@@ -323,3 +323,89 @@ CREATE POLICY "Users can view their own invoices" ON invoices
 
 -- Admins full access (checked via role in profiles)
 -- Done via service role or admin verification
+
+-- 14. SEED DATA FOR PRODUCT CATEGORIES (Compliant with "A Handbook of Steel and Indl. Fasteners")
+INSERT INTO product_categories (slug, name, description, image_url, is_active, is_coming_soon, display_order, available_grades, specification_fields)
+VALUES 
+  (
+    'round-bar',
+    'Round Bar',
+    'Hot-rolled, normalized, and alloy engineering solid steel round bars strictly complying with IS: 2062, IS: 2073, IS: 1875, and IS: 5517 (BS 970 / EN & AISI equivalents).',
+    '/images/products/round-bar.png',
+    TRUE,
+    FALSE,
+    1,
+    '["IS: 2062 Fe410-W / E250 (Fusion Welded Structural)", "IS: 2073 C45 / 45C8 (BS 970: 080A40 / EN8)", "IS: 2073 C45D / 45C8 (080A47 / EN8D Forging Quality)", "IS: 5517 40Cr1Mo28 (BS: 708A42 / EN19 / AISI 4140)", "IS: 5517 40Ni2Cr1Mo28 (BS: 826M40 / EN24 / AISI 4340)", "IS: 5517 20MnCr5 / 16MnCr5 (Case Hardening Steel)", "IS: 5517 103Cr6 / 103Cr1 (BS: 534A99 / EN31 / SAE 52100)", "IS: 2073 C20 / 20C8 (AISI 1020 / Class 2 Forging)", "IS: 2073 55C8 (BS: 070A55 / EN9 Wear Resistant)", "IS: 1570 X04Cr18Ni9 (AISI 304 Austenitic Stainless)", "IS: 1570 X04Cr18Ni12Mo2 (AISI 316 Stainless Round)"]'::jsonb,
+    '[{"key": "diameter", "label": "Nominal Bar Diameter (IS: 1732 Standard)", "type": "select", "options": ["10 mm", "12 mm", "16 mm", "20 mm", "22 mm", "25 mm", "28 mm", "32 mm", "36 mm", "40 mm", "45 mm", "50 mm", "56 mm", "63 mm", "71 mm", "75 mm", "80 mm", "90 mm", "100 mm", "110 mm", "125 mm", "140 mm", "150 mm", "160 mm", "180 mm", "200 mm", "220 mm", "250 mm", "280 mm", "300 mm"], "unit": "mm", "required": true}, {"key": "supplyCondition", "label": "Supply / Heat Treatment Condition (Handbook Standard)", "type": "select", "options": ["AR - As Rolled / Hot Rolled (Black Surface)", "N - Normalised (Air Cooled at 880-920°C)", "A - Annealed (Furnace Cooled Softened)", "H&T - Hardened & Tempered (Quenched & Tempered)", "Peeled & Centerless Turned (Descaled)"], "required": true}, {"key": "length", "label": "Bar Length Standard", "type": "select", "options": ["Random Mill Length (4.0 to 6.0 Meters)", "Fixed Length (3.0 Meters)", "Fixed Length (6.0 Meters)", "Cut-to-Length Billet / Block"], "unit": "Meters", "required": true}, {"key": "testingRequirement", "label": "Testing & Inspection Standard", "type": "select", "options": ["Standard Mill Test Certificate (MTC with Chemistry & Tensile per IS: 2049)", "100% Ultrasonic Tested (UT per IS: 6396 / IS: 8791)", "Third Party Inspection (TPI Witnessed)", "100% Spark Tested for Chemical Grade Identity"], "required": false}]'::jsonb
+  ),
+  (
+    'bright-bar',
+    'Bright Bar',
+    'Cold-drawn, turned, and centerless ground precision bright steel bars complying with IS: 2073, IS: 1570, BS 970 (EN1A / EN8), and DIN ISO tolerance regimes.',
+    '/images/products/bright-bar.png',
+    TRUE,
+    FALSE,
+    2,
+    '["IS: 2073 14Mn1S14 / 14C14S14 (BS: 220M07 / EN1A Non-Leaded Free Cutting)", "IS: 2073 14Mn1S14L (EN1A Leaded with 0.15-0.35% Pb)", "IS: 2073 C20 / 20C8 (AISI 1018 / 1020 Bright Mild Steel)", "IS: 2073 C45 / 45C8 (BS: 080A47 / EN8D Bright Carbon)", "IS: 2073 13C10S25 (13S25 Free Machining Steel)", "IS: 5517 40Cr1Mo28 (EN19 / 708A42 Ground Bright)", "IS: 1570 X04Cr18Ni9 (SS 304 Precision Bright)"]'::jsonb,
+    '[{"key": "diameter", "label": "Bright Bar Diameter", "type": "select", "options": ["5 mm", "6 mm", "8 mm", "10 mm", "12 mm", "14 mm", "16 mm", "18 mm", "20 mm", "22 mm", "24 mm", "25 mm", "28 mm", "30 mm", "32 mm", "35 mm", "38 mm", "40 mm", "45 mm", "50 mm", "55 mm", "60 mm", "65 mm", "70 mm", "75 mm", "80 mm", "90 mm", "100 mm"], "unit": "mm", "required": true}, {"key": "tolerance", "label": "Dimensional Tolerance Standard (Handbook ISO / DIN)", "type": "select", "options": ["ISO h9 Tolerance (Precision Turned / Cold Drawn)", "ISO h11 Tolerance (Standard Commercial Cold Drawn)", "ISO h8 Tolerance (Centerless Ground & Polished)"], "required": true}, {"key": "finishCondition", "label": "Surface Processing Condition (Handbook Table)", "type": "select", "options": ["CD - Cold Drawn Bright (Scale-Free Smooth)", "Peeled & Polished Surface", "Centerless Ground & End Chamfered"], "required": true}, {"key": "length", "label": "Bar Length", "type": "select", "options": ["Standard 3.0 to 4.0 Meters", "Fixed 3.0 Meters", "Fixed 6.0 Meters"], "unit": "Meters", "required": true}]'::jsonb
+  ),
+  (
+    'flat',
+    'Flat',
+    'Hot-rolled structural, medium carbon, and spring steel flats adhering to IS: 2062, IS: 2073, IS: 1570, and IS: 3749 standards from the handbook.',
+    '/images/products/flat.png',
+    TRUE,
+    FALSE,
+    3,
+    '["IS: 2062 Fe410-W / St42-W (Standard Fusion Welded Quality)", "IS: 2062 Fe410-WC / St42-WC (Weather-Resistant Copper Alloyed)", "IS: 2062 Fe540WT / St55HTW (High Tensile Weldable Structural)", "IS: 2073 40C8 / C45 (BS 970: 080A40 / EN8 Medium Carbon)", "IS: 3749 55Si7 / T55Si7 (BS: 250A53 / EN45 Oil-Hardening Spring Steel)", "IS: 3749 65Si7 / 60Si7 (Heavy Laminated Leaf Spring Steel)", "IS: 5517 50CrV4 / 50Cr1V23 (BS: 735A50 / EN47 Chrome-Vanadium Spring)", "IS: 1570 X04Cr18Ni9 (SS 304 Industrial Stainless Flat)"]'::jsonb,
+    '[{"key": "width", "label": "Flat Width (IS: 1730 Standard Range)", "type": "select", "options": ["20 mm", "25 mm", "32 mm", "40 mm", "50 mm", "65 mm", "75 mm", "90 mm", "100 mm", "125 mm", "150 mm", "180 mm", "200 mm", "250 mm"], "unit": "mm", "required": true}, {"key": "thickness", "label": "Flat Thickness (IS: 1730 Standard Range)", "type": "select", "options": ["3 mm", "5 mm", "6 mm", "8 mm", "10 mm", "12 mm", "16 mm", "20 mm", "25 mm", "32 mm", "40 mm", "50 mm"], "unit": "mm", "required": true}, {"key": "supplyCondition", "label": "Supply / Heat Treatment Condition (Handbook Standard)", "type": "select", "options": ["AR - As Rolled / Hot Rolled Standard", "N - Normalised (Uniform Microstructure)", "A - Annealed (Softened for Shearing & Punching)", "H&T - Hardened & Tempered (Oil Quenched Spring Steel)"], "required": true}, {"key": "length", "label": "Length", "type": "select", "options": ["Standard Mill Length (5.5 - 6.0 Meters)", "Cut-to-Length Customized"], "required": false}]'::jsonb
+  ),
+  (
+    'sheet',
+    'Sheet',
+    'Cold-rolled (IS: 513 CR1-CR4) and hot-rolled (IS: 1079 HR1-HR4 / IS: 2062 / IS: 2002) steel sheets, coils, and plates matching handbook tables.',
+    '/images/products/sheet.png',
+    TRUE,
+    FALSE,
+    4,
+    '["IS: 513 CR1 / Ordinary (O) Commercial Cold Rolled", "IS: 513 CR2 / Deep Drawing (D) Stamping Quality", "IS: 513 CR3 / Extra Deep Drawing (DD)", "IS: 513 CR4 / EDD (Non-Aging Super Deep Drawing)", "IS: 1079 HR1 / Ordinary Commercial Hot Rolled Sheet", "IS: 1079 HR2 / Deep Drawing HR Sheet & Strip", "IS: 2062 Fe410-W / E250 (Hot Rolled Structural Plate)", "IS: 2002 Grade 1 / 2 (Boiler & Pressure Vessel Quality Plate)", "IS: 1570 X04Cr18Ni9 (SS 304 2B/BA Stainless Sheet)", "IS: 2062 Chequered Floor Plate (Tear Drop Raised Pattern)"]'::jsonb,
+    '[{"key": "thickness", "label": "Sheet / Plate Thickness (IS: 513 / IS: 1079 Range)", "type": "select", "options": ["0.5 mm", "0.6 mm", "0.8 mm", "1.0 mm", "1.2 mm", "1.6 mm", "2.0 mm", "2.5 mm", "3.15 mm", "4.0 mm", "5.0 mm", "6.0 mm", "8.0 mm", "10.0 mm", "12.0 mm", "16.0 mm", "20.0 mm", "25.0 mm"], "unit": "mm", "required": true}, {"key": "width", "label": "Standard Sheet Width", "type": "select", "options": ["900 mm (3 ft)", "1000 mm (1.0 Mtr)", "1220 mm (4 ft)", "1250 mm (1.25 Mtr)", "1500 mm (5 ft)", "2000 mm (2.0 Mtr)"], "unit": "mm", "required": true}, {"key": "lengthFormat", "label": "Length / Product Format (Handbook Standard)", "type": "select", "options": ["2000 mm Sheet Standard", "2440 mm (8 ft Sheet)", "2500 mm Sheet", "3000 mm (10 ft Sheet)", "6000 mm Industrial Plate", "Continuous Coil (CR Coil / HR Coil)"], "required": true}, {"key": "surfaceFinish", "label": "Surface Finish / Processing (Handbook Standard)", "type": "select", "options": ["CR 2B - Skin Passed / Scale-Free Cold Rolled", "HR Mill Finish (Hot Rolled As Rolled)", "HRPO - Hot Rolled Pickled & Oiled (Descaled)", "Annealed & Descaled (IS: 1079 General Engineering)"], "required": true}]'::jsonb
+  ),
+  (
+    'square',
+    'Square',
+    'Hot-rolled solid square steel bars complying with IS: 2062, IS: 1875, IS: 2073, and IS: 5517 for heavy structural, drop forging, and crane shaft applications.',
+    '/images/products/square.png',
+    TRUE,
+    FALSE,
+    5,
+    '["IS: 2062 Fe410-W / St42-W (Fusion Welded Structural Square)", "IS: 1875 Class 2 / 20C8 (Carbon Steel Forging Billet)", "IS: 1875 Class 4 / 45C8 (BS: 080A47 / EN8 Forging Grade)", "IS: 2073 40C8 / C45 (Engineering Machining Square)", "IS: 5517 40Cr1Mo28 (BS: 708A42 / EN19 Chrome-Moly Square)", "IS: 5517 40Ni2Cr1Mo28 (BS: 826M40 / EN24 Heavy Duty Shaft Quality)", "IS: 1570 X04Cr18Ni9 (SS 304 Solid Stainless Square)"]'::jsonb,
+    '[{"key": "squareSize", "label": "Square Size (IS: 1732 Standard Square Dimensions)", "type": "select", "options": ["10 x 10 mm", "12 x 12 mm", "16 x 16 mm", "20 x 20 mm", "25 x 25 mm", "32 x 32 mm", "40 x 40 mm", "50 x 50 mm", "63 x 63 mm", "75 x 75 mm", "90 x 90 mm", "100 x 100 mm", "125 x 125 mm", "150 x 150 mm"], "unit": "mm", "required": true}, {"key": "supplyCondition", "label": "Supply / Heat Treatment Condition (Handbook Standard)", "type": "select", "options": ["AR - As Rolled / Hot Rolled Standard", "N - Normalised (Air Cooled at 880-920°C)", "A - Annealed (Furnace Cooled)", "H&T - Hardened & Tempered"], "required": true}, {"key": "length", "label": "Bar Length Standard", "type": "select", "options": ["Standard Mill Length (5.5 - 6.0 Meters)", "Cut-to-Length Billet Custom"], "required": true}]'::jsonb
+  ),
+  (
+    'tmt-bar',
+    'TMT Bar',
+    'Thermo-Mechanically Treated high-ductility rebar and deformed bars strictly conforming to IS: 1786 and IS: 432 / IS: 2062 for concrete reinforcement.',
+    '/images/products/tmt-bar.png',
+    TRUE,
+    FALSE,
+    6,
+    '["Fe 415 (IS: 1786 Standard Construction Rebar)", "Fe 415D (IS: 1786 High Ductility - Earthquake Resistant)", "Fe 500 (IS: 1786 High Strength Concrete Reinforcement)", "Fe 500D (IS: 1786 High Ductility & Elongation >= 16%)", "Fe 550 / Fe 550D (IS: 1786 Heavy Infrastructure & Flyovers)", "Fe 600 (IS: 1786 Ultra High Strength Heavy Columns)", "CRS Fe 500D (Corrosion Resistant Steel for Coastal / Marine)", "Fe 380 / Fe 410 M.S. Gr-I (IS: 432 / IS: 2062 Mild Steel Rebar)"]'::jsonb,
+    '[{"key": "diameter", "label": "Bar Diameter (IS: 1786 Nominal Sizes)", "type": "select", "options": ["8 mm", "10 mm", "12 mm", "16 mm", "20 mm", "25 mm", "28 mm", "32 mm", "36 mm", "40 mm"], "unit": "mm", "required": true}, {"key": "length", "label": "Length & Packaging Standard", "type": "select", "options": ["Standard 12.0 Meters (Straight Bundle)", "Standard 12.0 Meters (U-Bend Bundle)", "Cut & Bend Custom Project Fabricated"], "required": true}, {"key": "certification", "label": "BIS Certification & Mill Provenance", "type": "select", "options": ["Primary Integrated Steel Mill (Tata Tiscon / SAIL / JSW Neosteel / Jindal Panther)", "Secondary Quality ISI Certified IS: 1786 with MTC", "BIS ISI Hallmarked with 100% 0.2% Proof Stress Test"], "required": false}]'::jsonb
+  ),
+  (
+    'square-bright-bar',
+    'Square Bright Bar',
+    'Precision cold-drawn bright square steel bars with sharp 90-degree corners per IS: 2073, IS: 1570, BS 970 (EN1A / EN8), and ISO h9/h11 tolerances.',
+    '/images/products/square-bright.png',
+    TRUE,
+    FALSE,
+    7,
+    '["IS: 2073 14Mn1S14 / EN1A (Cold Drawn Free Cutting Bright Square)", "IS: 2073 14Mn1S14L / EN1A Leaded (High-Speed Machining)", "IS: 2073 C20 / 20C8 (AISI 1018 Bright Quality)", "IS: 2073 C45 / 45C8 (BS: 080A47 / EN8D Carbon Bright Square)", "IS: 1570 X04Cr18Ni9 (SS 304 Precision Bright Square)"]'::jsonb,
+    '[{"key": "squareSize", "label": "Square Dimension (IS Standard)", "type": "select", "options": ["6 x 6 mm", "8 x 8 mm", "10 x 10 mm", "12 x 12 mm", "14 x 14 mm", "16 x 16 mm", "18 x 18 mm", "20 x 20 mm", "22 x 22 mm", "25 x 25 mm", "30 x 30 mm", "32 x 32 mm", "35 x 35 mm", "40 x 40 mm", "45 x 45 mm", "50 x 50 mm", "60 x 60 mm", "75 x 75 mm"], "unit": "mm", "required": true}, {"key": "tolerance", "label": "Dimensional Tolerance Standard (Handbook ISO / DIN)", "type": "select", "options": ["ISO h9 Tolerance (Sharp 90° Precision Square)", "ISO h11 Tolerance (Standard Bright Cold Drawn)", "ISO h8 Tolerance (Centerless Ground Finish)"], "required": true}, {"key": "finishCondition", "label": "Supply / Surface Condition (Handbook Standard)", "type": "select", "options": ["CD - Cold Drawn Bright (Scale-Free Smooth)", "Cold Drawn & Annealed (Stress Relieved)", "Peeled & Ground Surface"], "required": true}, {"key": "length", "label": "Bar Length", "type": "select", "options": ["Standard 3.0 to 4.0 Meters", "Fixed 3.0 Meters", "Fixed 6.0 Meters"], "unit": "Meters", "required": true}]'::jsonb
+  )
+ON CONFLICT (slug) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  available_grades = EXCLUDED.available_grades,
+  specification_fields = EXCLUDED.specification_fields;
