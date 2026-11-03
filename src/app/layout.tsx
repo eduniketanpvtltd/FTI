@@ -3,11 +3,17 @@ import './globals.css';
 import { StoreProvider } from '@/lib/store-context';
 
 export const metadata: Metadata = {
-  title: 'FTI – Industrial Raw Materials & Scrap Trading Platform',
+  title: 'FTI – FieldFast Tech International | Raw Materials & Scrap Trading',
   description:
-    'B2B marketplace for industrial steel round bars, bright bars, flats, sheets, square bars, TMT rebars, and real-time live scrap market prices.',
+    'FieldFast Tech International (FTI) B2B marketplace for industrial steel round bars, bright bars, flats, sheets, square bars, TMT rebars, and real-time live scrap market prices.',
+  icons: {
+    icon: '/fti-logo.png',
+    shortcut: '/fti-logo.png',
+    apple: '/fti-logo.png',
+  },
   keywords: [
     'FTI',
+    'FieldFast Tech International',
     'Industrial Raw Materials',
     'Steel Trading',
     'Round Bar',
