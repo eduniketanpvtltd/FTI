@@ -108,6 +108,9 @@ function OrderDetailContent() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-lg p-1 bg-slate-950 border border-slate-700 flex items-center justify-center shrink-0">
+                  <img src="/fti-logo.png" alt="FTI Logo" className="w-full h-full object-contain" />
+                </div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
                   Purchase Order #{order.orderNumber}
                 </h1>
@@ -365,7 +368,7 @@ function OrderDetailContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded border border-slate-200 text-xs font-mono">
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase">Beneficiary Name</span>
-                  <span className="font-bold text-slate-900">FTI INDUSTRIAL TRADING CORP</span>
+                  <span className="font-bold text-slate-900">FIELDFAST TECH INTERNATIONAL (FTI)</span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase">Bank & Branch</span>

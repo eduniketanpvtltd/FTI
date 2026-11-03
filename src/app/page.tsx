@@ -42,9 +42,11 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="max-w-2xl">
-              <div className="inline-flex items-center space-x-2 bg-blue-900/60 border border-blue-600/40 px-3 py-1 rounded-full text-blue-300 text-xs font-semibold uppercase tracking-wider mb-3">
-                <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-                <span>Industrial B2B Metal Trading Platform</span>
+              <div className="inline-flex items-center space-x-2 bg-slate-900/90 border border-slate-700/80 px-3 py-1 rounded-full text-slate-200 text-xs font-semibold uppercase tracking-wider mb-3 shadow-sm">
+                <img src="/fti-logo.png" alt="FTI Logo" className="w-4 h-4 object-contain" />
+                <span className="text-red-400 font-bold">FieldFast Tech International</span>
+                <span className="text-slate-500">•</span>
+                <span>B2B Metal Trading Desk</span>
               </div>
               <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
                 Direct Mill Sourced Raw Materials & Live Scrap Price Index
@@ -292,11 +294,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 4. Why Choose FTI Industrial Trading */}
+      {/* 4. Why Choose FieldFast Tech International (FTI) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
         <div className="text-center max-w-2xl mx-auto mb-8">
+          <div className="inline-flex items-center justify-center space-x-2 mb-2">
+            <img src="/fti-logo.png" alt="FTI Logo" className="w-6 h-6 object-contain" />
+            <span className="text-xs uppercase font-bold text-red-600 tracking-wider">FieldFast Advantage</span>
+          </div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-            Why Industrial Buyers Rely on FTI
+            Why Industrial Buyers Rely on FTI (FieldFast Tech International)
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
             Engineered specifically for engineering works, infrastructure EPC contractors, and steel traders.

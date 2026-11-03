@@ -8,10 +8,12 @@ import {
   Order,
   Invoice,
   MarketMaterial,
+  MandiBulletinData,
   NotificationItem,
   AppSettings,
 } from '@/types';
 import { generateRefId } from './utils';
+import { INITIAL_MANDI_BULLETIN, INITIAL_MANDI_MATERIALS } from './mandi-parser';
 
 // ==========================================
 // INITIAL SEED DATA
@@ -520,275 +522,7 @@ function generateHistory(basePrice: number, days: number = 30, volatilityRatio: 
   return points;
 }
 
-export const INITIAL_MARKET_MATERIALS: MarketMaterial[] = [
-  // --- RAW MATERIALS ---
-  {
-    id: 'mat-steel-billet',
-    categorySlug: 'raw_materials',
-    categoryName: 'Raw Materials',
-    name: 'Mild Steel Billet (100x100 mm)',
-    symbol: 'MS-BILLET',
-    unit: '₹ / Metric Ton',
-    currentPrice: 48500,
-    previousPrice: 47500,
-    priceChange: 1000,
-    percentageChange: 2.11,
-    movementDirection: 'up',
-    highPrice: 49200,
-    lowPrice: 46100,
-    averagePrice: 47800,
-    volatility: 1.6,
-    lastUpdatedAt: '2026-11-03T11:30:00.000Z',
-    displayOrder: 1,
-    isActive: true,
-    notes: 'Ex-Mandi Gobindgarh / Raipur secondary hub indicative rates.',
-    historicalPrices: generateHistory(48500, 45, 0.015),
-  },
-  {
-    id: 'mat-tmt-rebar',
-    categorySlug: 'raw_materials',
-    categoryName: 'Raw Materials',
-    name: 'TMT Rebar 500D (Primary Mill)',
-    symbol: 'TMT-500D',
-    unit: '₹ / Metric Ton',
-    currentPrice: 54200,
-    previousPrice: 53250,
-    priceChange: 950,
-    percentageChange: 1.78,
-    movementDirection: 'up',
-    highPrice: 55400,
-    lowPrice: 51800,
-    averagePrice: 53500,
-    volatility: 1.4,
-    lastUpdatedAt: '2026-11-03T11:30:00.000Z',
-    displayOrder: 2,
-    isActive: true,
-    notes: 'Ex-Plant pricing across primary manufacturers (JSW/Tata/Jindal).',
-    historicalPrices: generateHistory(54200, 45, 0.012),
-  },
-  {
-    id: 'mat-hr-plate',
-    categorySlug: 'raw_materials',
-    categoryName: 'Raw Materials',
-    name: 'Hot Rolled Steel Coil / Plate (IS 2062)',
-    symbol: 'HR-COIL',
-    unit: '₹ / Metric Ton',
-    currentPrice: 56800,
-    previousPrice: 57000,
-    priceChange: -200,
-    percentageChange: -0.35,
-    movementDirection: 'down',
-    highPrice: 58200,
-    lowPrice: 55500,
-    averagePrice: 56900,
-    volatility: 0.9,
-    lastUpdatedAt: '2026-11-03T11:30:00.000Z',
-    displayOrder: 3,
-    isActive: true,
-    notes: 'Base grade 2.5mm - 10mm thickness, ex-warehouse Mumbai/NCR.',
-    historicalPrices: generateHistory(56800, 45, 0.011),
-  },
-  {
-    id: 'mat-copper-cathode',
-    categorySlug: 'raw_materials',
-    categoryName: 'Raw Materials',
-    name: 'Copper Cathode Grade A (99.99%)',
-    symbol: 'CU-CATH',
-    unit: '₹ / Metric Ton',
-    currentPrice: 865000,
-    previousPrice: 849500,
-    priceChange: 15500,
-    percentageChange: 1.82,
-    movementDirection: 'up',
-    highPrice: 878000,
-    lowPrice: 812000,
-    averagePrice: 845000,
-    volatility: 2.2,
-    lastUpdatedAt: '2026-11-03T11:30:00.000Z',
-    displayOrder: 4,
-    isActive: true,
-    notes: 'Benchmark MCX / LME spot linked indicative industrial basis.',
-    historicalPrices: generateHistory(865000, 45, 0.024),
-  },
-  {
-    id: 'mat-aluminium-ingot',
-    categorySlug: 'raw_materials',
-    categoryName: 'Raw Materials',
-    name: 'Primary Aluminium Ingot EC-Grade (99.7%)',
-    symbol: 'AL-INGOT',
-    unit: '₹ / Metric Ton',
-    currentPrice: 242000,
-    previousPrice: 242000,
-    priceChange: 0,
-    percentageChange: 0.00,
-    movementDirection: 'neutral',
-    highPrice: 248000,
-    lowPrice: 232000,
-    averagePrice: 239500,
-    volatility: 1.1,
-    lastUpdatedAt: '2026-11-03T11:30:00.000Z',
-    displayOrder: 5,
-    isActive: true,
-    notes: 'NALCO / Hindalco reference pricing ex-smelter.',
-    historicalPrices: generateHistory(242000, 45, 0.014),
-  },
-  {
-    id: 'mat-zinc-ingot',
-    categorySlug: 'raw_materials',
-    categoryName: 'Raw Materials',
-    name: 'Special High Grade Zinc (99.995%)',
-    symbol: 'ZN-SHG',
-    unit: '₹ / Metric Ton',
-    currentPrice: 282000,
-    previousPrice: 285000,
-    priceChange: -3000,
-    percentageChange: -1.05,
-    movementDirection: 'down',
-    highPrice: 294000,
-    lowPrice: 271000,
-    averagePrice: 283000,
-    volatility: 1.7,
-    lastUpdatedAt: '2026-11-03T11:30:00.000Z',
-    displayOrder: 6,
-    isActive: true,
-    notes: 'Hindustan Zinc Ltd benchmark commercial reference.',
-    historicalPrices: generateHistory(282000, 45, 0.018),
-  },
-
-  // --- SCRAP MATERIALS ---
-  {
-    id: 'mat-hms-scrap',
-    categorySlug: 'scrap_materials',
-    categoryName: 'Scrap Materials',
-    name: 'Heavy Melting Scrap (HMS 1&2 80:20)',
-    symbol: 'HMS-8020',
-    unit: '₹ / Metric Ton',
-    currentPrice: 34800,
-    previousPrice: 35200,
-    priceChange: -400,
-    percentageChange: -1.14,
-    movementDirection: 'down',
-    highPrice: 36500,
-    lowPrice: 33200,
-    averagePrice: 34900,
-    volatility: 1.8,
-    lastUpdatedAt: '2026-11-03T11:30:00.000Z',
-    displayOrder: 7,
-    isActive: true,
-    notes: 'Melting quality scrap for induction furnaces ex-Alang / Jalna.',
-    historicalPrices: generateHistory(34800, 45, 0.019),
-  },
-  {
-    id: 'mat-cast-iron-scrap',
-    categorySlug: 'scrap_materials',
-    categoryName: 'Scrap Materials',
-    name: 'Cast Iron Scrap (Foundry Grade Machinery)',
-    symbol: 'CI-SCRAP',
-    unit: '₹ / Metric Ton',
-    currentPrice: 31200,
-    previousPrice: 31050,
-    priceChange: 150,
-    percentageChange: 0.48,
-    movementDirection: 'up',
-    highPrice: 32400,
-    lowPrice: 29800,
-    averagePrice: 31100,
-    volatility: 1.3,
-    lastUpdatedAt: '2026-11-03T11:30:00.000Z',
-    displayOrder: 8,
-    isActive: true,
-    notes: 'High silicon machinery cast iron scrap for foundries.',
-    historicalPrices: generateHistory(31200, 45, 0.015),
-  },
-  {
-    id: 'mat-copper-scrap',
-    categorySlug: 'scrap_materials',
-    categoryName: 'Scrap Materials',
-    name: 'Copper Armature / Heavy Scrap (Candy)',
-    symbol: 'CU-SCRAP',
-    unit: '₹ / Metric Ton',
-    currentPrice: 780000,
-    previousPrice: 768500,
-    priceChange: 11500,
-    percentageChange: 1.50,
-    movementDirection: 'up',
-    highPrice: 792000,
-    lowPrice: 735000,
-    averagePrice: 765000,
-    volatility: 2.1,
-    lastUpdatedAt: '2026-11-03T11:30:00.000Z',
-    displayOrder: 9,
-    isActive: true,
-    notes: 'ISRI Grade Candy / Berry clean unalloyed copper scrap.',
-    historicalPrices: generateHistory(780000, 45, 0.022),
-  },
-  {
-    id: 'mat-aluminium-scrap',
-    categorySlug: 'scrap_materials',
-    categoryName: 'Scrap Materials',
-    name: 'Aluminium Utensil / Tense Scrap',
-    symbol: 'AL-TENSE',
-    unit: '₹ / Metric Ton',
-    currentPrice: 175000,
-    previousPrice: 175500,
-    priceChange: -500,
-    percentageChange: -0.28,
-    movementDirection: 'down',
-    highPrice: 182000,
-    lowPrice: 168000,
-    averagePrice: 174000,
-    volatility: 1.2,
-    lastUpdatedAt: '2026-11-03T11:30:00.000Z',
-    displayOrder: 10,
-    isActive: true,
-    notes: 'Mixed aluminium casting and sheet scrap ISRI Tense.',
-    historicalPrices: generateHistory(175000, 45, 0.013),
-  },
-  {
-    id: 'mat-ss304-scrap',
-    categorySlug: 'scrap_materials',
-    categoryName: 'Scrap Materials',
-    name: 'Stainless Steel 304 Scrap Solids (18/8)',
-    symbol: 'SS304-SCRAP',
-    unit: '₹ / Metric Ton',
-    currentPrice: 142000,
-    previousPrice: 140500,
-    priceChange: 1500,
-    percentageChange: 1.07,
-    movementDirection: 'up',
-    highPrice: 148000,
-    lowPrice: 135000,
-    averagePrice: 141000,
-    volatility: 1.5,
-    lastUpdatedAt: '2026-11-03T11:30:00.000Z',
-    displayOrder: 11,
-    isActive: true,
-    notes: 'Clean non-magnetic 304 solids and off-cuts.',
-    historicalPrices: generateHistory(142000, 45, 0.016),
-  },
-  {
-    id: 'mat-brass-scrap',
-    categorySlug: 'scrap_materials',
-    categoryName: 'Scrap Materials',
-    name: 'Brass Honey Scrap (ISRI Honey)',
-    symbol: 'BRASS-HONEY',
-    unit: '₹ / Metric Ton',
-    currentPrice: 495000,
-    previousPrice: 491000,
-    priceChange: 4000,
-    percentageChange: 0.81,
-    movementDirection: 'up',
-    highPrice: 508000,
-    lowPrice: 472000,
-    averagePrice: 489000,
-    volatility: 1.4,
-    lastUpdatedAt: '2026-11-03T11:30:00.000Z',
-    displayOrder: 12,
-    isActive: true,
-    notes: 'Yellow brass scrap solids for extrusion and casting.',
-    historicalPrices: generateHistory(495000, 45, 0.017),
-  },
-];
+export const INITIAL_MARKET_MATERIALS: MarketMaterial[] = INITIAL_MANDI_MATERIALS;
 
 export const INITIAL_USERS: UserProfile[] = [
   {
@@ -853,7 +587,7 @@ export const INITIAL_ADDRESSES: UserAddress[] = [
 ];
 
 export const INITIAL_SETTINGS: AppSettings = {
-  companyName: 'FTI Industrial Trading Corporation',
+  companyName: 'FieldFast Tech International (FTI)',
   tagline: 'Direct Mill Sourced Raw Materials & Certified Scrap',
   gstin: '27AAACF0123M1Z5',
   address: 'FTI House, Iron & Steel Market, Kalamboli, Navi Mumbai, Maharashtra 410218, India',
@@ -1012,7 +746,7 @@ export const INITIAL_INVOICES: Invoice[] = [
     invoiceDate: '2026-11-02',
     dueDate: '2026-11-02',
     companyDetails: {
-      name: 'FTI Industrial Trading Corporation',
+      name: 'FieldFast Tech International (FTI)',
       tagline: 'Direct Mill Sourced Raw Materials & Certified Scrap',
       address: 'FTI House, Iron & Steel Market, Kalamboli, Navi Mumbai, Maharashtra 410218, India',
       gstin: '27AAACF0123M1Z5',
@@ -1099,7 +833,7 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
 // REPOSITORY & LOCAL STORAGE STATE SYNC
 // ==========================================
 
-const STORAGE_KEY = 'fti_platform_state_v2';
+export const STORAGE_KEY = 'fti_platform_state_v2';
 
 export interface AppState {
   currentUser: UserProfile;
@@ -1110,6 +844,7 @@ export interface AppState {
   invoices: Invoice[];
   addresses: UserAddress[];
   marketMaterials: MarketMaterial[];
+  mandiBulletin: MandiBulletinData;
   notifications: NotificationItem[];
   settings: AppSettings;
 }
@@ -1125,6 +860,7 @@ export function getInitialState(): AppState {
       invoices: INITIAL_INVOICES,
       addresses: INITIAL_ADDRESSES,
       marketMaterials: INITIAL_MARKET_MATERIALS,
+      mandiBulletin: INITIAL_MANDI_BULLETIN,
       notifications: INITIAL_NOTIFICATIONS,
       settings: INITIAL_SETTINGS,
     };
@@ -1134,6 +870,9 @@ export function getInitialState(): AppState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      const hasMandiData =
+        parsed.marketMaterials &&
+        parsed.marketMaterials.some((m: any) => m.categorySlug === 'ingot' || m.id?.startsWith('mandi-'));
       return {
         currentUser: parsed.currentUser || INITIAL_USERS[0],
         categories: INITIAL_CATEGORIES,
@@ -1142,7 +881,8 @@ export function getInitialState(): AppState {
         orders: parsed.orders || INITIAL_ORDERS,
         invoices: parsed.invoices || INITIAL_INVOICES,
         addresses: parsed.addresses || INITIAL_ADDRESSES,
-        marketMaterials: parsed.marketMaterials || INITIAL_MARKET_MATERIALS,
+        marketMaterials: hasMandiData ? parsed.marketMaterials : INITIAL_MARKET_MATERIALS,
+        mandiBulletin: parsed.mandiBulletin || INITIAL_MANDI_BULLETIN,
         notifications: parsed.notifications || INITIAL_NOTIFICATIONS,
         settings: parsed.settings || INITIAL_SETTINGS,
       };
@@ -1160,6 +900,7 @@ export function getInitialState(): AppState {
     invoices: INITIAL_INVOICES,
     addresses: INITIAL_ADDRESSES,
     marketMaterials: INITIAL_MARKET_MATERIALS,
+    mandiBulletin: INITIAL_MANDI_BULLETIN,
     notifications: INITIAL_NOTIFICATIONS,
     settings: INITIAL_SETTINGS,
   };
@@ -1169,7 +910,6 @@ export function saveState(state: AppState) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    window.dispatchEvent(new CustomEvent('fti_state_updated', { detail: state }));
   } catch (err) {
     console.error('Error saving state to localStorage:', err);
   }

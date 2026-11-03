@@ -151,6 +151,7 @@ export type PaymentStatus = 'pending' | 'partial' | 'paid' | 'refunded';
 export interface OrderItem {
   id: string;
   categoryName: string;
+  categorySlug?: string;
   specifications: Record<string, string | number>;
   grade: string;
   quantity: number;
@@ -262,10 +263,12 @@ export type MovementDirection = 'up' | 'down' | 'neutral';
 
 export interface MarketMaterial {
   id: string;
-  categorySlug: 'raw_materials' | 'scrap_materials';
+  categorySlug: 'ingot' | 'scrap' | 'billet' | 'benchmark' | 'raw_materials' | 'scrap_materials' | string;
   categoryName: string;
   name: string;
   symbol: string;
+  hubCity?: string;
+  specification?: string;
   unit: string; // '₹ / Metric Ton'
   currentPrice: number;
   previousPrice: number;
@@ -281,6 +284,19 @@ export interface MarketMaterial {
   isActive: boolean;
   notes?: string;
   historicalPrices: MarketPricePoint[];
+}
+
+export interface MandiBulletinData {
+  dateStr: string;
+  timeStr: string;
+  usdInrRate: number;
+  overallTrend: 'up' | 'down' | 'neutral';
+  trendText: string;
+  rawMessageText: string;
+  supportPhone: string;
+  smsPhones: string[];
+  whatsappPhones: string[];
+  lastUpdatedAt: string;
 }
 
 export interface NotificationItem {

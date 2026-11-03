@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { Invoice, Quotation } from '@/types';
 import { formatINR, formatIndianDate } from './utils';
+import { FTI_LOGO_BASE64 } from './logo-data';
 
 /**
  * Generate official Indian GST Tax Invoice PDF
@@ -19,16 +20,22 @@ export function generateInvoicePDF(invoice: Invoice) {
   doc.setFillColor(15, 23, 42); // slate-900 industrial charcoal
   doc.rect(0, 0, pageWidth, 28, 'F');
 
+  try {
+    doc.addImage(FTI_LOGO_BASE64, 'PNG', 12, 3, 22, 22);
+  } catch {
+    // fallback if image rendering fails
+  }
+
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
+  doc.setFontSize(15);
   doc.setTextColor(255, 255, 255);
-  doc.text('FTI INDUSTRIAL TRADING CORP.', 14, 12);
+  doc.text('FIELDFAST TECH INTERNATIONAL', 38, 11);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setTextColor(203, 213, 225);
-  doc.text('Direct Mill Sourced Raw Materials & Certified Scrap | ISO 9001:2015 Certified', 14, 18);
-  doc.text(`GSTIN: ${invoice.companyDetails.gstin} | PAN: ${invoice.companyDetails.pan}`, 14, 23);
+  doc.text('FTI Metals Desk • Direct Mill Sourced Raw Materials & Certified Scrap | ISO 9001:2015 Certified', 38, 17);
+  doc.text(`GSTIN: ${invoice.companyDetails.gstin} | PAN: ${invoice.companyDetails.pan}`, 38, 22);
 
   // Right Header Title
   doc.setFont('helvetica', 'bold');
@@ -245,7 +252,7 @@ export function generateInvoicePDF(invoice: Invoice) {
   doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.text('For FTI INDUSTRIAL TRADING CORP.', pageWidth - 18, y, { align: 'right' });
+  doc.text('For FIELDFAST TECH INTERNATIONAL (FTI)', pageWidth - 18, y, { align: 'right' });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.text('Authorised Signatory / Computer Generated Document', pageWidth - 18, y + 14, { align: 'right' });
@@ -271,15 +278,21 @@ export function generateQuotationPDF(quotation: Quotation) {
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 0, pageWidth, 28, 'F');
 
+  try {
+    doc.addImage(FTI_LOGO_BASE64, 'PNG', 12, 3, 22, 22);
+  } catch {
+    // fallback
+  }
+
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
+  doc.setFontSize(15);
   doc.setTextColor(255, 255, 255);
-  doc.text('FTI INDUSTRIAL TRADING CORP.', 14, 12);
+  doc.text('FIELDFAST TECH INTERNATIONAL', 38, 11);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setTextColor(203, 213, 225);
-  doc.text('Direct Mill Sourced Raw Materials & Certified Scrap | ISO 9001:2015', 14, 18);
+  doc.text('FTI Metals Desk • Direct Mill Sourced Raw Materials & Certified Scrap | ISO 9001:2015', 38, 17);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);

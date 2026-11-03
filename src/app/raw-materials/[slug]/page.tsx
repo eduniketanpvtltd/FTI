@@ -92,6 +92,7 @@ function CategoryDetailContent() {
   // Handle adding a combination
   const handleAddCombination = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[DEBUG] handleAddCombination called, event phase:', e.eventPhase, 'target:', e.target);
     setFormError(null);
 
     if (!selectedGrade) {

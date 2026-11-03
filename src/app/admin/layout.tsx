@@ -19,7 +19,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex-1 flex flex-col min-w-0">
         {/* Admin Top Status Bar */}
         <header className="bg-slate-900 text-slate-200 border-b border-slate-800 px-6 py-2.5 flex items-center justify-between">
-          <div className="flex items-center space-x-3 text-xs">
+          <div className="flex items-center space-x-2.5 text-xs">
+            <img src="/fti-logo.png" alt="FTI Logo" className="w-5 h-5 object-contain" />
             <span className="font-bold text-white tracking-wide">FTI TRADING CONTROL DESK</span>
             <span className="text-slate-600">|</span>
             <span className="text-slate-400">Authenticated: {currentUser.fullName}</span>

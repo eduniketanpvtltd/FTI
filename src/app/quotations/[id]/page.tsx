@@ -103,6 +103,9 @@ function QuotationDetailContent() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-lg p-1 bg-slate-950 border border-slate-700 flex items-center justify-center shrink-0">
+                  <img src="/fti-logo.png" alt="FTI Logo" className="w-full h-full object-contain" />
+                </div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
                   Quotation #{quotation.quotationNumber}
                 </h1>

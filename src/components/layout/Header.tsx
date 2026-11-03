@@ -233,6 +233,17 @@ export function Header() {
       {/* Mobile Slide-Down Menu Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-4 py-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
+          {/* Brand Card in Drawer */}
+          <div className="flex items-center space-x-2.5 pb-2 border-b border-slate-800/80">
+            <div className="w-8 h-8 rounded-lg p-0.5 bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
+              <img src="/fti-logo.png" alt="FTI Logo" className="w-full h-full object-contain" />
+            </div>
+            <div>
+              <p className="font-bold text-white text-xs tracking-wide">FIELDFAST TECH INTERNATIONAL</p>
+              <p className="text-[10px] text-slate-400">Industrial Raw Materials & Live Scrap Platform</p>
+            </div>
+          </div>
+
           {/* User Info Card in Drawer */}
           <div className="p-3 bg-slate-900 rounded-lg border border-slate-800 flex items-center justify-between">
             <div className="flex items-center space-x-3">

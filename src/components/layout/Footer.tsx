@@ -49,11 +49,22 @@ export function Footer() {
       {/* Main Footer Links */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         <div>
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded bg-blue-700 flex items-center justify-center text-white font-extrabold text-sm">
-              FTI
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-lg p-1 bg-slate-950 border border-slate-800 flex items-center justify-center shrink-0">
+              <img
+                src="/fti-logo.png"
+                alt="FTI - FieldFast Tech International"
+                className="w-full h-full object-contain"
+              />
             </div>
-            <span className="font-bold text-slate-100 text-base tracking-wide">FTI METALS CORP</span>
+            <div>
+              <span className="font-bold text-slate-100 text-sm tracking-wide block">
+                FieldFast Tech International
+              </span>
+              <span className="text-[10px] text-red-400 font-semibold uppercase tracking-wider block">
+                FTI Industrial Trading
+              </span>
+            </div>
           </div>
           <p className="text-xs text-slate-400 mt-3 leading-relaxed">
             Leading industrial raw materials sourcing and certified scrap liquidation desk catering to heavy engineering, infrastructure, and component manufacturers across India.
@@ -158,7 +169,7 @@ export function Footer() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
-        <p>© 2026 FTI Industrial Trading Corporation. All rights reserved.</p>
+        <p>© 2026 FieldFast Tech International (FTI). All rights reserved.</p>
         <div className="flex space-x-4 mt-2 sm:mt-0">
           <span>ISO 9001:2015 Quality Management</span>
           <span>•</span>

@@ -16,6 +16,7 @@ import {
   Order,
   Invoice,
   MarketMaterial,
+  MandiBulletinData,
   NotificationItem,
   AppSettings,
   ProductCategory,
@@ -24,6 +25,15 @@ import {
   PaymentStatus,
 } from '@/types';
 import { generateRefId, numberToIndianWords } from './utils';
+import {
+  fetchDbCategories,
+  fetchDbMarketMaterials,
+  fetchDbQuotations,
+  fetchDbOrders,
+  createDbQuotation,
+  createDbOrder,
+  updateDbMarketPrice as syncDbMarketPrice,
+} from './supabase-service';
 
 interface StoreContextType {
   state: AppState;
@@ -72,7 +82,9 @@ interface StoreContextType {
   getInvoiceByOrder: (orderId: string) => Invoice | undefined;
   // Market
   marketMaterials: MarketMaterial[];
+  mandiBulletin: MandiBulletinData;
   updateMarketPrice: (materialId: string, newPrice: number, notes?: string) => void;
+  updateMandiBulletin: (rawBulletinText: string) => void;
   addMarketMaterial: (material: Omit<MarketMaterial, 'id' | 'lastUpdatedAt' | 'historicalPrices'>) => void;
   lastMarketSyncTime: Date;
   refreshMarketPrices: () => void;
@@ -108,6 +120,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleUpdate = (e: Event) => {
       const custom = e as CustomEvent<AppState>;
+      console.log('[DEBUG] fti_state_updated received, detail cart len:', custom.detail?.cart?.length);
       if (custom.detail) {
         setState(custom.detail);
       }
@@ -118,8 +131,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Save changes whenever state modifies
   const mutate = useCallback((updater: (prev: AppState) => AppState) => {
+    console.log('[DEBUG] mutate called');
     setState((prev) => {
+      console.log('[DEBUG] setState updater running, prev cart len:', prev.cart.length);
       const next = updater(prev);
+      console.log('[DEBUG] setState updater produced next cart len:', next.cart.length);
       saveState(next);
       return next;
     });
@@ -133,6 +149,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Background sync from Supabase when database tables exist
+  useEffect(() => {
+    async function syncFromSupabase() {
+      try {
+        const [dbCats, dbMat, dbQuotes, dbOrders] = await Promise.all([
+          fetchDbCategories(),
+          fetchDbMarketMaterials(),
+          fetchDbQuotations(),
+          fetchDbOrders(),
+        ]);
+
+        if (dbCats || dbMat || dbQuotes || dbOrders) {
+          mutate((prev) => ({
+            ...prev,
+            categories: dbCats && dbCats.length > 0 ? dbCats : prev.categories,
+            marketMaterials: dbMat && dbMat.length > 0 ? dbMat : prev.marketMaterials,
+            quotations: dbQuotes && dbQuotes.length > 0 ? dbQuotes : prev.quotations,
+            orders: dbOrders && dbOrders.length > 0 ? dbOrders : prev.orders,
+          }));
+        }
+      } catch (err) {
+        // Fallback safely to current state
+      }
+    }
+    syncFromSupabase();
+  }, [mutate]);
 
   const refreshMarketPrices = useCallback(() => {
     setLastMarketSyncTime(new Date());
@@ -148,6 +191,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Cart operations
   const addToCart = useCallback((item: Omit<CartLineItem, 'id' | 'addedAt'>) => {
+    console.log('[DEBUG] addToCart called with item:', item.grade);
     mutate((prev) => {
       const newItem: CartLineItem = {
         ...item,
@@ -254,9 +298,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           notifications: [newNotification, ...prev.notifications],
         };
       });
+
+      // Background asynchronous sync to Supabase database
+      const createdObj = state.quotations.find((q) => q.id === createdQuotationId);
+      if (createdObj) {
+        createDbQuotation(createdObj).catch((err) =>
+          console.warn('Supabase quotation sync notice:', err)
+        );
+      }
+
       return createdQuotationId;
     },
-    [mutate]
+    [mutate, state.quotations]
   );
 
   // Admin quotation pricing & sending
@@ -500,9 +553,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           notifications: [notification, ...prev.notifications],
         };
       });
+
+      // Background asynchronous sync to Supabase database
+      const createdOrder = state.orders.find((o) => o.id === createdOrderId);
+      if (createdOrder) {
+        createDbOrder(createdOrder).catch((err) =>
+          console.warn('Supabase order sync notice:', err)
+        );
+      }
+
       return createdOrderId;
     },
-    [mutate]
+    [mutate, state.orders]
   );
 
   // Reject quotation
@@ -664,9 +726,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           marketMaterials: prev.marketMaterials.map((m) => (m.id === materialId ? updatedMaterial : m)),
         };
       });
+
+      // Background asynchronous sync to Supabase database
+      syncDbMarketPrice(materialId, newPrice, notes).catch((err) =>
+        console.warn('Supabase market price sync notice:', err)
+      );
     },
     [mutate]
   );
+
 
   const addMarketMaterial = useCallback(
     (materialData: Omit<MarketMaterial, 'id' | 'lastUpdatedAt' | 'historicalPrices'>) => {
@@ -690,6 +758,34 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           marketMaterials: [...prev.marketMaterials, newMat],
         };
       });
+    },
+    [mutate]
+  );
+
+  const updateMandiBulletin = useCallback(
+    (rawBulletinText: string) => {
+      // Import parser dynamically or use helper
+      const { parseMandiBroadcast } = require('./mandi-parser');
+      const { bulletin, materials } = parseMandiBroadcast(rawBulletinText);
+      mutate((prev: AppState) => {
+        const notif: NotificationItem = {
+          id: `notif-${Date.now()}`,
+          title: 'Live Mandi Benchmark Updated',
+          message: `Mandi Gobindgarh live bulletin updated for ${bulletin.dateStr} (${bulletin.timeStr}) with ${materials.length} hub rates.`,
+          type: 'market',
+          link: '/market',
+          isRead: false,
+          createdAt: new Date().toISOString(),
+        };
+
+        return {
+          ...prev,
+          mandiBulletin: bulletin,
+          marketMaterials: materials,
+          notifications: [notif, ...prev.notifications],
+        };
+      });
+      setLastMarketSyncTime(new Date());
     },
     [mutate]
   );
@@ -789,7 +885,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       invoices: state.invoices,
       getInvoiceByOrder,
       marketMaterials: state.marketMaterials,
+      mandiBulletin: state.mandiBulletin,
       updateMarketPrice,
+      updateMandiBulletin,
       addMarketMaterial,
       lastMarketSyncTime,
       refreshMarketPrices,
@@ -818,6 +916,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       updatePaymentStatus,
       getInvoiceByOrder,
       updateMarketPrice,
+      updateMandiBulletin,
       addMarketMaterial,
       lastMarketSyncTime,
       refreshMarketPrices,

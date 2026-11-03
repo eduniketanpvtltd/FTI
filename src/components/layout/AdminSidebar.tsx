@@ -84,12 +84,16 @@ export function AdminSidebar() {
       {/* Admin Header */}
       <div className="p-4 border-b border-slate-800">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center font-bold text-white text-sm">
-            FTI
+          <div className="w-9 h-9 rounded-lg p-0.5 bg-slate-950 border border-slate-700 flex items-center justify-center shrink-0">
+            <img
+              src="/fti-logo.png"
+              alt="FTI - FieldFast Tech International"
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
-            <h2 className="font-bold text-sm text-white tracking-wide">ADMIN PORTAL</h2>
-            <p className="text-[11px] text-blue-400 font-mono">B2B Trading Desk Operations</p>
+            <h2 className="font-bold text-sm text-white tracking-wide">FTI ADMIN DESK</h2>
+            <p className="text-[10px] text-red-400 font-medium">FieldFast Tech International</p>
           </div>
         </div>
 
