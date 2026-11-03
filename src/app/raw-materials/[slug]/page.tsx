@@ -45,6 +45,7 @@ function CategoryDetailContent() {
   const [specialInstructions, setSpecialInstructions] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState<boolean>(false);
 
   // Filter current cart items belonging to this category
   const activeCombinations = useMemo(
@@ -92,7 +93,7 @@ function CategoryDetailContent() {
   // Handle adding a combination
   const handleAddCombination = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('[DEBUG] handleAddCombination called, event phase:', e.eventPhase, 'target:', e.target);
+    if (isAdding) return;
     setFormError(null);
 
     if (!selectedGrade) {
@@ -113,6 +114,8 @@ function CategoryDetailContent() {
       }
     }
 
+    setIsAdding(true);
+
     // Add combination line item to Quotation Cart
     addToCart({
       categoryId: category.id,
@@ -127,6 +130,11 @@ function CategoryDetailContent() {
 
     setSuccessMessage(`Added combination for ${category.name} (${selectedGrade}) to Quotation Cart!`);
     setSpecialInstructions('');
+
+    // Re-enable submission after 500ms
+    setTimeout(() => {
+      setIsAdding(false);
+    }, 500);
 
     // Clear success message after 3 seconds
     setTimeout(() => {
@@ -330,10 +338,13 @@ function CategoryDetailContent() {
                 <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
                   <button
                     type="submit"
-                    className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 px-4 rounded shadow flex items-center justify-center space-x-2 transition"
+                    disabled={isAdding}
+                    className={`w-full sm:flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 px-4 rounded shadow flex items-center justify-center space-x-2 transition ${
+                      isAdding ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
+                    }`}
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Add This Combination to Cart</span>
+                    <span>{isAdding ? 'Adding to Cart...' : 'Add This Combination to Cart'}</span>
                   </button>
 
                   <Link

@@ -4,7 +4,11 @@ import {
   MarketMaterial,
   Quotation,
   QuotationItem,
+  QuotationStatus,
   Order,
+  OrderStatus,
+  PaymentStatus,
+  Invoice,
   CartLineItem,
   UserProfile,
 } from '@/types';
@@ -424,3 +428,160 @@ export async function fetchDbOrders(userId?: string): Promise<Order[] | null> {
     return null;
   }
 }
+
+export async function updateDbQuotationPricing(
+  quotationId: string,
+  pricingData: {
+    items: QuotationItem[];
+    taxRate: number;
+    transportationCharges: number;
+    discountAmount: number;
+    validUntil: string;
+    termsAndConditions?: string;
+    adminNotes?: string;
+    status: QuotationStatus;
+  }
+): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const client = getClient();
+    const subtotal = pricingData.items.reduce((acc, it) => acc + (it.lineTotal || 0), 0);
+    const taxAmount = (subtotal * (pricingData.taxRate || 18)) / 100;
+    const grandTotal = Math.max(
+      0,
+      subtotal + taxAmount + (pricingData.transportationCharges || 0) - (pricingData.discountAmount || 0)
+    );
+
+    const { error: quoteErr } = await client
+      .from('quotations')
+      .update({
+        subtotal,
+        tax_rate: pricingData.taxRate,
+        tax_amount: taxAmount,
+        transportation_charges: pricingData.transportationCharges,
+        discount_amount: pricingData.discountAmount,
+        grand_total: grandTotal,
+        valid_until: pricingData.validUntil,
+        terms_and_conditions: pricingData.termsAndConditions,
+        admin_notes: pricingData.adminNotes,
+        status: pricingData.status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', quotationId);
+
+    if (quoteErr) {
+      console.warn('updateDbQuotationPricing error:', quoteErr.message);
+      return false;
+    }
+
+    // Update item unit prices
+    for (const item of pricingData.items) {
+      await client
+        .from('quotation_items')
+        .update({
+          unit_price: item.unitPrice || 0,
+          line_total: item.lineTotal || 0,
+        })
+        .eq('id', item.id);
+    }
+
+    return true;
+  } catch (err) {
+    console.warn('updateDbQuotationPricing error:', err);
+    return false;
+  }
+}
+
+export async function updateDbOrderStatus(
+  orderId: string,
+  status: OrderStatus,
+  options?: {
+    trackingCarrier?: string;
+    trackingNumber?: string;
+    estimatedDelivery?: string;
+    notes?: string;
+  }
+): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const client = getClient();
+    const updates: any = {
+      status,
+      updated_at: new Date().toISOString(),
+    };
+    if (options?.trackingCarrier) updates.tracking_carrier = options.trackingCarrier;
+    if (options?.trackingNumber) updates.tracking_number = options.trackingNumber;
+    if (options?.estimatedDelivery) updates.estimated_delivery = options.estimatedDelivery;
+
+    const { error } = await client.from('orders').update(updates).eq('id', orderId);
+    if (error) {
+      console.warn('updateDbOrderStatus error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('updateDbOrderStatus error:', err);
+    return false;
+  }
+}
+
+export async function updateDbPaymentStatus(
+  orderId: string,
+  status: PaymentStatus
+): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const client = getClient();
+    const { error } = await client
+      .from('orders')
+      .update({
+        payment_status: status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', orderId);
+
+    return !error;
+  } catch (err) {
+    console.warn('updateDbPaymentStatus error:', err);
+    return false;
+  }
+}
+
+export async function createDbInvoice(invoice: Invoice): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const client = getClient();
+    const { error } = await client.from('invoices').insert({
+      id: invoice.id,
+      invoice_number: invoice.invoiceNumber,
+      order_id: invoice.orderId,
+      order_number: invoice.orderNumber,
+      quotation_id: invoice.quotationId,
+      quotation_number: invoice.quotationNumber,
+      user_id: invoice.userId,
+      invoice_date: invoice.invoiceDate,
+      due_date: invoice.dueDate,
+      company_details: invoice.companyDetails,
+      customer_details: invoice.customerDetails,
+      billing_address: invoice.billingAddress,
+      shipping_address: invoice.shippingAddress,
+      subtotal: invoice.subtotal,
+      cgst_amount: invoice.cgstAmount,
+      sgst_amount: invoice.sgstAmount,
+      igst_amount: invoice.igstAmount,
+      transportation_charges: invoice.transportationCharges,
+      discount_amount: invoice.discountAmount,
+      grand_total: invoice.grandTotal,
+      amount_in_words: invoice.amountInWords,
+      payment_terms: invoice.paymentTerms,
+      status: invoice.status,
+      created_at: invoice.createdAt,
+    });
+
+    return !error;
+  } catch (err) {
+    console.warn('createDbInvoice error:', err);
+    return false;
+  }
+}
+

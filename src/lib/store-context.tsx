@@ -6,6 +6,7 @@ import {
   getInitialState,
   saveState,
   INITIAL_USERS,
+  STORAGE_KEY,
 } from './db-store';
 import {
   UserProfile,
@@ -33,6 +34,10 @@ import {
   createDbQuotation,
   createDbOrder,
   updateDbMarketPrice as syncDbMarketPrice,
+  updateDbQuotationPricing,
+  updateDbOrderStatus,
+  updateDbPaymentStatus,
+  createDbInvoice,
 } from './supabase-service';
 
 interface StoreContextType {
@@ -116,29 +121,30 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setLastMarketSyncTime(new Date());
   }, []);
 
-  // Listen to cross-tab / window state changes
+  // Persist state to localStorage on modification
   useEffect(() => {
-    const handleUpdate = (e: Event) => {
-      const custom = e as CustomEvent<AppState>;
-      console.log('[DEBUG] fti_state_updated received, detail cart len:', custom.detail?.cart?.length);
-      if (custom.detail) {
-        setState(custom.detail);
+    saveState(state);
+  }, [state]);
+
+  // Listen to cross-tab storage changes (native storage event only fires across OTHER tabs)
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setState(parsed);
+        } catch (err) {
+          console.error('Error syncing cross-tab state:', err);
+        }
       }
     };
-    window.addEventListener('fti_state_updated', handleUpdate);
-    return () => window.removeEventListener('fti_state_updated', handleUpdate);
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  // Save changes whenever state modifies
+  // Pure state updater without side-effects inside reducer
   const mutate = useCallback((updater: (prev: AppState) => AppState) => {
-    console.log('[DEBUG] mutate called');
-    setState((prev) => {
-      console.log('[DEBUG] setState updater running, prev cart len:', prev.cart.length);
-      const next = updater(prev);
-      console.log('[DEBUG] setState updater produced next cart len:', next.cart.length);
-      saveState(next);
-      return next;
-    });
+    setState((prev) => updater(prev));
   }, []);
 
   // 5-minute automated customer market price polling synchronization
@@ -191,13 +197,31 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Cart operations
   const addToCart = useCallback((item: Omit<CartLineItem, 'id' | 'addedAt'>) => {
-    console.log('[DEBUG] addToCart called with item:', item.grade);
+    const now = Date.now();
+    const newItemId = `cart-${now}-${Math.random().toString(36).substring(2, 6)}`;
+    const addedAt = new Date().toISOString();
+
     mutate((prev) => {
+      // Guard against rapid duplicate submission (< 1000ms) of the identical combination
+      const isDuplicateRecent = prev.cart.some((c) => {
+        const timeDiff = Math.abs(now - new Date(c.addedAt).getTime());
+        const isSameCategory = c.categorySlug === item.categorySlug;
+        const isSameGrade = c.grade === item.grade;
+        const isSameQty = Number(c.quantity) === Number(item.quantity) && c.unit === item.unit;
+        const isSameSpecs = JSON.stringify(c.specifications) === JSON.stringify(item.specifications);
+        return isSameCategory && isSameGrade && isSameQty && isSameSpecs && timeDiff < 1000;
+      });
+
+      if (isDuplicateRecent) {
+        return prev;
+      }
+
       const newItem: CartLineItem = {
         ...item,
-        id: `cart-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        addedAt: new Date().toISOString(),
+        id: newItemId,
+        addedAt,
       };
+
       return {
         ...prev,
         cart: [...prev.cart, newItem],
@@ -230,6 +254,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const submitQuotationRequest = useCallback(
     (deliveryAddress: UserAddress, specialNotes?: string): string => {
       let createdQuotationId = '';
+      let pendingQuote: Quotation | null = null;
+
       mutate((prev) => {
         if (prev.cart.length === 0) return prev;
 
@@ -280,6 +306,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           updatedAt: new Date().toISOString(),
         };
 
+        pendingQuote = newQuotation;
+
         const newNotification: NotificationItem = {
           id: `notif-${Date.now()}`,
           userId: prev.currentUser.id,
@@ -300,16 +328,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
 
       // Background asynchronous sync to Supabase database
-      const createdObj = state.quotations.find((q) => q.id === createdQuotationId);
-      if (createdObj) {
-        createDbQuotation(createdObj).catch((err) =>
+      if (pendingQuote) {
+        createDbQuotation(pendingQuote).catch((err) =>
           console.warn('Supabase quotation sync notice:', err)
         );
       }
 
       return createdQuotationId;
     },
-    [mutate, state.quotations]
+    [mutate]
   );
 
   // Admin quotation pricing & sending
@@ -384,6 +411,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           notifications: [notification, ...prev.notifications],
         };
       });
+
+      // Background asynchronous sync to Supabase database
+      updateDbQuotationPricing(quotationId, pricingData).catch((err) =>
+        console.warn('Supabase quotation pricing sync error:', err)
+      );
     },
     [mutate]
   );
@@ -392,6 +424,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const acceptQuotation = useCallback(
     (quotationId: string): string => {
       let createdOrderId = '';
+      let pendingOrder: Order | null = null;
+      let pendingInvoice: Invoice | null = null;
+
       mutate((prev) => {
         const quotation = prev.quotations.find((q) => q.id === quotationId);
         if (!quotation || quotation.status !== 'quotation_sent') return prev;
@@ -471,6 +506,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           updatedAt: new Date().toISOString(),
         };
 
+        pendingOrder = newOrder;
+
         // Half CGST & Half SGST for intra-state Maharashtra, or full IGST
         const halfTax = (quotation.taxAmount || 0) / 2;
 
@@ -534,6 +571,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           createdAt: new Date().toISOString(),
         };
 
+        pendingInvoice = newInvoice;
+
         const notification: NotificationItem = {
           id: `notif-${Date.now()}`,
           userId: quotation.userId,
@@ -555,16 +594,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
 
       // Background asynchronous sync to Supabase database
-      const createdOrder = state.orders.find((o) => o.id === createdOrderId);
-      if (createdOrder) {
-        createDbOrder(createdOrder).catch((err) =>
+      if (pendingOrder) {
+        createDbOrder(pendingOrder).catch((err) =>
           console.warn('Supabase order sync notice:', err)
+        );
+      }
+      if (pendingInvoice) {
+        createDbInvoice(pendingInvoice).catch((err) =>
+          console.warn('Supabase invoice sync notice:', err)
         );
       }
 
       return createdOrderId;
     },
-    [mutate, state.orders]
+    [mutate]
   );
 
   // Reject quotation
@@ -650,6 +693,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           notifications: [notification, ...prev.notifications],
         };
       });
+
+      // Background asynchronous sync to Supabase database
+      updateDbOrderStatus(orderId, status, options).catch((err) =>
+        console.warn('Supabase order status sync notice:', err)
+      );
     },
     [mutate]
   );
@@ -677,6 +725,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           invoices: updatedInvoices,
         };
       });
+
+      // Background asynchronous sync to Supabase database
+      updateDbPaymentStatus(orderId, status).catch((err) =>
+        console.warn('Supabase payment status sync notice:', err)
+      );
     },
     [mutate]
   );

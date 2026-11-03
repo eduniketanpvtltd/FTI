@@ -18,7 +18,7 @@ CREATE TYPE movement_direction AS ENUM ('up', 'down', 'neutral');
 
 -- 3. PROFILES & ROLES
 CREATE TABLE IF NOT EXISTS profiles (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
   firebase_uid VARCHAR(128) UNIQUE,
   full_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 -- 4. USER ADDRESSES
 CREATE TABLE IF NOT EXISTS user_addresses (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+  user_id VARCHAR(128) NOT NULL,
   address_type VARCHAR(20) DEFAULT 'billing', -- 'billing', 'shipping', 'both'
   is_default BOOLEAN DEFAULT FALSE,
   recipient_name VARCHAR(255) NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS user_addresses (
 
 -- 5. PRODUCT CATEGORIES & SPECIFICATIONS
 CREATE TABLE IF NOT EXISTS product_categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
   slug VARCHAR(100) UNIQUE NOT NULL,
   name VARCHAR(255) NOT NULL,
   description TEXT,
@@ -70,9 +70,9 @@ CREATE TABLE IF NOT EXISTS product_categories (
 
 -- 6. CART ITEMS (MULTI-COMBINATION QUOTATION CART)
 CREATE TABLE IF NOT EXISTS cart_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  category_id UUID REFERENCES product_categories(id),
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+  user_id VARCHAR(128) NOT NULL,
+  category_id VARCHAR(128),
   category_slug VARCHAR(100) NOT NULL,
   category_name VARCHAR(255) NOT NULL,
   specifications JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -85,9 +85,9 @@ CREATE TABLE IF NOT EXISTS cart_items (
 
 -- 7. QUOTATIONS & VERSIONS
 CREATE TABLE IF NOT EXISTS quotations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
   quotation_number VARCHAR(50) UNIQUE NOT NULL,
-  user_id UUID NOT NULL REFERENCES profiles(id),
+  user_id VARCHAR(128) NOT NULL,
   customer_snapshot JSONB NOT NULL,
   status quotation_status DEFAULT 'pending',
   version INT DEFAULT 1,
@@ -101,13 +101,14 @@ CREATE TABLE IF NOT EXISTS quotations (
   special_notes TEXT,
   admin_notes TEXT,
   terms_and_conditions TEXT,
+  status_history JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS quotation_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  quotation_id UUID NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+  quotation_id VARCHAR(128) NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
   category_name VARCHAR(255) NOT NULL,
   category_slug VARCHAR(100) NOT NULL,
   specifications JSONB NOT NULL,
@@ -121,17 +122,17 @@ CREATE TABLE IF NOT EXISTS quotation_items (
 );
 
 CREATE TABLE IF NOT EXISTS quotation_versions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  quotation_id UUID NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+  quotation_id VARCHAR(128) NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
   version INT NOT NULL,
   snapshot JSONB NOT NULL,
-  created_by UUID REFERENCES profiles(id),
+  created_by VARCHAR(128),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS quotation_status_history (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  quotation_id UUID NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+  quotation_id VARCHAR(128) NOT NULL REFERENCES quotations(id) ON DELETE CASCADE,
   status quotation_status NOT NULL,
   changed_by VARCHAR(255) NOT NULL,
   note TEXT,
@@ -140,11 +141,11 @@ CREATE TABLE IF NOT EXISTS quotation_status_history (
 
 -- 8. ORDERS & ORDER ITEMS
 CREATE TABLE IF NOT EXISTS orders (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
   order_number VARCHAR(50) UNIQUE NOT NULL,
-  quotation_id UUID NOT NULL REFERENCES quotations(id),
+  quotation_id VARCHAR(128) NOT NULL,
   quotation_number VARCHAR(50) NOT NULL,
-  user_id UUID NOT NULL REFERENCES profiles(id),
+  user_id VARCHAR(128) NOT NULL,
   customer_snapshot JSONB NOT NULL,
   billing_address JSONB NOT NULL,
   shipping_address JSONB NOT NULL,
@@ -161,14 +162,18 @@ CREATE TABLE IF NOT EXISTS orders (
   estimated_delivery DATE,
   dispatch_date DATE,
   cancellation_reason TEXT,
+  invoice_id VARCHAR(128),
+  invoice_number VARCHAR(50),
+  status_history JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS order_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+  order_id VARCHAR(128) NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   category_name VARCHAR(255) NOT NULL,
+  category_slug VARCHAR(100),
   specifications JSONB NOT NULL,
   grade VARCHAR(100) NOT NULL,
   quantity NUMERIC(14, 3) NOT NULL,
@@ -179,8 +184,8 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 
 CREATE TABLE IF NOT EXISTS order_status_history (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+  order_id VARCHAR(128) NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   status order_status NOT NULL,
   changed_by VARCHAR(255) NOT NULL,
   note TEXT,
@@ -189,13 +194,13 @@ CREATE TABLE IF NOT EXISTS order_status_history (
 
 -- 9. INVOICES
 CREATE TABLE IF NOT EXISTS invoices (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
   invoice_number VARCHAR(50) UNIQUE NOT NULL,
-  order_id UUID NOT NULL REFERENCES orders(id),
+  order_id VARCHAR(128) NOT NULL,
   order_number VARCHAR(50) NOT NULL,
-  quotation_id UUID NOT NULL REFERENCES quotations(id),
+  quotation_id VARCHAR(128) NOT NULL,
   quotation_number VARCHAR(50) NOT NULL,
-  user_id UUID NOT NULL REFERENCES profiles(id),
+  user_id VARCHAR(128) NOT NULL,
   invoice_date DATE NOT NULL,
   due_date DATE NOT NULL,
   company_details JSONB NOT NULL,
@@ -218,11 +223,12 @@ CREATE TABLE IF NOT EXISTS invoices (
 
 -- 10. MARKET MODULE
 CREATE TABLE IF NOT EXISTS market_materials (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
   category_slug VARCHAR(50) NOT NULL, -- 'raw_materials' or 'scrap_materials'
   category_name VARCHAR(100) NOT NULL,
   name VARCHAR(255) NOT NULL,
-  symbol VARCHAR(50) NOT NULL,
+  symbol VARCHAR(50) UNIQUE NOT NULL,
+  hub_city VARCHAR(100),
   unit VARCHAR(50) DEFAULT '₹ / Metric Ton',
   current_price NUMERIC(14, 2) NOT NULL,
   previous_price NUMERIC(14, 2) NOT NULL,
@@ -241,8 +247,8 @@ CREATE TABLE IF NOT EXISTS market_materials (
 );
 
 CREATE TABLE IF NOT EXISTS market_price_history (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  material_id UUID NOT NULL REFERENCES market_materials(id) ON DELETE CASCADE,
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+  material_id VARCHAR(128) NOT NULL REFERENCES market_materials(id) ON DELETE CASCADE,
   price NUMERIC(14, 2) NOT NULL,
   previous_price NUMERIC(14, 2),
   change_amount NUMERIC(14, 2),
@@ -254,8 +260,8 @@ CREATE TABLE IF NOT EXISTS market_price_history (
 
 -- 11. NOTIFICATIONS & APP SETTINGS & AUDIT LOGS
 CREATE TABLE IF NOT EXISTS notifications (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+  user_id VARCHAR(128) NOT NULL,
   title VARCHAR(255) NOT NULL,
   message TEXT NOT NULL,
   type VARCHAR(50) DEFAULT 'system',
@@ -271,11 +277,11 @@ CREATE TABLE IF NOT EXISTS app_settings (
 );
 
 CREATE TABLE IF NOT EXISTS audit_logs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES profiles(id),
+  id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
+  user_id VARCHAR(128),
   action VARCHAR(100) NOT NULL,
   entity_type VARCHAR(100) NOT NULL,
-  entity_id UUID,
+  entity_id VARCHAR(128),
   details JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -310,16 +316,22 @@ CREATE POLICY "Public read market_price_history" ON market_price_history FOR SEL
 
 -- User-scoped access for cart, quotations, orders, and addresses
 CREATE POLICY "Users can manage their own cart" ON cart_items
-  FOR ALL USING (auth.uid() = user_id::text::uuid OR user_id IS NOT NULL);
+  FOR ALL USING (auth.uid()::text = user_id OR true);
 
-CREATE POLICY "Users can view their own quotations" ON quotations
-  FOR SELECT USING (auth.uid() = user_id::text::uuid OR true);
+CREATE POLICY "Users can view and manage their quotations" ON quotations
+  FOR ALL USING (auth.uid()::text = user_id OR true);
 
-CREATE POLICY "Users can view their own orders" ON orders
-  FOR SELECT USING (auth.uid() = user_id::text::uuid OR true);
+CREATE POLICY "Users can manage quotation items" ON quotation_items
+  FOR ALL USING (true);
+
+CREATE POLICY "Users can view and manage their orders" ON orders
+  FOR ALL USING (auth.uid()::text = user_id OR true);
+
+CREATE POLICY "Users can view order items" ON order_items
+  FOR ALL USING (true);
 
 CREATE POLICY "Users can view their own invoices" ON invoices
-  FOR SELECT USING (auth.uid() = user_id::text::uuid OR true);
+  FOR ALL USING (auth.uid()::text = user_id OR true);
 
 -- Admins full access (checked via role in profiles)
 -- Done via service role or admin verification
@@ -449,5 +461,13 @@ VALUES
   (uuid_generate_v4(), 'billet', 'Billet', 'Hyderabad', 'MANDI-BIL-35', 'Hyderabad', '₹ / Metric Ton', 45000, 45500, -500, -1.1, 'down', 46000, 44500, 45000, 1.2, 35, TRUE, 'Billet spot fixing ex-Hyderabad. Applicable Sales Tax extra (ast).'),
   (uuid_generate_v4(), 'billet', 'Billet', 'Durgapur', 'MANDI-BIL-36', 'Durgapur', '₹ / Metric Ton', 43600, 43800, -200, -0.46, 'down', 44300, 43100, 43600, 1.2, 36, TRUE, 'Billet spot fixing ex-Durgapur. Applicable Sales Tax extra (ast).'),
   (uuid_generate_v4(), 'billet', 'Billet', 'Kolkatta', 'MANDI-BIL-37', 'Kolkatta', '₹ / Metric Ton', 43800, 44000, -200, -0.45, 'down', 44500, 43300, 43800, 1.2, 37, TRUE, 'Billet spot fixing ex-Kolkatta. Applicable Sales Tax extra (ast).'),
-  (uuid_generate_v4(), 'billet', 'Billet', 'Bhavnagar', 'MANDI-BIL-38', 'Bhavnagar', '₹ / Metric Ton', 45900, 46100, -200, -0.43, 'down', 46600, 45400, 45900, 1.2, 38, TRUE, 'Billet spot fixing ex-Bhavnagar. Applicable Sales Tax extra (ast).')
+  (uuid_generate_v4()::text, 'billet', 'Billet', 'Bhavnagar', 'MANDI-BIL-38', 'Bhavnagar', '₹ / Metric Ton', 45900, 46100, -200, -0.43, 'down', 46600, 45400, 45900, 1.2, 38, TRUE, 'Billet spot fixing ex-Bhavnagar. Applicable Sales Tax extra (ast).')
+ON CONFLICT (symbol) DO NOTHING;
+
+-- 16. SEED DEMO PROFILES
+INSERT INTO profiles (id, full_name, email, mobile, company_name, gstin, business_type, role)
+VALUES 
+  ('user-customer-demo', 'Rajesh Sharma', 'rajesh.sharma@apexengineering.com', '+91 98201 12345', 'Apex Precision Engineering Pvt Ltd', '27AABCA1234F1Z8', 'Manufacturer', 'customer'),
+  ('user-admin-demo', 'Vikramaditya Singhania', 'admin@fti-materials.com', '+91 98100 99887', 'FieldFast Tech International (FTI Admin)', '27AAACF0123M1Z5', 'Wholesaler', 'super_admin')
 ON CONFLICT (id) DO NOTHING;
+
