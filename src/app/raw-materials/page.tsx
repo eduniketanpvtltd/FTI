@@ -5,9 +5,57 @@ import Link from 'next/link';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
 import { useStore } from '@/lib/store-context';
 import { ProductIcon } from '@/components/ui/ProductIcon';
-import { Layers, ArrowRight, Search, ShieldCheck } from 'lucide-react';
+import { Layers, ArrowRight, Search, ShieldCheck, ChevronDown } from 'lucide-react';
 
 import { ProductCategory } from '@/types';
+
+function CollapsibleGrades({ grades }: { grades: string[] }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="bg-[#A8ADB1] border border-[#737A7F] rounded overflow-hidden transition">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full p-2.5 flex items-center justify-between text-left hover:bg-[#9FA6AC] transition cursor-pointer select-none"
+        aria-expanded={isOpen}
+      >
+        <div className="flex items-center space-x-2">
+          <h4 className="text-[11px] font-extrabold text-[#252A2E] uppercase tracking-wider">
+            Available Grades
+          </h4>
+          <span className="text-[10px] font-mono font-bold bg-[#858C92] text-[#252A2E] px-1.5 py-0.5 rounded border border-[#737A7F]">
+            {grades.length}
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-1 text-[11px] font-bold text-[#49352D]">
+          <span>{isOpen ? 'Hide' : 'View'}</span>
+          <ChevronDown
+            className={`w-3.5 h-3.5 transition-transform duration-200 ${
+              isOpen ? 'rotate-180 text-[#76513F]' : 'text-[#626B72]'
+            }`}
+          />
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="p-2.5 pt-1 border-t border-[#737A7F]/40 animate-in fade-in duration-150">
+          <div className="flex flex-wrap gap-1 mt-1">
+            {grades.map((grade: string) => (
+              <span
+                key={grade}
+                className="bg-[#858C92] border border-[#737A7F] text-[#252A2E] text-[10px] px-2 py-0.5 rounded font-mono font-bold"
+              >
+                {grade}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function RawMaterialsPage() {
   const { categories } = useStore();
@@ -145,7 +193,14 @@ export default function RawMaterialsPage() {
                   <div className="space-y-1.5 text-xs text-[#252A2E]">
                     {cat.specificationFields.map((field: any) => (
                       <div key={field.key} className="flex items-center justify-between">
-                        <span className="text-[#343A3F] font-medium">{field.label}:</span>
+                        <span className="text-[#343A3F] font-medium">
+                          {field.label}
+                          {!field.required && (
+                            <span className="text-[10px] text-[#49352D] font-normal ml-1">
+                              (Optional)
+                            </span>
+                          )}:
+                        </span>
                         <span className="font-bold text-[#252A2E] text-right">
                           {field.options ? `${field.options.length} Sizes Available` : 'Custom Input'}
                         </span>
@@ -154,22 +209,8 @@ export default function RawMaterialsPage() {
                   </div>
                 </div>
 
-                {/* Available Grades Chips */}
-                <div>
-                  <h4 className="text-[11px] font-extrabold text-[#252A2E] uppercase tracking-wider mb-1.5">
-                    Available Grades
-                  </h4>
-                  <div className="flex flex-wrap gap-1">
-                    {cat.availableGrades.map((grade: string) => (
-                      <span
-                        key={grade}
-                        className="bg-[#858C92] border border-[#737A7F] text-[#252A2E] text-[10px] px-2 py-0.5 rounded font-mono font-bold"
-                      >
-                        {grade}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                {/* Collapsible Available Grades */}
+                <CollapsibleGrades grades={cat.availableGrades} />
               </div>
 
               {/* Bottom Action Card Footer */}

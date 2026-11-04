@@ -36,13 +36,14 @@ import {
   Building2,
   MapPin,
   ArrowLeft,
+  X,
 } from 'lucide-react';
 
 export default function MarketPage() {
   const { marketMaterials, mandiBulletin, refreshMarketPrices } = useStore();
 
-  // Primary Level 1: 'raw_materials' vs 'scrap_materials' (or 'whatsapp')
-  const [mainCategory, setMainCategory] = useState<MarketMainCategory | 'whatsapp'>('raw_materials');
+  // Primary Level 1: 'raw_materials' vs 'scrap_materials' (Strictly 2 divisions)
+  const [mainCategory, setMainCategory] = useState<MarketMainCategory>('raw_materials');
 
   // Secondary Level 2: Specific Material Name filter (e.g. 'All', 'Ingot', 'Billet', 'Melting Scrap')
   const [selectedMaterialGroup, setSelectedMaterialGroup] = useState<string>('all');
@@ -53,8 +54,27 @@ export default function MarketPage() {
   const [historyLimit, setHistoryLimit] = useState<7 | 15 | 30 | 50>(50);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copiedBulletin, setCopiedBulletin] = useState(false);
-  // Mobile tab switcher ('mandis' vs 'history')
-  const [mobileTab, setMobileTab] = useState<'mandis' | 'history'>('mandis');
+  // Dedicated modal for 50-record historical analysis
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+
+  // Close modal on Escape key and handle body scroll lock
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setHistoryModalOpen(false);
+      }
+    };
+    if (historyModalOpen) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [historyModalOpen]);
 
   // Manual refresh animation
   const handleManualRefresh = () => {
@@ -74,14 +94,13 @@ export default function MarketPage() {
   };
 
   // Reset secondary filter when primary category changes
-  const handleCategoryChange = (cat: MarketMainCategory | 'whatsapp') => {
+  const handleCategoryChange = (cat: MarketMainCategory) => {
     setMainCategory(cat);
     setSelectedMaterialGroup('all');
   };
 
-  // 1. Available materials in active primary category
+  // 1. Available materials in active primary category (Strictly 2 divisions: Raw Materials & Scrap Materials)
   const categoryMaterials = useMemo(() => {
-    if (mainCategory === 'whatsapp') return [];
     return marketMaterials.filter((m) => {
       if (m.mainCategory) return m.mainCategory === mainCategory;
       // Fallback
@@ -228,68 +247,9 @@ export default function MarketPage() {
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                <span className="text-[11px] font-mono font-bold tracking-wider uppercase text-[#F1EAE1] bg-[#343A3F] border border-[#737A7F] px-2 py-0.5 rounded">
-                  FIELDFAST TECH INTERNATIONAL
-                </span>
-                <span className="bg-[#10B981]/20 text-[#10B981] text-xs font-bold px-2.5 py-0.5 rounded border border-[#10B981]/40 flex items-center space-x-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
-                  <span>LIVE MANDI SPOT BENCHMARK</span>
-                </span>
-                <span className="bg-[#76513F] text-[#F1EAE1] text-xs font-bold px-2.5 py-0.5 rounded border border-[#B18A70] flex items-center space-x-1">
-                  <History className="w-3.5 h-3.5 text-[#B18A70]" />
-                  <span>PAST 50 RECORDS SAVED</span>
-                </span>
-              </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F1EAE1]">
                 Industrial Raw Materials & Scrap Mandi Price Desk
               </h1>
-              <p className="text-xs sm:text-sm text-[#A8ADB1] mt-1 max-w-2xl leading-relaxed">
-                Live spot rates categorized by <strong>Raw Materials</strong> & <strong>Scrap Materials</strong>,
-                broken down by material and tracked across Mandi Gobindgarh, Ludhiana, Raipur, Muzaffarnagar,
-                and national trading hubs with full 50-record audit history.
-              </p>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={handleCopyBulletin}
-                className="px-3 py-2 bg-[#343A3F] hover:bg-[#604333] text-[#F1EAE1] border border-[#737A7F] rounded-md text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer"
-                title="Copy entire WhatsApp bulletin text"
-              >
-                {copiedBulletin ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-[#10B981]" />
-                    <span className="text-[#10B981] font-bold">Bulletin Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-[#B18A70]" />
-                    <span>Copy WhatsApp Bulletin</span>
-                  </>
-                )}
-              </button>
-
-              <a
-                href="https://wa.me/919780830333?text=Hello%20FTI,%20I%20am%20inquiring%20about%20today's%20Mandi%20Gobindgarh%20Live%20Rates"
-                target="_blank"
-                rel="noreferrer"
-                className="px-3 py-2 bg-[#10B981] hover:bg-[#059669] text-[#252A2E] font-bold rounded-md text-xs flex items-center space-x-1.5 shadow transition"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>WhatsApp Desk</span>
-              </a>
-
-              <button
-                onClick={handleManualRefresh}
-                className={`p-2 rounded-md bg-[#343A3F] hover:bg-[#604333] text-[#F1EAE1] border border-[#737A7F] transition cursor-pointer ${
-                  isRefreshing ? 'animate-spin text-[#B18A70]' : ''
-                }`}
-                title="Refresh Live Rates"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
             </div>
           </div>
 
@@ -331,15 +291,27 @@ export default function MarketPage() {
               </div>
             </div>
 
-            <div className="bg-[#343A3F] border border-[#737A7F] p-2 sm:p-2.5 rounded-lg flex items-center space-x-2 min-w-0">
-              <span className="text-lg sm:text-xl shrink-0">🇺🇸</span>
+            <button
+              onClick={handleManualRefresh}
+              className="bg-[#343A3F] hover:bg-[#604333] border border-[#737A7F] hover:border-[#B18A70] p-2 sm:p-2.5 rounded-lg flex items-center space-x-2 min-w-0 transition cursor-pointer text-left group"
+              title="Refresh live Mandi rates"
+            >
+              <span className="text-lg sm:text-xl shrink-0 flex items-center justify-center">
+                <RefreshCw
+                  className={`w-5 h-5 text-[#B18A70] group-hover:text-[#F1EAE1] transition ${
+                    isRefreshing ? 'animate-spin text-[#10B981]' : ''
+                  }`}
+                />
+              </span>
               <div className="min-w-0">
-                <span className="text-[9px] sm:text-[10px] text-[#A8ADB1] uppercase font-mono block">USD / INR</span>
-                <span className="text-xs sm:text-sm font-extrabold text-[#E5A34B] font-mono truncate block">
-                  1$ = ₹{mandiBulletin?.usdInrRate || 95.04}
+                <span className="text-[9px] sm:text-[10px] text-[#A8ADB1] uppercase font-mono block">
+                  {isRefreshing ? 'Syncing...' : 'Live Sync'}
+                </span>
+                <span className="text-xs sm:text-sm font-extrabold text-[#F1EAE1] group-hover:text-[#B18A70] font-mono truncate block transition">
+                  {isRefreshing ? 'Updating...' : 'Refresh Rates'}
                 </span>
               </div>
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -348,56 +320,50 @@ export default function MarketPage() {
       <div className="bg-[#604333] border-b border-[#49352D] sticky top-14 z-20 shadow-md">
         <div className="max-w-7xl mx-auto px-3 sm:px-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 py-2.5 sm:py-3">
-            {/* Primary Category Switcher Tabs */}
-            <div className="flex items-center space-x-2 overflow-x-auto scrollbar-none w-full sm:w-auto pb-1 sm:pb-0">
+            {/* Primary Category Switcher Tabs - Unified Full-Width Segmented Tab Bar */}
+            <div className="w-full md:w-auto grid grid-cols-2 p-1 bg-[#343A3F] rounded-xl border border-[#737A7F] shadow-inner">
               <button
                 onClick={() => handleCategoryChange('raw_materials')}
-                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-extrabold rounded-lg transition flex items-center space-x-1.5 sm:space-x-2 shrink-0 cursor-pointer ${
+                className={`py-2 px-3 sm:px-4 text-xs sm:text-sm font-extrabold rounded-lg transition flex items-center justify-center space-x-1.5 sm:space-x-2 cursor-pointer ${
                   mainCategory === 'raw_materials'
                     ? 'bg-[#76513F] text-[#F1EAE1] shadow-md border border-[#B18A70]'
-                    : 'bg-[#49352D] text-[#A8ADB1] hover:text-[#F1EAE1] border border-[#737A7F]'
+                    : 'text-[#A8ADB1] hover:text-[#F1EAE1] hover:bg-[#49352D]/60 border border-transparent'
                 }`}
               >
-                <Building2 className="w-4 h-4 text-[#B18A70] shrink-0" />
-                <span className="whitespace-nowrap">RAW MATERIALS</span>
-                <span className="text-[10px] sm:text-xs font-mono bg-[#343A3F] text-[#F1EAE1] px-1.5 py-0.5 rounded border border-[#737A7F]">
-                  {rawCount} Mandis
+                <Building2 className={`w-4 h-4 shrink-0 ${mainCategory === 'raw_materials' ? 'text-[#B18A70]' : 'text-[#A8ADB1]'}`} />
+                <span className="whitespace-nowrap tracking-wide">RAW MATERIALS</span>
+                <span className={`text-[10px] sm:text-xs font-mono px-1.5 py-0.5 rounded ${
+                  mainCategory === 'raw_materials'
+                    ? 'bg-[#49352D] text-[#F1EAE1] border border-[#B18A70]/50'
+                    : 'bg-[#252A2E] text-[#A8ADB1]'
+                }`}>
+                  {rawCount}
                 </span>
               </button>
 
               <button
                 onClick={() => handleCategoryChange('scrap_materials')}
-                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-extrabold rounded-lg transition flex items-center space-x-1.5 sm:space-x-2 shrink-0 cursor-pointer ${
+                className={`py-2 px-3 sm:px-4 text-xs sm:text-sm font-extrabold rounded-lg transition flex items-center justify-center space-x-1.5 sm:space-x-2 cursor-pointer ${
                   mainCategory === 'scrap_materials'
                     ? 'bg-[#76513F] text-[#F1EAE1] shadow-md border border-[#B18A70]'
-                    : 'bg-[#49352D] text-[#A8ADB1] hover:text-[#F1EAE1] border border-[#737A7F]'
+                    : 'text-[#A8ADB1] hover:text-[#F1EAE1] hover:bg-[#49352D]/60 border border-transparent'
                 }`}
               >
-                <Layers className="w-4 h-4 text-[#B18A70] shrink-0" />
-                <span className="whitespace-nowrap">SCRAP MATERIALS</span>
-                <span className="text-[10px] sm:text-xs font-mono bg-[#343A3F] text-[#F1EAE1] px-1.5 py-0.5 rounded border border-[#737A7F]">
-                  {scrapCount} Mandis
+                <Layers className={`w-4 h-4 shrink-0 ${mainCategory === 'scrap_materials' ? 'text-[#B18A70]' : 'text-[#A8ADB1]'}`} />
+                <span className="whitespace-nowrap tracking-wide">SCRAP MATERIALS</span>
+                <span className={`text-[10px] sm:text-xs font-mono px-1.5 py-0.5 rounded ${
+                  mainCategory === 'scrap_materials'
+                    ? 'bg-[#49352D] text-[#F1EAE1] border border-[#B18A70]/50'
+                    : 'bg-[#252A2E] text-[#A8ADB1]'
+                }`}>
+                  {scrapCount}
                 </span>
-              </button>
-
-              <button
-                onClick={() => handleCategoryChange('whatsapp')}
-                className={`px-3 py-2 text-xs font-bold rounded-lg transition flex items-center space-x-1.5 shrink-0 cursor-pointer ${
-                  mainCategory === 'whatsapp'
-                    ? 'bg-[#10B981] text-[#252A2E] shadow-md'
-                    : 'bg-[#49352D] text-[#10B981] hover:bg-[#343A3F] border border-[#737A7F]'
-                }`}
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
-                <span className="hidden sm:inline whitespace-nowrap">WhatsApp Mandi Feed</span>
-                <span className="sm:hidden">Feed</span>
               </button>
             </div>
 
             {/* Search & Ups / Downs Filter */}
-            {mainCategory !== 'whatsapp' && (
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-                <div className="relative w-full sm:w-56">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+              <div className="relative w-full sm:w-56">
                   <Search className="w-3.5 h-3.5 text-[#A8ADB1] absolute left-2.5 top-2.5" />
                   <input
                     type="text"
@@ -421,134 +387,54 @@ export default function MarketPage() {
                   <option value="neutral">Neutral (Unchanged ▬)</option>
                 </select>
               </div>
-            )}
           </div>
 
           {/* 3. SECONDARY LEVEL 2: MATERIAL NAME PILLS */}
-          {mainCategory !== 'whatsapp' && (
-            <div className="py-2 border-t border-[#49352D] flex items-center space-x-2 overflow-x-auto scrollbar-none">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#A8ADB1] shrink-0 flex items-center space-x-1">
-                <Filter className="w-3 h-3 text-[#B18A70]" />
-                <span>Materials:</span>
-              </span>
+          <div className="py-2 border-t border-[#49352D] flex items-center space-x-2 overflow-x-auto scrollbar-none">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#A8ADB1] shrink-0 flex items-center space-x-1">
+              <Filter className="w-3 h-3 text-[#B18A70]" />
+              <span>Materials:</span>
+            </span>
 
-              <button
-                onClick={() => setSelectedMaterialGroup('all')}
-                className={`px-3 py-1 text-xs font-bold rounded-full transition shrink-0 cursor-pointer ${
-                  selectedMaterialGroup === 'all'
-                    ? 'bg-[#76513F] text-[#F1EAE1] border border-[#B18A70] shadow-xs'
-                    : 'bg-[#49352D] text-[#A8ADB1] hover:text-[#F1EAE1] border border-[#737A7F]'
-                }`}
-              >
-                All {mainCategory === 'raw_materials' ? 'Raw Materials' : 'Scrap Materials'} ({categoryMaterials.length})
-              </button>
+            <button
+              onClick={() => setSelectedMaterialGroup('all')}
+              className={`px-3 py-1 text-xs font-bold rounded-full transition shrink-0 cursor-pointer ${
+                selectedMaterialGroup === 'all'
+                  ? 'bg-[#76513F] text-[#F1EAE1] border border-[#B18A70] shadow-xs'
+                  : 'bg-[#49352D] text-[#A8ADB1] hover:text-[#F1EAE1] border border-[#737A7F]'
+              }`}
+            >
+              All {mainCategory === 'raw_materials' ? 'Raw Materials' : 'Scrap Materials'} ({categoryMaterials.length})
+            </button>
 
-              {availableMaterialNames.map((matName) => {
-                const count = categoryMaterials.filter(
-                  (m) => m.materialName === matName || m.categoryName === matName
-                ).length;
-                const isSelected = selectedMaterialGroup === matName;
+            {availableMaterialNames.map((matName) => {
+              const count = categoryMaterials.filter(
+                (m) => m.materialName === matName || m.categoryName === matName
+              ).length;
+              const isSelected = selectedMaterialGroup === matName;
 
-                return (
-                  <button
-                    key={matName}
-                    onClick={() => setSelectedMaterialGroup(matName)}
-                    className={`px-3 py-1 text-xs font-bold rounded-full transition shrink-0 flex items-center space-x-1.5 cursor-pointer ${
-                      isSelected
-                        ? 'bg-[#76513F] text-[#F1EAE1] border border-[#B18A70] shadow-xs'
-                        : 'bg-[#49352D] text-[#A8ADB1] hover:text-[#F1EAE1] border border-[#737A7F]'
-                    }`}
-                  >
-                    <span>{matName}</span>
-                    <span className="text-[10px] opacity-80 font-mono">({count})</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+              return (
+                <button
+                  key={matName}
+                  onClick={() => setSelectedMaterialGroup(matName)}
+                  className={`px-3 py-1 text-xs font-bold rounded-full transition shrink-0 flex items-center space-x-1.5 cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#76513F] text-[#F1EAE1] border border-[#B18A70] shadow-xs'
+                      : 'bg-[#49352D] text-[#A8ADB1] hover:text-[#F1EAE1] border border-[#737A7F]'
+                  }`}
+                >
+                  <span>{matName}</span>
+                  <span className="text-[10px] opacity-80 font-mono">({count})</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* 4. MAIN BODY CONTAINER */}
+      {/* 4. MAIN BODY CONTAINER: Live Mandi Rates Board */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {mainCategory === 'whatsapp' ? (
-          /* Dedicated WhatsApp Broadcast View */
-          <div className="max-w-3xl mx-auto space-y-4">
-            <div className="bg-[#343A3F] text-[#F1EAE1] rounded-xl shadow-xl overflow-hidden border border-[#737A7F]">
-              <div className="bg-[#49352D] p-3.5 px-4 flex items-center justify-between border-b border-[#343A3F]">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-[#76513F] border border-[#B18A70] flex items-center justify-center text-[#F1EAE1] font-black text-sm">
-                    FTI
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-1.5">
-                      <h3 className="font-bold text-sm text-[#F1EAE1]">FIELDFAST TECH INTERNATIONAL</h3>
-                      <ShieldCheck className="w-4 h-4 text-[#10B981]" />
-                    </div>
-                    <p className="text-[11px] text-[#A8ADB1]">Official Daily Mandi Live Rates Broadcast</p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleCopyBulletin}
-                  className="px-3 py-1.5 bg-[#76513F] hover:bg-[#604333] text-[#F1EAE1] font-bold text-xs rounded border border-[#B18A70] flex items-center space-x-1.5 transition cursor-pointer"
-                >
-                  {copiedBulletin ? <Check className="w-3.5 h-3.5 text-[#10B981]" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedBulletin ? 'Copied!' : 'Copy Broadcast'}</span>
-                </button>
-              </div>
-
-              <div className="p-4 sm:p-6 bg-[#252A2E]">
-                <div className="max-w-xl mx-auto bg-[#343A3F] rounded-lg p-4 sm:p-5 shadow border border-[#737A7F] font-mono text-xs text-[#F1EAE1] whitespace-pre-wrap leading-relaxed select-all">
-                  {mandiBulletin?.rawMessageText}
-                </div>
-              </div>
-
-              <div className="p-3 bg-[#49352D] border-t border-[#343A3F] flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-[#A8ADB1] gap-2">
-                <span>Updated {mandiBulletin?.dateStr} at {mandiBulletin?.timeStr}</span>
-                <a
-                  href="https://wa.me/919780830333"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[#10B981] hover:underline font-bold flex items-center space-x-1"
-                >
-                  <span>Join FTI WhatsApp Alert Broadcast List</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Mobile Segmented View Switcher (< lg) */}
-            <div className="flex lg:hidden bg-[#BAC0C5] p-1 rounded-xl border border-[#737A7F] shadow-xs mb-4">
-              <button
-                onClick={() => setMobileTab('mandis')}
-                className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 cursor-pointer ${
-                  mobileTab === 'mandis'
-                    ? 'bg-[#76513F] text-[#F1EAE1] shadow-xs'
-                    : 'text-[#252A2E] hover:bg-[#A8ADB1]'
-                }`}
-              >
-                <Building2 className="w-3.5 h-3.5" />
-                <span>Mandi Rates ({filteredMaterials.length})</span>
-              </button>
-              <button
-                onClick={() => setMobileTab('history')}
-                className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 cursor-pointer ${
-                  mobileTab === 'history'
-                    ? 'bg-[#76513F] text-[#F1EAE1] shadow-xs'
-                    : 'text-[#252A2E] hover:bg-[#A8ADB1]'
-                }`}
-              >
-                <History className="w-3.5 h-3.5" />
-                <span>50-Rec Analysis {selectedMaterial ? `(${selectedMaterial.mandiCity})` : ''}</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* Left Column (7 cols): Mandis and Places grouped by Material Name */}
-              <div className={`lg:col-span-7 space-y-6 ${mobileTab === 'mandis' ? 'block' : 'hidden lg:block'}`}>
+        <div className="space-y-6">
                 {Object.keys(groupedByMaterial).length === 0 ? (
                   <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-xl p-12 text-center text-[#252A2E]">
                     <Search className="w-10 h-10 mx-auto mb-2 text-[#49352D]" />
@@ -605,7 +491,7 @@ export default function MarketPage() {
                                 <th className="py-2.5 px-3 text-right">Spot Price ᵃˢᵗ</th>
                                 <th className="py-2.5 px-3 text-right">Ups / Downs</th>
                                 <th className="py-2.5 px-3 text-right hidden sm:table-cell">Prev. Session</th>
-                                <th className="py-2.5 px-3.5 text-center">Audit</th>
+                                <th className="py-2.5 px-3.5 text-center">50-Rec Analysis</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-[#737A7F]/30">
@@ -619,7 +505,7 @@ export default function MarketPage() {
                                     key={mat.id}
                                     onClick={() => {
                                       setSelectedMaterial(mat);
-                                      setMobileTab('history');
+                                      setHistoryModalOpen(true);
                                     }}
                                     className={`cursor-pointer transition group ${
                                       isSelected
@@ -699,12 +585,13 @@ export default function MarketPage() {
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           setSelectedMaterial(mat);
-                                          setMobileTab('history');
+                                          setHistoryModalOpen(true);
                                         }}
-                                        className="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-[#858C92] text-[#252A2E] hover:bg-[#76513F] hover:text-[#F1EAE1] transition border border-[#737A7F] cursor-pointer"
-                                        title="View all 50 recorded price sessions"
+                                        className="px-2.5 py-1 rounded text-[10px] font-bold font-mono bg-[#76513F] text-[#F1EAE1] hover:bg-[#604333] transition border border-[#B18A70] cursor-pointer inline-flex items-center space-x-1 shadow-xs"
+                                        title="Inspect 50 recorded price sessions"
                                       >
-                                        50 Rec
+                                        <History className="w-3 h-3 text-[#F1EAE1]" />
+                                        <span>50 Rec</span>
                                       </button>
                                     </td>
                                   </tr>
@@ -728,269 +615,275 @@ export default function MarketPage() {
                 </div>
               </div>
 
-              {/* Right Column (5 cols): Selected Mandi's Past 50 Historical Records Panel */}
-              <div className={`lg:col-span-5 space-y-4 lg:sticky lg:top-36 ${mobileTab === 'history' ? 'block' : 'hidden lg:block'}`}>
-                {selectedMaterial ? (
-                  <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-xl p-3.5 sm:p-5 shadow-sm space-y-4 text-[#252A2E]">
-                    {/* Mobile Back Button */}
+      {/* 5. DEDICATED 50-RECORD ANALYSIS MODAL ("Somewhere Else") */}
+      {historyModalOpen && selectedMaterial && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          onClick={() => setHistoryModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-4xl bg-[#BAC0C5] rounded-2xl shadow-2xl border border-[#737A7F] overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Top Header Bar */}
+            <div className="bg-[#49352D] text-[#F1EAE1] p-4 sm:p-5 flex items-center justify-between border-b border-[#343A3F]">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-lg bg-[#76513F] border border-[#B18A70] flex items-center justify-center shrink-0">
+                  <History className="w-5 h-5 text-[#F1EAE1]" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h2 className="text-base sm:text-lg font-black text-[#F1EAE1]">
+                      {selectedMaterial.materialName} — {selectedMaterial.mandiCity}
+                    </h2>
+                    <span className="text-[10px] font-bold text-[#F1EAE1] bg-[#76513F] px-2 py-0.5 rounded border border-[#B18A70] font-mono">
+                      {selectedMaterial.symbol}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#A8ADB1] font-medium">
+                    50-Session Historical Audit & Trend Inspection
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handleExportCSV(selectedMaterial)}
+                  className="px-2.5 py-1.5 bg-[#76513F] hover:bg-[#604333] text-[#F1EAE1] rounded text-xs font-bold flex items-center space-x-1.5 transition border border-[#B18A70] cursor-pointer"
+                  title="Download Past 50 Records as CSV"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Export CSV</span>
+                </button>
+                <button
+                  onClick={() => setHistoryModalOpen(false)}
+                  className="w-8 h-8 rounded-lg bg-[#343A3F] hover:bg-[#252A2E] text-[#F1EAE1] flex items-center justify-center transition border border-[#737A7F] cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+              {/* Current Price Banner */}
+              <div className="bg-[#A8ADB1] p-3.5 sm:p-4 rounded-xl border border-[#737A7F] flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] uppercase font-mono text-[#49352D] font-bold block">
+                    Current Spot Market Benchmark
+                  </span>
+                  <div className="flex items-baseline space-x-2 mt-0.5">
+                    <span className="text-2xl sm:text-3xl font-black text-[#252A2E] font-mono">
+                      {formatINR(selectedMaterial.currentPrice)}
+                    </span>
+                    <span className="text-xs text-[#49352D] font-bold font-mono">/ MT ᵃˢᵗ</span>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <span
+                    className={`inline-flex items-center text-xs sm:text-sm font-black font-mono px-2.5 py-1 rounded-md shadow-xs ${
+                      selectedMaterial.movementDirection === 'up'
+                        ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40'
+                        : selectedMaterial.movementDirection === 'down'
+                        ? 'bg-[#DC6262]/20 text-[#DC6262] border border-[#DC6262]/40'
+                        : 'bg-[#858C92] text-[#252A2E] border border-[#737A7F]'
+                    }`}
+                  >
+                    {selectedMaterial.movementDirection === 'up' && '▲ +'}
+                    {selectedMaterial.movementDirection === 'down' && '▼ '}
+                    {selectedMaterial.movementDirection === 'neutral' && '▬ '}
+                    ₹{Math.abs(selectedMaterial.priceChange)} ({selectedMaterial.percentageChange}%)
+                  </span>
+                  <span className="text-[10px] text-[#49352D] font-mono block mt-1">vs previous session</span>
+                </div>
+              </div>
+
+              {/* Chart Controls */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center space-x-1.5">
+                  <TrendingUp className="w-4 h-4 text-[#76513F]" />
+                  <span className="text-xs sm:text-sm font-extrabold text-[#252A2E]">
+                    Historical Price Curve ({historyLimit} Sessions)
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-1 bg-[#858C92] p-0.5 rounded text-xs font-bold font-mono border border-[#737A7F]">
+                  {([7, 15, 30, 50] as const).map((count) => (
                     <button
-                      onClick={() => setMobileTab('mandis')}
-                      className="lg:hidden w-full py-2 px-3 bg-[#858C92] hover:bg-[#A8ADB1] text-[#252A2E] text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 cursor-pointer border border-[#737A7F] mb-2"
+                      key={count}
+                      onClick={() => setHistoryLimit(count)}
+                      className={`px-2.5 py-0.5 rounded transition cursor-pointer ${
+                        historyLimit === count
+                          ? 'bg-[#76513F] text-[#F1EAE1] shadow-xs'
+                          : 'text-[#252A2E] hover:text-[#F1EAE1]'
+                      }`}
                     >
-                      <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>← Back to Mandi Rates List</span>
+                      {count}d
                     </button>
-                    {/* Selected Mandi Details Header */}
-                    <div className="border-b border-[#737A7F] pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-[10px] font-bold text-[#F1EAE1] bg-[#76513F] px-2 py-0.5 rounded border border-[#B18A70] font-mono">
-                            {selectedMaterial.symbol}
-                          </span>
-                          <span className="text-[10px] font-bold text-[#252A2E] bg-[#858C92] px-2 py-0.5 rounded uppercase font-mono border border-[#737A7F]">
-                            {selectedMaterial.mainCategory === 'raw_materials' ? 'Raw Material' : 'Scrap Material'}
-                          </span>
-                        </div>
+                  ))}
+                </div>
+              </div>
 
-                        <button
-                          onClick={() => handleExportCSV(selectedMaterial)}
-                          className="px-2.5 py-1 bg-[#858C92] hover:bg-[#76513F] hover:text-[#F1EAE1] text-[#252A2E] rounded text-xs font-bold flex items-center space-x-1 transition border border-[#737A7F] cursor-pointer"
-                          title="Download Past 50 Records as CSV"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Export 50 Rec</span>
-                        </button>
-                      </div>
+              {/* Recharts AreaChart */}
+              <div className="h-64 sm:h-72 w-full bg-[#343A3F] rounded-xl p-3 border border-[#737A7F]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="historyGradientModal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#B18A70" stopOpacity={0.5} />
+                        <stop offset="95%" stopColor="#76513F" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#49352D" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 10, fill: '#A8ADB1' }}
+                      tickLine={false}
+                      axisLine={{ stroke: '#737A7F' }}
+                    />
+                    <YAxis
+                      domain={['auto', 'auto']}
+                      tick={{ fontSize: 10, fill: '#A8ADB1' }}
+                      tickLine={false}
+                      axisLine={{ stroke: '#737A7F' }}
+                      tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
+                    />
+                    <Tooltip
+                      formatter={(value: any) => [formatINR(Number(value)), 'Price / MT']}
+                      labelFormatter={(label) => `Session Date: ${label}`}
+                      contentStyle={{
+                        backgroundColor: '#49352D',
+                        borderColor: '#737A7F',
+                        color: '#F1EAE1',
+                        borderRadius: '8px',
+                        fontSize: '11px',
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="price"
+                      stroke="#B18A70"
+                      strokeWidth={2.5}
+                      fillOpacity={1}
+                      fill="url(#historyGradientModal)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
 
-                      <div className="mt-2 flex items-baseline justify-between">
+              {/* 4 Stats Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center text-xs">
+                <div className="bg-[#A8ADB1] p-2.5 rounded-lg border border-[#737A7F]">
+                  <span className="text-[10px] text-[#49352D] uppercase font-mono block font-bold">Previous</span>
+                  <span className="font-mono font-black text-[#252A2E] text-sm">
+                    {formatINR(selectedMaterial.previousPrice)}
+                  </span>
+                </div>
+                <div className="bg-[#A8ADB1] p-2.5 rounded-lg border border-[#737A7F]">
+                  <span className="text-[10px] text-[#49352D] uppercase font-mono block font-bold">50-Rec High</span>
+                  <span className="font-mono font-black text-[#10B981] text-sm">
+                    {formatINR(selectedMaterial.highPrice)}
+                  </span>
+                </div>
+                <div className="bg-[#A8ADB1] p-2.5 rounded-lg border border-[#737A7F]">
+                  <span className="text-[10px] text-[#49352D] uppercase font-mono block font-bold">50-Rec Low</span>
+                  <span className="font-mono font-black text-[#DC6262] text-sm">
+                    {formatINR(selectedMaterial.lowPrice)}
+                  </span>
+                </div>
+                <div className="bg-[#A8ADB1] p-2.5 rounded-lg border border-[#737A7F]">
+                  <span className="text-[10px] text-[#49352D] uppercase font-mono block font-bold">Volatility</span>
+                  <span className="font-mono font-black text-[#604333] text-sm">
+                    {selectedMaterial.volatility}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Tabular Audit List of Past 50 Records */}
+              <div className="border border-[#737A7F] rounded-xl overflow-hidden bg-[#BAC0C5]">
+                <div className="bg-[#858C92] p-2.5 px-3.5 flex items-center justify-between text-xs font-extrabold text-[#252A2E]">
+                  <span className="flex items-center space-x-1.5">
+                    <History className="w-3.5 h-3.5 text-[#252A2E]" />
+                    <span>Chronological Past 50 Price Sessions</span>
+                  </span>
+                  <span className="text-[10px] text-[#49352D] font-mono font-bold">
+                    {(selectedMaterial.historicalPrices || []).length} Records Logged
+                  </span>
+                </div>
+
+                <div className="max-h-60 overflow-y-auto divide-y divide-[#737A7F]/30 text-xs">
+                  {chartData
+                    .slice()
+                    .reverse()
+                    .map((point) => (
+                      <div
+                        key={point.index}
+                        className="p-2.5 px-3.5 flex items-center justify-between hover:bg-[#C7CBD0] transition"
+                      >
                         <div>
-                          <h2 className="text-xl font-black text-[#252A2E]">
-                            {selectedMaterial.materialName}
-                          </h2>
-                          <p className="text-xs font-bold text-[#49352D] flex items-center space-x-1">
-                            <MapPin className="w-3 h-3 text-[#76513F]" />
-                            <span>{selectedMaterial.mandiCity} Spot Market</span>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-mono text-[10px] text-[#49352D] font-bold">
+                              #{point.index}
+                            </span>
+                            <span className="font-bold text-[#252A2E] text-xs">{point.date}</span>
+                          </div>
+                          <p className="text-[10px] text-[#49352D] truncate max-w-xs font-medium">
+                            {point.notes}
                           </p>
                         </div>
 
                         <div className="text-right">
-                          <span className="text-2xl font-black text-[#252A2E] font-mono block">
-                            {formatINR(selectedMaterial.currentPrice)}
+                          <span className="font-mono font-extrabold text-[#252A2E] block text-xs">
+                            {formatINR(point.price)}
                           </span>
                           <span
-                            className={`inline-flex items-center text-xs font-black font-mono ${
-                              selectedMaterial.movementDirection === 'up'
+                            className={`text-[10px] font-mono font-bold inline-flex items-center ${
+                              point.direction === 'up'
                                 ? 'text-[#10B981]'
-                                : selectedMaterial.movementDirection === 'down'
+                                : point.direction === 'down'
                                 ? 'text-[#DC6262]'
                                 : 'text-[#626B72]'
                             }`}
                           >
-                            {selectedMaterial.movementDirection === 'up' && '▲ +'}
-                            {selectedMaterial.movementDirection === 'down' && '▼ '}
-                            {selectedMaterial.movementDirection === 'neutral' && '▬ '}
-                            ₹{Math.abs(selectedMaterial.priceChange)} ({selectedMaterial.percentageChange}%)
+                            {point.direction === 'up' && '▲ +'}
+                            {point.direction === 'down' && '▼ -'}
+                            ₹{Math.abs(point.change)}
                           </span>
                         </div>
                       </div>
-                    </div>
+                    ))}
+                </div>
+              </div>
 
-                    {/* Past 50 Records Chart Control */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center space-x-1">
-                        <History className="w-4 h-4 text-[#49352D]" />
-                        <span className="text-xs font-extrabold text-[#252A2E]">
-                          Past 50 Records Trend
-                        </span>
-                      </div>
-
-                      <div className="flex items-center space-x-1 bg-[#858C92] p-0.5 rounded text-xs font-bold font-mono border border-[#737A7F]">
-                        {([7, 15, 30, 50] as const).map((count) => (
-                          <button
-                            key={count}
-                            onClick={() => setHistoryLimit(count)}
-                            className={`px-2 py-0.5 rounded transition cursor-pointer ${
-                              historyLimit === count
-                                ? 'bg-[#76513F] text-[#F1EAE1] shadow-xs'
-                                : 'text-[#252A2E] hover:text-[#F1EAE1]'
-                            }`}
-                          >
-                            {count}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Recharts Historical Curve */}
-                    <div className="h-56 w-full bg-[#343A3F] rounded-lg p-2 border border-[#737A7F]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="historyGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop
-                                offset="5%"
-                                stopColor="#B18A70"
-                                stopOpacity={0.45}
-                              />
-                              <stop
-                                offset="95%"
-                                stopColor="#76513F"
-                                stopOpacity={0.0}
-                              />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#49352D" />
-                          <XAxis
-                            dataKey="date"
-                            tick={{ fontSize: 9, fill: '#A8ADB1' }}
-                            tickLine={false}
-                            axisLine={{ stroke: '#737A7F' }}
-                          />
-                          <YAxis
-                            domain={['auto', 'auto']}
-                            tick={{ fontSize: 9, fill: '#A8ADB1' }}
-                            tickLine={false}
-                            axisLine={{ stroke: '#737A7F' }}
-                            tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
-                          />
-                          <Tooltip
-                            formatter={(value: any) => [formatINR(Number(value)), 'Price / MT']}
-                            labelFormatter={(label) => `Session Date: ${label}`}
-                            contentStyle={{
-                              backgroundColor: '#49352D',
-                              borderColor: '#737A7F',
-                              color: '#F1EAE1',
-                              borderRadius: '6px',
-                              fontSize: '11px',
-                            }}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="price"
-                            stroke="#B18A70"
-                            strokeWidth={2}
-                            fillOpacity={1}
-                            fill="url(#historyGradient)"
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    {/* 50-Record Statistics Bar */}
-                    <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                      <div className="bg-[#A8ADB1] p-2 rounded border border-[#737A7F]">
-                        <span className="text-[9px] text-[#49352D] uppercase font-mono block font-bold">Previous</span>
-                        <span className="font-mono font-black text-[#252A2E] text-xs">
-                          {formatINR(selectedMaterial.previousPrice)}
-                        </span>
-                      </div>
-
-                      <div className="bg-[#A8ADB1] p-2 rounded border border-[#737A7F]">
-                        <span className="text-[9px] text-[#49352D] uppercase font-mono block font-bold">50-Rec High</span>
-                        <span className="font-mono font-black text-[#10B981] text-xs">
-                          {formatINR(selectedMaterial.highPrice)}
-                        </span>
-                      </div>
-
-                      <div className="bg-[#A8ADB1] p-2 rounded border border-[#737A7F]">
-                        <span className="text-[9px] text-[#49352D] uppercase font-mono block font-bold">50-Rec Low</span>
-                        <span className="font-mono font-black text-[#DC6262] text-xs">
-                          {formatINR(selectedMaterial.lowPrice)}
-                        </span>
-                      </div>
-
-                      <div className="bg-[#A8ADB1] p-2 rounded border border-[#737A7F]">
-                        <span className="text-[9px] text-[#49352D] uppercase font-mono block font-bold">Volatility</span>
-                        <span className="font-mono font-black text-[#604333] text-xs">
-                          {selectedMaterial.volatility}%
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* TABULAR AUDIT LIST OF PAST 50 RECORDS */}
-                    <div className="border border-[#737A7F] rounded-lg overflow-hidden">
-                      <div className="bg-[#858C92] p-2 px-3 flex items-center justify-between text-xs font-extrabold text-[#252A2E]">
-                        <span className="flex items-center space-x-1">
-                          <History className="w-3.5 h-3.5 text-[#252A2E]" />
-                          <span>Chronological Past 50 Records</span>
-                        </span>
-                        <span className="text-[10px] text-[#49352D] font-mono font-bold">
-                          {(selectedMaterial.historicalPrices || []).length} Records Total
-                        </span>
-                      </div>
-
-                      <div className="max-h-56 overflow-y-auto divide-y divide-[#737A7F]/30 text-xs">
-                        {chartData
-                          .slice()
-                          .reverse()
-                          .map((point) => (
-                            <div
-                              key={point.index}
-                              className="p-2 px-3 flex items-center justify-between hover:bg-[#C7CBD0] transition"
-                            >
-                              <div>
-                                <div className="flex items-center space-x-2">
-                                  <span className="font-mono text-[10px] text-[#49352D] font-bold">
-                                    #{point.index}
-                                  </span>
-                                  <span className="font-bold text-[#252A2E] text-xs">{point.date}</span>
-                                </div>
-                                <p className="text-[10px] text-[#49352D] truncate max-w-[200px] font-medium">
-                                  {point.notes}
-                                </p>
-                              </div>
-
-                              <div className="text-right">
-                                <span className="font-mono font-extrabold text-[#252A2E] block text-xs">
-                                  {formatINR(point.price)}
-                                </span>
-                                <span
-                                  className={`text-[10px] font-mono font-bold inline-flex items-center ${
-                                    point.direction === 'up'
-                                      ? 'text-[#10B981]'
-                                      : point.direction === 'down'
-                                      ? 'text-[#DC6262]'
-                                      : 'text-[#626B72]'
-                                  }`}
-                                >
-                                  {point.direction === 'up' && '▲ +'}
-                                  {point.direction === 'down' && '▼ -'}
-                                  ₹{Math.abs(point.change)}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-
-                    {/* Physical Material Sourcing CTA */}
-                    <div className="p-3.5 bg-[#49352D] rounded-lg text-[#F1EAE1] flex items-center justify-between gap-3 border border-[#343A3F]">
-                      <div>
-                        <p className="text-xs font-bold">Source Material at this Spot Rate</p>
-                        <p className="text-[10px] text-[#A8ADB1]">
-                          Lock custom specs for dispatch from {selectedMaterial.mandiCity}.
-                        </p>
-                      </div>
-                      <Link
-                        href={`/raw-materials`}
-                        className="px-3.5 py-2 bg-[#76513F] hover:bg-[#604333] text-[#F1EAE1] rounded font-bold text-xs shadow border border-[#B18A70] transition text-center shrink-0"
-                      >
-                        Request Quote
-                      </Link>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-xl p-12 text-center text-[#49352D]">
-                    <Activity className="w-10 h-10 mx-auto mb-2 text-[#76513F]" />
-                    <p className="text-xs font-bold text-[#252A2E]">
-                      Click any Mandi or Place on the left to view the past 50 historical price records.
-                    </p>
-                  </div>
-                )}
+              {/* Sourcing CTA Footer */}
+              <div className="p-4 bg-[#49352D] rounded-xl text-[#F1EAE1] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border border-[#343A3F]">
+                <div>
+                  <p className="text-xs sm:text-sm font-bold">Source Material at this Spot Rate</p>
+                  <p className="text-[11px] text-[#A8ADB1]">
+                    Lock custom specs for dispatch from {selectedMaterial.mandiCity}.
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setHistoryModalOpen(false)}
+                    className="px-4 py-2 bg-[#343A3F] hover:bg-[#252A2E] text-[#F1EAE1] rounded-lg font-bold text-xs border border-[#737A7F] transition cursor-pointer"
+                  >
+                    Close
+                  </button>
+                  <Link
+                    href="/raw-materials"
+                    className="px-4 py-2 bg-[#76513F] hover:bg-[#604333] text-[#F1EAE1] rounded-lg font-bold text-xs shadow border border-[#B18A70] transition text-center shrink-0"
+                  >
+                    Request Quote
+                  </Link>
+                </div>
               </div>
             </div>
-          </>
-        )}
+          </div>
+        </div>
+      )}
 
         {/* 5. Authentic Mandi Notes & Rumours Disclaimer - Dark Chocolate Brown */}
         <div className="bg-[#49352D] text-[#F1EAE1] rounded-xl p-5 sm:p-6 border border-[#343A3F] space-y-4 shadow-sm">

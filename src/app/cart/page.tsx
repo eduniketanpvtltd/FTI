@@ -140,7 +140,9 @@ export default function QuotationCartPage() {
                   {/* List of Cart Items */}
                   <div className="space-y-4">
                     {cart.map((item, index) => {
-                      const specEntries = Object.entries(item.specifications);
+                      const specEntries = Object.entries(item.specifications).filter(
+                        ([_, v]) => v !== undefined && v !== null && String(v).trim() !== ''
+                      );
                       const dimensionKeys = ['diameter', 'length', 'thickness', 'width', 'size', 'outerdiameter', 'wallthickness'];
                       const dimensions = specEntries.filter(([k]) => dimensionKeys.includes(k.toLowerCase()));
                       const technicalSpecs = specEntries.filter(([k]) => !dimensionKeys.includes(k.toLowerCase()));

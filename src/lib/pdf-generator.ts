@@ -362,6 +362,7 @@ export function generateQuotationPDF(quotation: Quotation) {
     doc.text(`${item.categoryName} (${item.grade})`, 24, y + 6);
 
     const specText = Object.entries(item.specifications)
+      .filter(([_, v]) => v !== undefined && v !== null && String(v).trim() !== '')
       .map(([k, v]) => `${k}: ${v}`)
       .join(', ');
     doc.setFont('helvetica', 'normal');

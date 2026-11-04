@@ -16,6 +16,8 @@ import {
   AlertCircle,
   HelpCircle,
   Layers,
+  ChevronDown,
+  Sliders,
 } from 'lucide-react';
 
 import { ProductCategory, SpecificationField } from '@/types';
@@ -46,6 +48,17 @@ function CategoryDetailContent() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState<boolean>(false);
+  const [advanceRequirementsOpen, setAdvanceRequirementsOpen] = useState<boolean>(false);
+
+  // Separate required specifications from advance / optional specifications
+  const requiredSpecFields = useMemo(
+    () => category?.specificationFields.filter((f) => f.required) || [],
+    [category]
+  );
+  const optionalSpecFields = useMemo(
+    () => category?.specificationFields.filter((f) => !f.required) || [],
+    [category]
+  );
 
   // Filter current cart items belonging to this category
   const activeCombinations = useMemo(
@@ -116,12 +129,20 @@ function CategoryDetailContent() {
 
     setIsAdding(true);
 
+    // Filter out empty/unspecified optional specifications
+    const cleanSpecs: Record<string, string> = {};
+    Object.entries(specValues).forEach(([k, v]) => {
+      if (v && typeof v === 'string' && v.trim() !== '') {
+        cleanSpecs[k] = v.trim();
+      }
+    });
+
     // Add combination line item to Quotation Cart
     addToCart({
       categoryId: category.id,
       categorySlug: category.slug,
       categoryName: category.name,
-      specifications: specValues,
+      specifications: cleanSpecs,
       grade: selectedGrade,
       quantity: Number(quantity),
       unit,
@@ -237,44 +258,46 @@ function CategoryDetailContent() {
                   </div>
                 </div>
 
-                {/* 2. Dynamic Specification Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  {category.specificationFields.map((field: SpecificationField) => (
-                    <div key={field.key}>
-                      <label className="block text-xs font-bold text-[#252A2E] mb-1">
-                        {field.label} {field.required && <span className="text-[#DC6262]">*</span>}
-                      </label>
+                {/* 2. Required Specification Fields */}
+                {requiredSpecFields.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    {requiredSpecFields.map((field: SpecificationField) => (
+                      <div key={field.key}>
+                        <label className="block text-xs font-bold text-[#252A2E] mb-1">
+                          {field.label} <span className="text-[#DC6262]">*</span>
+                        </label>
 
-                      {field.type === 'select' && field.options ? (
-                        <select
-                          value={specValues[field.key] || ''}
-                          onChange={(e) =>
-                            setSpecValues({ ...specValues, [field.key]: e.target.value })
-                          }
-                          className="w-full text-xs bg-[#A8ADB1] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
-                          required={field.required}
-                        >
-                          {field.options.map((opt: string) => (
-                            <option key={opt} value={opt}>
-                              {opt}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type={field.type}
-                          value={specValues[field.key] || ''}
-                          onChange={(e) =>
-                            setSpecValues({ ...specValues, [field.key]: e.target.value })
-                          }
-                          placeholder={field.placeholder || `Enter ${field.label}`}
-                          className="w-full text-xs bg-[#A8ADB1] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
-                          required={field.required}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
+                        {field.type === 'select' && field.options ? (
+                          <select
+                            value={specValues[field.key] || ''}
+                            onChange={(e) =>
+                              setSpecValues({ ...specValues, [field.key]: e.target.value })
+                            }
+                            className="w-full text-xs bg-[#A8ADB1] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
+                            required={field.required}
+                          >
+                            {field.options.map((opt: string) => (
+                              <option key={opt} value={opt}>
+                                {opt}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type={field.type}
+                            value={specValues[field.key] || ''}
+                            onChange={(e) =>
+                              setSpecValues({ ...specValues, [field.key]: e.target.value })
+                            }
+                            placeholder={field.placeholder || `Enter ${field.label}`}
+                            className="w-full text-xs bg-[#A8ADB1] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
+                            required={field.required}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* 3. Quantity & Unit of Measurement */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -310,18 +333,100 @@ function CategoryDetailContent() {
                   </div>
                 </div>
 
-                {/* 4. Special Instructions */}
+                {/* 4. Advance Requirements (Collapsible) */}
                 <div className="pt-2">
-                  <label className="block text-xs font-bold text-[#252A2E] mb-1">
-                    Special Requirements / Tolerances (Optional)
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={specialInstructions}
-                    onChange={(e) => setSpecialInstructions(e.target.value)}
-                    placeholder="e.g. Mill test certificate required, cutting tolerance ±2mm, ultrasonic testing..."
-                    className="w-full text-xs bg-[#A8ADB1] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
-                  />
+                  <div className="border border-[#737A7F] rounded-lg overflow-hidden bg-[#A8ADB1]/40 transition">
+                    <button
+                      type="button"
+                      onClick={() => setAdvanceRequirementsOpen(!advanceRequirementsOpen)}
+                      className="w-full p-3 flex items-center justify-between text-left hover:bg-[#A8ADB1] transition cursor-pointer select-none"
+                      aria-expanded={advanceRequirementsOpen}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Sliders className="w-4 h-4 text-[#76513F]" />
+                        <span className="text-xs font-extrabold text-[#252A2E] uppercase tracking-wider">
+                          Advance Requirements
+                        </span>
+                        <span className="text-[10px] font-mono font-bold bg-[#858C92] text-[#252A2E] px-2 py-0.5 rounded border border-[#737A7F]">
+                          Optional ({optionalSpecFields.length + 1})
+                        </span>
+                      </div>
+
+                      <div className="flex items-center space-x-1 text-xs font-bold text-[#49352D]">
+                        <span>{advanceRequirementsOpen ? 'Hide' : 'Expand'}</span>
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            advanceRequirementsOpen ? 'rotate-180 text-[#76513F]' : 'text-[#626B72]'
+                          }`}
+                        />
+                      </div>
+                    </button>
+
+                    {advanceRequirementsOpen && (
+                      <div className="p-3 sm:p-4 border-t border-[#737A7F]/40 space-y-4 animate-in fade-in duration-150 bg-[#A8ADB1]/20">
+                        {/* Optional Dynamic Specifications */}
+                        {optionalSpecFields.length > 0 && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {optionalSpecFields.map((field: SpecificationField) => (
+                              <div key={field.key}>
+                                <label className="block text-xs font-bold text-[#252A2E] mb-1">
+                                  {field.label}{' '}
+                                  <span className="text-[#49352D] font-medium text-[11px] ml-1.5">
+                                    (Optional)
+                                  </span>
+                                </label>
+                                {field.type === 'select' && field.options ? (
+                                  <select
+                                    value={specValues[field.key] || ''}
+                                    onChange={(e) =>
+                                      setSpecValues({ ...specValues, [field.key]: e.target.value })
+                                    }
+                                    className="w-full text-xs bg-[#BAC0C5] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
+                                  >
+                                    <option value="">-- Not Specified (Optional) --</option>
+                                    {field.options.map((opt: string) => (
+                                      <option key={opt} value={opt}>
+                                        {opt}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <input
+                                    type={field.type}
+                                    value={specValues[field.key] || ''}
+                                    onChange={(e) =>
+                                      setSpecValues({ ...specValues, [field.key]: e.target.value })
+                                    }
+                                    placeholder={
+                                      field.placeholder || `Enter ${field.label} (Optional)`
+                                    }
+                                    className="w-full text-xs bg-[#BAC0C5] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
+                                  />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Special Requirements / Tolerances */}
+                        <div>
+                          <label className="block text-xs font-bold text-[#252A2E] mb-1">
+                            Special Requirements / Tolerances{' '}
+                            <span className="text-[#49352D] font-medium text-[11px] ml-1.5">
+                              (Optional)
+                            </span>
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={specialInstructions}
+                            onChange={(e) => setSpecialInstructions(e.target.value)}
+                            placeholder="e.g. Mill test certificate required, cutting tolerance ±2mm, ultrasonic testing..."
+                            className="w-full text-xs bg-[#BAC0C5] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Important Notice: No Prices Displayed */}

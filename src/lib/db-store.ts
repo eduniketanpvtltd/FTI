@@ -66,7 +66,7 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
           'H&T - Hardened & Tempered (Quenched & Tempered)',
           'Peeled & Centerless Turned (Descaled)',
         ],
-        required: true,
+        required: false,
       },
       {
         key: 'length',
@@ -79,7 +79,7 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
           'Cut-to-Length Billet / Block',
         ],
         unit: 'Meters',
-        required: true,
+        required: false,
       },
       {
         key: 'testingRequirement',
@@ -213,7 +213,7 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
           'A - Annealed (Softened for Shearing & Punching)',
           'H&T - Hardened & Tempered (Oil Quenched Spring Steel)',
         ],
-        required: true,
+        required: false,
       },
       {
         key: 'length',
@@ -339,7 +339,7 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
           'A - Annealed (Furnace Cooled)',
           'H&T - Hardened & Tempered',
         ],
-        required: true,
+        required: false,
       },
       {
         key: 'length',
@@ -349,7 +349,7 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
           'Standard Mill Length (5.5 - 6.0 Meters)',
           'Cut-to-Length Billet Custom',
         ],
-        required: true,
+        required: false,
       },
     ],
   },
