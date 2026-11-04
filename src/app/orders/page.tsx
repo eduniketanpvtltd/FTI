@@ -11,11 +11,8 @@ import {
   PackageCheck,
   Truck,
   Receipt,
-  Download,
   ArrowRight,
   Search,
-  CheckCircle2,
-  Clock,
   ShieldCheck,
 } from 'lucide-react';
 
@@ -36,65 +33,65 @@ export default function OrdersListPage() {
   const getOrderStatusBadge = (status: OrderStatus) => {
     switch (status) {
       case 'order_confirmed':
-        return <span className="bg-blue-100 text-blue-800 text-[11px] font-bold px-2 py-0.5 rounded border border-blue-200">Order Confirmed</span>;
+        return <span className="bg-[#76513F] text-[#F1EAE1] text-[11px] font-bold px-2 py-0.5 rounded border border-[#B18A70]">Order Confirmed</span>;
       case 'payment_pending':
-        return <span className="bg-amber-100 text-amber-800 text-[11px] font-bold px-2 py-0.5 rounded border border-amber-200">Payment Pending</span>;
+        return <span className="bg-[#E5A34B]/20 text-[#49352D] text-[11px] font-bold px-2 py-0.5 rounded border border-[#E5A34B]">Payment Pending</span>;
       case 'payment_received':
-        return <span className="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded border border-emerald-200">Payment Received</span>;
+        return <span className="bg-[#10B981]/20 text-[#10B981] text-[11px] font-bold px-2 py-0.5 rounded border border-[#10B981]">Payment Received</span>;
       case 'processing':
-        return <span className="bg-indigo-100 text-indigo-800 text-[11px] font-bold px-2 py-0.5 rounded border border-indigo-200">Processing & Bundling</span>;
+        return <span className="bg-[#343A3F] text-[#F1EAE1] text-[11px] font-bold px-2 py-0.5 rounded border border-[#737A7F]">Processing & Bundling</span>;
       case 'dispatched':
-        return <span className="bg-purple-100 text-purple-900 text-[11px] font-bold px-2 py-0.5 rounded border border-purple-300 animate-pulse">Dispatched (En Route)</span>;
+        return <span className="bg-[#604333] text-[#F1EAE1] text-[11px] font-bold px-2 py-0.5 rounded border border-[#B18A70] animate-pulse">Dispatched (En Route)</span>;
       case 'in_transit':
-        return <span className="bg-purple-100 text-purple-900 text-[11px] font-bold px-2 py-0.5 rounded border border-purple-300">In Transit</span>;
+        return <span className="bg-[#604333] text-[#F1EAE1] text-[11px] font-bold px-2 py-0.5 rounded border border-[#B18A70]">In Transit</span>;
       case 'delivered':
-        return <span className="bg-emerald-600 text-white text-[11px] font-bold px-2 py-0.5 rounded">Delivered</span>;
+        return <span className="bg-[#10B981] text-[#252A2E] text-[11px] font-black px-2 py-0.5 rounded">Delivered</span>;
       case 'completed':
-        return <span className="bg-slate-800 text-white text-[11px] font-bold px-2 py-0.5 rounded">Completed</span>;
+        return <span className="bg-[#343A3F] text-[#F1EAE1] text-[11px] font-bold px-2 py-0.5 rounded">Completed</span>;
       case 'cancelled':
-        return <span className="bg-rose-100 text-rose-800 text-[11px] font-bold px-2 py-0.5 rounded">Cancelled</span>;
+        return <span className="bg-[#DC6262]/20 text-[#DC6262] text-[11px] font-bold px-2 py-0.5 rounded border border-[#DC6262]">Cancelled</span>;
       default:
-        return <span className="bg-slate-100 text-slate-700 text-[11px] font-medium px-2 py-0.5 rounded">{status}</span>;
+        return <span className="bg-[#858C92] text-[#252A2E] text-[11px] font-bold px-2 py-0.5 rounded">{status}</span>;
     }
   };
 
   const getPaymentBadge = (status: PaymentStatus) => {
     switch (status) {
       case 'paid':
-        return <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Paid in Full</span>;
+        return <span className="text-[#10B981] font-bold bg-[#10B981]/20 px-2 py-0.5 rounded border border-[#10B981]/40">Paid in Full</span>;
       case 'partial':
-        return <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Partially Paid</span>;
+        return <span className="text-[#49352D] font-bold bg-[#E5A34B]/30 px-2 py-0.5 rounded border border-[#E5A34B]">Partially Paid</span>;
       case 'pending':
-        return <span className="text-amber-800 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Payment Awaited</span>;
+        return <span className="text-[#49352D] font-bold bg-[#E5A34B]/20 px-2 py-0.5 rounded border border-[#E5A34B]">Payment Awaited</span>;
       case 'refunded':
-        return <span className="text-slate-600 font-semibold bg-slate-100 px-2 py-0.5 rounded">Refunded</span>;
+        return <span className="text-[#252A2E] font-semibold bg-[#858C92] px-2 py-0.5 rounded">Refunded</span>;
     }
   };
 
   return (
     <CustomerLayout>
-      {/* Top Banner */}
-      <div className="bg-slate-900 text-white py-6 px-4 sm:px-6 border-b border-slate-800">
+      {/* Top Banner - Dark Chocolate Brown */}
+      <div className="bg-[#49352D] text-[#F1EAE1] py-6 px-4 sm:px-6 border-b border-[#343A3F]">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center space-x-2 text-xs text-slate-400 mb-2">
-            <Link href="/" className="hover:text-slate-200">Home</Link>
+          <div className="flex items-center space-x-2 text-xs text-[#A8ADB1] mb-2 font-medium">
+            <Link href="/" className="hover:text-[#F1EAE1] transition">Home</Link>
             <span>/</span>
-            <span className="text-blue-400 font-semibold">My Orders</span>
+            <span className="text-[#B18A70] font-bold">My Orders</span>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F1EAE1]">
                 Purchase Orders & Dispatch Tracking
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1">
+              <p className="text-xs sm:text-sm text-[#A8ADB1] mt-1 leading-relaxed">
                 Monitor live fulfillment progress, truck logistics, weighbridge slips, and official GST invoices.
               </p>
             </div>
 
-            <div className="bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded text-xs flex items-center space-x-2 shrink-0">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span className="text-slate-300 font-medium">Kalamboli Transit Insured</span>
+            <div className="bg-[#343A3F] border border-[#737A7F] px-3 py-1.5 rounded text-xs flex items-center space-x-2 shrink-0 shadow-xs">
+              <ShieldCheck className="w-4 h-4 text-[#10B981]" />
+              <span className="text-[#F1EAE1] font-semibold">Kalamboli Transit Insured</span>
             </div>
           </div>
         </div>
@@ -102,28 +99,28 @@ export default function OrdersListPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Filters and Search */}
-        <div className="bg-white border border-slate-200 rounded-lg p-4 mb-6 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-lg p-4 mb-6 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-[#252A2E]">
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-[#49352D] absolute left-3 top-2.5" />
             <input
               type="text"
               placeholder="Search by Order ID (e.g. FTI-ORD-2026-0001) or material..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded focus:outline-hidden focus:ring-1 focus:ring-blue-500 text-slate-900"
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#A8ADB1] border border-[#737A7F] rounded text-[#252A2E] placeholder-[#49352D] font-medium"
             />
           </div>
 
           <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 md:pb-0 text-xs">
-            <span className="text-slate-500 text-[11px] font-semibold shrink-0">Filter:</span>
+            <span className="text-[#252A2E] text-[11px] font-bold shrink-0">Filter:</span>
             {['all', 'order_confirmed', 'processing', 'dispatched', 'delivered'].map((st) => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition shrink-0 ${
+                className={`px-3 py-1 rounded-full text-xs font-bold transition shrink-0 cursor-pointer ${
                   statusFilter === st
-                    ? 'bg-blue-600 text-white font-semibold'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-[#76513F] text-[#F1EAE1] border border-[#B18A70] shadow-xs'
+                    : 'bg-[#A8ADB1] text-[#252A2E] hover:bg-[#858C92] border border-[#737A7F]'
                 }`}
               >
                 {st === 'all' ? 'All Orders' : st.replace('_', ' ')}
@@ -134,15 +131,15 @@ export default function OrdersListPage() {
 
         {/* Orders List */}
         {filteredOrders.length === 0 ? (
-          <div className="text-center py-16 bg-white border border-slate-200 rounded-lg p-8">
-            <PackageCheck className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-            <h3 className="font-bold text-slate-800 text-sm">No Orders Found</h3>
-            <p className="text-xs text-slate-500 mt-1 mb-4">
+          <div className="text-center py-16 bg-[#BAC0C5] border border-[#737A7F] rounded-lg p-8">
+            <PackageCheck className="w-12 h-12 text-[#49352D] mx-auto mb-3" />
+            <h3 className="font-extrabold text-[#252A2E] text-sm">No Orders Found</h3>
+            <p className="text-xs text-[#49352D] mt-1 mb-4 font-medium">
               Accepted quotations automatically convert into purchase orders here.
             </p>
             <Link
               href="/quotations"
-              className="inline-flex items-center space-x-1.5 bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded"
+              className="inline-flex items-center space-x-1.5 bg-[#76513F] hover:bg-[#604333] text-[#F1EAE1] text-xs font-bold px-4 py-2 rounded border border-[#B18A70]"
             >
               <span>View Quotations</span>
             </Link>
@@ -154,30 +151,30 @@ export default function OrdersListPage() {
               return (
                 <div
                   key={order.id}
-                  className="bg-white border border-slate-200 hover:border-slate-300 rounded-lg p-5 shadow-xs hover:shadow transition"
+                  className="bg-[#BAC0C5] border border-[#737A7F] hover:border-[#76513F] rounded-lg p-5 shadow-xs transition text-[#252A2E]"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3 mb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-[#737A7F]/40 pb-3 mb-3">
                     <div>
                       <div className="flex items-center space-x-3">
-                        <span className="font-mono font-bold text-base text-slate-900">
+                        <span className="font-mono font-bold text-base text-[#252A2E]">
                           {order.orderNumber}
                         </span>
                         {getOrderStatusBadge(order.status)}
                         <span className="text-[11px]">{getPaymentBadge(order.paymentStatus)}</span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-xs text-[#49352D] mt-1 font-medium">
                         Placed on {formatIndianDateTime(order.createdAt)} • Ref: {order.quotationNumber}
                       </p>
                     </div>
 
                     <div className="text-left sm:text-right">
-                      <span className="text-[10px] text-slate-400 block uppercase font-medium">
+                      <span className="text-[10px] text-[#49352D] block uppercase font-bold">
                         Total Amount
                       </span>
-                      <span className="text-base font-extrabold text-blue-700">
+                      <span className="text-base font-black text-[#604333]">
                         {formatINR(order.grandTotal)}
                       </span>
-                      <span className="text-[10px] text-slate-500 block">
+                      <span className="text-[10px] text-[#49352D] block font-medium">
                         (Incl. GST & Transportation)
                       </span>
                     </div>
@@ -189,23 +186,23 @@ export default function OrdersListPage() {
                       {order.items.map((it, idx) => (
                         <div
                           key={it.id || idx}
-                          className="bg-slate-50 border border-slate-200/80 rounded p-2.5 flex items-center justify-between"
+                          className="bg-[#A8ADB1] border border-[#737A7F] rounded p-2.5 flex items-center justify-between"
                         >
                           <div>
-                            <p className="font-bold text-slate-800">
+                            <p className="font-bold text-[#252A2E]">
                               {it.categoryName} ({it.grade})
                             </p>
-                            <p className="text-[11px] text-slate-500">
+                            <p className="text-[11px] text-[#49352D] font-medium">
                               {Object.entries(it.specifications)
                                 .map(([k, v]) => `${k}: ${v}`)
                                 .join(' • ')}
                             </p>
                           </div>
                           <div className="text-right">
-                            <span className="font-bold text-slate-900 block font-mono">
+                            <span className="font-bold text-[#252A2E] block font-mono">
                               {it.quantity} {it.unit}
                             </span>
-                            <span className="text-[11px] font-semibold text-blue-700">
+                            <span className="text-[11px] font-bold text-[#604333]">
                               {formatINR(it.lineTotal)}
                             </span>
                           </div>
@@ -216,14 +213,14 @@ export default function OrdersListPage() {
 
                   {/* Dispatch / Tracking Info Pill if Available */}
                   {order.trackingNumber && (
-                    <div className="mt-3 p-2.5 bg-blue-50/70 border border-blue-200 rounded flex items-center justify-between text-xs">
-                      <div className="flex items-center space-x-2 text-blue-900">
-                        <Truck className="w-4 h-4 text-blue-600" />
-                        <span className="font-semibold">{order.trackingCarrier}:</span>
-                        <span className="font-mono">{order.trackingNumber}</span>
+                    <div className="mt-3 p-2.5 bg-[#858C92] border border-[#737A7F] rounded flex items-center justify-between text-xs">
+                      <div className="flex items-center space-x-2 text-[#252A2E]">
+                        <Truck className="w-4 h-4 text-[#76513F]" />
+                        <span className="font-bold">{order.trackingCarrier}:</span>
+                        <span className="font-mono font-bold">{order.trackingNumber}</span>
                       </div>
                       {order.estimatedDelivery && (
-                        <span className="text-slate-600 text-[11px]">
+                        <span className="text-[#343A3F] text-[11px] font-medium">
                           Est. Delivery: {formatIndianDate(order.estimatedDelivery)}
                         </span>
                       )}
@@ -231,10 +228,10 @@ export default function OrdersListPage() {
                   )}
 
                   {/* Bottom Action Footer */}
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
-                    <div className="text-slate-500">
+                  <div className="mt-4 pt-3 border-t border-[#737A7F]/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                    <div className="text-[#49352D] font-medium">
                       <span>Destination: </span>
-                      <span className="font-medium text-slate-700">
+                      <span className="font-bold text-[#252A2E]">
                         {order.shippingAddress?.city}, {order.shippingAddress?.state}
                       </span>
                     </div>
@@ -243,16 +240,16 @@ export default function OrdersListPage() {
                       {invoice && (
                         <button
                           onClick={() => generateInvoicePDF(invoice)}
-                          className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-3 py-1.5 rounded border border-slate-300 flex items-center space-x-1 transition"
+                          className="bg-[#858C92] hover:bg-[#76513F] text-[#252A2E] hover:text-[#F1EAE1] font-bold px-3 py-1.5 rounded border border-[#737A7F] flex items-center space-x-1 transition cursor-pointer"
                         >
-                          <Receipt className="w-3.5 h-3.5 text-blue-600" />
+                          <Receipt className="w-3.5 h-3.5" />
                           <span>PDF Invoice</span>
                         </button>
                       )}
 
                       <Link
                         href={`/orders/${order.id}`}
-                        className="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-4 py-2 rounded flex items-center space-x-1.5 transition"
+                        className="bg-[#76513F] hover:bg-[#604333] text-[#F1EAE1] font-bold px-4 py-2 rounded border border-[#B18A70] flex items-center space-x-1.5 transition cursor-pointer"
                       >
                         <span>Track Order Details</span>
                         <ArrowRight className="w-3.5 h-3.5" />

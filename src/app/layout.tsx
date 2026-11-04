@@ -39,7 +39,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 antialiased selection:bg-blue-600 selection:text-white">
+      <body className="min-h-full flex flex-col bg-[#A8ADB1] text-[#252A2E] antialiased selection:bg-[#76513F] selection:text-[#F1EAE1]">
         <StoreProvider>{children}</StoreProvider>
       </body>
     </html>

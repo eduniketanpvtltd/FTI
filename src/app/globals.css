@@ -1,48 +1,86 @@
 @import "tailwindcss";
 
+@theme {
+  --color-copper-primary: #76513F;
+  --color-copper-deep: #604333;
+  --color-copper-dark: #49352D;
+  --color-copper-soft: #B18A70;
+
+  --color-steel-industrial: #A8ADB1;
+  --color-steel-medium: #858C92;
+  --color-steel-charcoal: #343A3F;
+  --color-steel-surface: #BAC0C4;
+  --color-steel-card: #C7CBD0;
+  --color-steel-light: #D6DADC;
+
+  --color-neutral-ivory: #F1EAE1;
+  --color-neutral-dark: #252A2E;
+  --color-neutral-secondary: #626B72;
+  --color-neutral-border: #737A7F;
+
+  --color-func-live: #10B981;
+  --color-func-warning: #E5A34B;
+  --color-func-error: #DC6262;
+  --color-func-info: #75A9D8;
+}
+
 @layer base {
   :root {
-    --background: #f8fafc;
-    --foreground: #0f172a;
-    --card: #ffffff;
-    --card-foreground: #0f172a;
-    --primary: #0284c7;
-    --primary-foreground: #ffffff;
-    --secondary: #f1f5f9;
-    --secondary-foreground: #1e293b;
-    --muted: #f1f5f9;
-    --muted-foreground: #64748b;
-    --accent: #f8fafc;
-    --accent-foreground: #0f172a;
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
-    --border: #e2e8f0;
-    --input: #e2e8f0;
-    --ring: #0284c7;
+    --background: #A8ADB1;
+    --foreground: #252A2E;
+    --card: #C7CBD0;
+    --card-foreground: #252A2E;
+    --primary: #76513F;
+    --primary-foreground: #F1EAE1;
+    --secondary: #858C92;
+    --secondary-foreground: #252A2E;
+    --muted: #858C92;
+    --muted-foreground: #626B72;
+    --accent: #B18A70;
+    --accent-foreground: #F1EAE1;
+    --destructive: #DC6262;
+    --destructive-foreground: #F1EAE1;
+    --border: #737A7F;
+    --input: #737A7F;
+    --ring: #76513F;
   }
 }
 
 body {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: #A8ADB1;
+  color: #252A2E;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom industrial scrollbars */
+/* Custom industrial copper & steel scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #343A3F;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+  background: #76513F;
+  border-radius: 4px;
+  border: 1px solid #49352D;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #B18A70;
+}
+
+/* Selection highlight */
+::selection {
+  background-color: #76513F;
+  color: #F1EAE1;
+}
+
+/* Form input focus styles */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #76513F !important;
+  box-shadow: 0 0 0 2px rgba(118, 81, 63, 0.25) !important;
 }
 
 /* Print specific styles for invoice rendering */

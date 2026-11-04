@@ -16,16 +16,16 @@ export function BottomNav() {
   const isProfile = pathname.startsWith('/profile') || pathname.startsWith('/quotations') || pathname.startsWith('/orders');
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-800 shadow-lg pb-safe">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#604333] border-t border-[#49352D] shadow-2xl pb-safe">
       <div className="grid grid-cols-4 h-16">
         {/* 1. Home */}
         <Link
           href="/"
           className={`flex flex-col items-center justify-center space-y-1 transition ${
-            isHome ? 'text-blue-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            isHome ? 'text-[#F1EAE1] font-bold bg-[#76513F]/50' : 'text-[#A8ADB1] hover:text-[#F1EAE1]'
           }`}
         >
-          <Home className="w-5 h-5" />
+          <Home className={`w-5 h-5 ${isHome ? 'text-[#F1EAE1]' : 'text-[#A8ADB1]'}`} />
           <span className="text-[11px]">Home</span>
         </Link>
 
@@ -33,12 +33,12 @@ export function BottomNav() {
         <Link
           href="/market"
           className={`flex flex-col items-center justify-center space-y-1 relative transition ${
-            isMarket ? 'text-emerald-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            isMarket ? 'text-[#F1EAE1] font-bold bg-[#76513F]/50' : 'text-[#A8ADB1] hover:text-[#F1EAE1]'
           }`}
         >
           <div className="relative">
-            <TrendingUp className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <TrendingUp className={`w-5 h-5 ${isMarket ? 'text-[#10B981]' : 'text-[#A8ADB1]'}`} />
+            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
           </div>
           <span className="text-[11px]">Market</span>
         </Link>
@@ -47,13 +47,13 @@ export function BottomNav() {
         <Link
           href="/cart"
           className={`flex flex-col items-center justify-center space-y-1 relative transition ${
-            isCart ? 'text-blue-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            isCart ? 'text-[#F1EAE1] font-bold bg-[#76513F]/50' : 'text-[#A8ADB1] hover:text-[#F1EAE1]'
           }`}
         >
           <div className="relative">
-            <ShoppingCart className="w-5 h-5" />
+            <ShoppingCart className={`w-5 h-5 ${isCart ? 'text-[#B18A70]' : 'text-[#A8ADB1]'}`} />
             {cart.length > 0 && (
-              <span className="absolute -top-1.5 -right-2.5 bg-blue-500 text-white font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+              <span className="absolute -top-1.5 -right-2.5 bg-[#76513F] text-[#F1EAE1] border border-[#B18A70] font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
                 {cart.length}
               </span>
             )}
@@ -65,10 +65,10 @@ export function BottomNav() {
         <Link
           href="/profile"
           className={`flex flex-col items-center justify-center space-y-1 transition ${
-            isProfile ? 'text-blue-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+            isProfile ? 'text-[#F1EAE1] font-bold bg-[#76513F]/50' : 'text-[#A8ADB1] hover:text-[#F1EAE1]'
           }`}
         >
-          <User className="w-5 h-5" />
+          <User className={`w-5 h-5 ${isProfile ? 'text-[#F1EAE1]' : 'text-[#A8ADB1]'}`} />
           <span className="text-[11px]">Profile</span>
         </Link>
       </div>

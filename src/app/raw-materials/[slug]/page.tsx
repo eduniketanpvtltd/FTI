@@ -22,7 +22,7 @@ import { ProductCategory, SpecificationField } from '@/types';
 
 export default function CategoryDetailPage() {
   return (
-    <React.Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading material specifications...</div>}>
+    <React.Suspense fallback={<div className="p-8 text-center text-xs text-[#252A2E]">Loading material specifications...</div>}>
       <CategoryDetailContent />
     </React.Suspense>
   );
@@ -73,14 +73,14 @@ function CategoryDetailContent() {
     return (
       <CustomerLayout>
         <div className="max-w-4xl mx-auto py-16 px-4 text-center">
-          <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-          <h2 className="text-xl font-bold text-slate-800">Category Not Found</h2>
-          <p className="text-xs text-slate-500 mt-1 mb-4">
+          <AlertCircle className="w-12 h-12 text-[#49352D] mx-auto mb-3" />
+          <h2 className="text-xl font-bold text-[#252A2E]">Category Not Found</h2>
+          <p className="text-xs text-[#49352D] mt-1 mb-4 font-medium">
             The material category you requested does not exist or has been modified.
           </p>
           <Link
             href="/raw-materials"
-            className="inline-flex items-center space-x-1.5 bg-blue-600 text-white text-xs font-semibold px-4 py-2 rounded"
+            className="inline-flex items-center space-x-1.5 bg-[#76513F] hover:bg-[#604333] text-[#F1EAE1] text-xs font-bold px-4 py-2 rounded border border-[#B18A70]"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Raw Materials</span>
@@ -144,25 +144,25 @@ function CategoryDetailContent() {
 
   return (
     <CustomerLayout>
-      {/* Category Header Banner */}
-      <div className="bg-slate-900 text-white py-6 px-4 sm:px-6 border-b border-slate-800">
+      {/* Category Header Banner - Dark Chocolate Brown */}
+      <div className="bg-[#49352D] text-[#F1EAE1] py-6 px-4 sm:px-6 border-b border-[#343A3F]">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center space-x-2 text-xs text-slate-400 mb-2">
-            <Link href="/" className="hover:text-slate-200">Home</Link>
+          <div className="flex items-center space-x-2 text-xs text-[#A8ADB1] mb-2 font-medium">
+            <Link href="/" className="hover:text-[#F1EAE1] transition">Home</Link>
             <span>/</span>
-            <Link href="/raw-materials" className="hover:text-slate-200">Raw Materials</Link>
+            <Link href="/raw-materials" className="hover:text-[#F1EAE1] transition">Raw Materials</Link>
             <span>/</span>
-            <span className="text-blue-400 font-semibold">{category.name}</span>
+            <span className="text-[#B18A70] font-bold">{category.name}</span>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-4">
               <ProductIcon slug={category.slug} className="w-14 h-14 shrink-0" />
               <div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F1EAE1]">
                   {category.name}
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
+                <p className="text-xs sm:text-sm text-[#A8ADB1] mt-1 max-w-2xl leading-relaxed">
                   {category.description}
                 </p>
               </div>
@@ -170,9 +170,9 @@ function CategoryDetailContent() {
 
             <Link
               href="/cart"
-              className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded flex items-center space-x-2 shadow shrink-0 transition"
+              className="bg-[#76513F] hover:bg-[#604333] text-[#F1EAE1] text-xs font-bold px-4 py-2.5 rounded border border-[#B18A70] flex items-center space-x-2 shadow shrink-0 transition"
             >
-              <ShoppingCart className="w-4 h-4" />
+              <ShoppingCart className="w-4 h-4 text-[#F1EAE1]" />
               <span>View Quotation Cart ({cart.length})</span>
             </Link>
           </div>
@@ -184,31 +184,31 @@ function CategoryDetailContent() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column: Combination Configuration Form (7 Columns) */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="bg-white border border-slate-200 rounded-lg shadow-xs p-6">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-5">
+            <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-lg shadow-sm p-6 text-[#252A2E]">
+              <div className="flex items-center justify-between border-b border-[#737A7F] pb-3 mb-5">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">
+                  <h2 className="text-base font-extrabold text-[#252A2E]">
                     Add Specification Combination
                   </h2>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[#49352D] font-medium">
                     Configure dimension, grade, and lot quantity. You can add multiple combinations.
                   </p>
                 </div>
-                <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200">
+                <span className="text-[11px] font-bold text-[#F1EAE1] bg-[#76513F] px-2.5 py-0.5 rounded border border-[#B18A70]">
                   Step 1 of 2
                 </span>
               </div>
 
               {formError && (
-                <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded flex items-center space-x-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="mb-4 p-3 bg-[#DC6262]/20 border border-[#DC6262] text-[#252A2E] text-xs rounded flex items-center space-x-2 font-medium">
+                  <AlertCircle className="w-4 h-4 text-[#DC6262] shrink-0" />
                   <span>{formError}</span>
                 </div>
               )}
 
               {successMessage && (
-                <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded flex items-center space-x-2 animate-in fade-in">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <div className="mb-4 p-3 bg-[#10B981]/20 border border-[#10B981] text-[#252A2E] text-xs rounded flex items-center space-x-2 font-bold animate-in fade-in">
+                  <CheckCircle2 className="w-4 h-4 text-[#10B981] shrink-0" />
                   <span>{successMessage}</span>
                 </div>
               )}
@@ -216,8 +216,8 @@ function CategoryDetailContent() {
               <form onSubmit={handleAddCombination} className="space-y-4">
                 {/* 1. Grade Selection */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                    Material Grade <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-bold text-[#252A2E] mb-1.5">
+                    Material Grade <span className="text-[#DC6262]">*</span>
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {category.availableGrades.map((grade: string) => (
@@ -225,10 +225,10 @@ function CategoryDetailContent() {
                         type="button"
                         key={grade}
                         onClick={() => setSelectedGrade(grade)}
-                        className={`py-2 px-2.5 text-xs rounded border text-left font-mono transition ${
+                        className={`py-2 px-2.5 text-xs rounded border text-left font-mono transition cursor-pointer ${
                           selectedGrade === grade
-                            ? 'bg-blue-50 border-blue-600 text-blue-900 font-bold ring-1 ring-blue-600'
-                            : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                            ? 'bg-[#76513F] border-[#604333] text-[#F1EAE1] font-bold ring-2 ring-[#B18A70] shadow-xs'
+                            : 'bg-[#A8ADB1] border-[#737A7F] text-[#252A2E] hover:bg-[#C7CBD0] font-semibold'
                         }`}
                       >
                         {grade}
@@ -237,12 +237,12 @@ function CategoryDetailContent() {
                   </div>
                 </div>
 
-                {/* 2. Dynamic Specification Fields (Configured in Admin) */}
+                {/* 2. Dynamic Specification Fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                   {category.specificationFields.map((field: SpecificationField) => (
                     <div key={field.key}>
-                      <label className="block text-xs font-bold text-slate-800 mb-1">
-                        {field.label} {field.required && <span className="text-rose-500">*</span>}
+                      <label className="block text-xs font-bold text-[#252A2E] mb-1">
+                        {field.label} {field.required && <span className="text-[#DC6262]">*</span>}
                       </label>
 
                       {field.type === 'select' && field.options ? (
@@ -251,7 +251,7 @@ function CategoryDetailContent() {
                           onChange={(e) =>
                             setSpecValues({ ...specValues, [field.key]: e.target.value })
                           }
-                          className="w-full text-xs bg-slate-50 border border-slate-300 rounded p-2 text-slate-900 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                          className="w-full text-xs bg-[#A8ADB1] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
                           required={field.required}
                         >
                           {field.options.map((opt: string) => (
@@ -268,7 +268,7 @@ function CategoryDetailContent() {
                             setSpecValues({ ...specValues, [field.key]: e.target.value })
                           }
                           placeholder={field.placeholder || `Enter ${field.label}`}
-                          className="w-full text-xs bg-slate-50 border border-slate-300 rounded p-2 text-slate-900 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                          className="w-full text-xs bg-[#A8ADB1] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
                           required={field.required}
                         />
                       )}
@@ -279,8 +279,8 @@ function CategoryDetailContent() {
                 {/* 3. Quantity & Unit of Measurement */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1">
-                      Required Quantity <span className="text-rose-500">*</span>
+                    <label className="block text-xs font-bold text-[#252A2E] mb-1">
+                      Required Quantity <span className="text-[#DC6262]">*</span>
                     </label>
                     <input
                       type="number"
@@ -288,19 +288,19 @@ function CategoryDetailContent() {
                       min="0.1"
                       value={quantity}
                       onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
-                      className="w-full text-xs bg-slate-50 border border-slate-300 rounded p-2 text-slate-900 focus:ring-1 focus:ring-blue-500 focus:outline-hidden font-mono font-semibold"
+                      className="w-full text-xs bg-[#A8ADB1] border border-[#737A7F] rounded p-2 text-[#252A2E] font-mono font-bold"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1">
-                      Unit of Measurement <span className="text-rose-500">*</span>
+                    <label className="block text-xs font-bold text-[#252A2E] mb-1">
+                      Unit of Measurement <span className="text-[#DC6262]">*</span>
                     </label>
                     <select
                       value={unit}
                       onChange={(e) => setUnit(e.target.value)}
-                      className="w-full text-xs bg-slate-50 border border-slate-300 rounded p-2 text-slate-900 focus:ring-1 focus:ring-blue-500 focus:outline-hidden font-medium"
+                      className="w-full text-xs bg-[#A8ADB1] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
                     >
                       <option value="Metric Ton">Metric Ton (MT - Industrial Standard)</option>
                       <option value="Kilogram">Kilogram (kg)</option>
@@ -310,9 +310,9 @@ function CategoryDetailContent() {
                   </div>
                 </div>
 
-                {/* 4. Special Instructions (e.g. MTC, ultrasonic test, cut tolerance) */}
+                {/* 4. Special Instructions */}
                 <div className="pt-2">
-                  <label className="block text-xs font-bold text-slate-800 mb-1">
+                  <label className="block text-xs font-bold text-[#252A2E] mb-1">
                     Special Requirements / Tolerances (Optional)
                   </label>
                   <textarea
@@ -320,15 +320,15 @@ function CategoryDetailContent() {
                     value={specialInstructions}
                     onChange={(e) => setSpecialInstructions(e.target.value)}
                     placeholder="e.g. Mill test certificate required, cutting tolerance ±2mm, ultrasonic testing..."
-                    className="w-full text-xs bg-slate-50 border border-slate-300 rounded p-2 text-slate-900 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                    className="w-full text-xs bg-[#A8ADB1] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
                   />
                 </div>
 
                 {/* Important Notice: No Prices Displayed */}
-                <div className="p-3 bg-amber-50/80 border border-amber-200 rounded text-xs text-amber-900 flex items-start space-x-2">
-                  <HelpCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <p className="leading-relaxed text-[11px]">
-                    <span className="font-bold">B2B Quotation Model:</span> Prices are not displayed publicly.
+                <div className="p-3 bg-[#343A3F] border border-[#737A7F] rounded text-xs text-[#F1EAE1] flex items-start space-x-2">
+                  <HelpCircle className="w-4 h-4 text-[#B18A70] shrink-0 mt-0.5" />
+                  <p className="leading-relaxed text-[11px] text-[#A8ADB1]">
+                    <span className="font-bold text-[#F1EAE1]">B2B Quotation Model:</span> Prices are not displayed publicly.
                     After adding all required combinations, click "Request a Quotation".
                     The trading desk will prepare and send custom mill-direct pricing to your account.
                   </p>
@@ -339,8 +339,8 @@ function CategoryDetailContent() {
                   <button
                     type="submit"
                     disabled={isAdding}
-                    className={`w-full sm:flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 px-4 rounded shadow flex items-center justify-center space-x-2 transition ${
-                      isAdding ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
+                    className={`w-full sm:flex-1 bg-[#76513F] hover:bg-[#604333] text-[#F1EAE1] text-xs font-bold py-2.5 px-4 rounded border border-[#B18A70] shadow flex items-center justify-center space-x-2 transition cursor-pointer ${
+                      isAdding ? 'opacity-70 cursor-not-allowed' : ''
                     }`}
                   >
                     <Plus className="w-4 h-4" />
@@ -349,9 +349,9 @@ function CategoryDetailContent() {
 
                   <Link
                     href="/cart"
-                    className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold py-2.5 px-4 rounded flex items-center justify-center space-x-2 transition"
+                    className="w-full sm:w-auto bg-[#343A3F] hover:bg-[#604333] text-[#F1EAE1] text-xs font-bold py-2.5 px-4 rounded border border-[#737A7F] flex items-center justify-center space-x-2 transition"
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-blue-400" />
+                    <FileSpreadsheet className="w-4 h-4 text-[#B18A70]" />
                     <span>Go to Cart ({cart.length})</span>
                   </Link>
                 </div>
@@ -361,30 +361,30 @@ function CategoryDetailContent() {
 
           {/* Right Column: Active Combinations for this Material (5 Columns) */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="bg-white border border-slate-200 rounded-lg shadow-xs p-5">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+            <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-lg shadow-sm p-5 text-[#252A2E]">
+              <div className="flex items-center justify-between border-b border-[#737A7F] pb-3 mb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-sm font-extrabold text-[#252A2E]">
                     Added Combinations ({activeCombinations.length})
                   </h3>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-[#49352D] font-medium">
                     Items of {category.name} currently in your cart
                   </p>
                 </div>
 
                 <Link
                   href="/cart"
-                  className="text-xs text-blue-600 hover:underline font-semibold"
+                  className="text-xs text-[#76513F] hover:text-[#604333] font-bold"
                 >
                   View All Cart ({cart.length})
                 </Link>
               </div>
 
               {activeCombinations.length === 0 ? (
-                <div className="text-center py-8 px-4 bg-slate-50 border border-dashed border-slate-200 rounded">
-                  <Layers className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                  <p className="text-xs font-semibold text-slate-700">No combinations added yet</p>
-                  <p className="text-[11px] text-slate-500 mt-1">
+                <div className="text-center py-8 px-4 bg-[#A8ADB1] border border-dashed border-[#737A7F] rounded">
+                  <Layers className="w-8 h-8 text-[#49352D] mx-auto mb-2" />
+                  <p className="text-xs font-bold text-[#252A2E]">No combinations added yet</p>
+                  <p className="text-[11px] text-[#49352D] mt-1 font-medium">
                     Configure your specifications on the left and click "Add This Combination to Cart".
                   </p>
                 </div>
@@ -393,21 +393,21 @@ function CategoryDetailContent() {
                   {activeCombinations.map((item, index) => (
                     <div
                       key={item.id}
-                      className="border border-slate-200 rounded-lg p-3 bg-slate-50/60 hover:bg-slate-50 transition"
+                      className="border border-[#737A7F] rounded-lg p-3 bg-[#A8ADB1] transition shadow-xs"
                     >
                       <div className="flex items-start justify-between">
                         <div>
-                          <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded font-mono">
+                          <span className="text-[10px] font-bold text-[#F1EAE1] bg-[#76513F] px-1.5 py-0.2 rounded font-mono border border-[#B18A70]">
                             Comb #{index + 1}
                           </span>
-                          <h4 className="text-xs font-bold text-slate-900 mt-1">
+                          <h4 className="text-xs font-bold text-[#252A2E] mt-1">
                             {item.grade}
                           </h4>
                         </div>
 
                         <button
                           onClick={() => removeFromCart(item.id)}
-                          className="text-slate-400 hover:text-rose-600 p-1 rounded transition"
+                          className="text-[#DC6262] hover:text-[#DC6262]/80 p-1 rounded transition cursor-pointer"
                           title="Remove combination"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -415,21 +415,21 @@ function CategoryDetailContent() {
                       </div>
 
                       {/* Specification Details List */}
-                      <div className="mt-2 text-[11px] text-slate-600 space-y-0.5 border-t border-slate-200/80 pt-2">
+                      <div className="mt-2 text-[11px] text-[#252A2E] space-y-0.5 border-t border-[#737A7F]/40 pt-2">
                         {Object.entries(item.specifications).map(([k, v]) => (
                           <div key={k} className="flex justify-between text-xs">
-                            <span className="text-slate-500 capitalize">
+                            <span className="text-[#49352D] font-medium capitalize">
                               {k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}:
                             </span>
-                            <span className="font-medium text-slate-800">{v}</span>
+                            <span className="font-bold text-[#252A2E]">{v}</span>
                           </div>
                         ))}
-                        <div className="flex justify-between font-semibold text-slate-900 pt-1 border-t border-slate-200/60">
+                        <div className="flex justify-between font-bold text-[#252A2E] pt-1 border-t border-[#737A7F]/40">
                           <span>Quantity:</span>
-                          <span className="text-blue-700">{item.quantity} {item.unit}</span>
+                          <span className="text-[#604333]">{item.quantity} {item.unit}</span>
                         </div>
                         {item.specialInstructions && (
-                          <p className="text-[10px] text-slate-500 italic pt-1">
+                          <p className="text-[10px] text-[#49352D] italic pt-1 font-medium">
                             Note: {item.specialInstructions}
                           </p>
                         )}
@@ -440,9 +440,9 @@ function CategoryDetailContent() {
                   <div className="pt-3">
                     <Link
                       href="/cart"
-                      className="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded flex items-center justify-center space-x-2 transition shadow"
+                      className="w-full bg-[#76513F] hover:bg-[#604333] text-[#F1EAE1] text-xs font-bold py-2.5 px-4 rounded border border-[#B18A70] flex items-center justify-center space-x-2 transition shadow cursor-pointer"
                     >
-                      <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                      <FileSpreadsheet className="w-4 h-4 text-[#F1EAE1]" />
                       <span>Proceed to Quotation Cart</span>
                     </Link>
                   </div>

@@ -12,17 +12,13 @@ import {
   MapPin,
   Plus,
   AlertCircle,
-  CheckCircle2,
   ShieldCheck,
-  Building2,
-  ArrowRight,
-  Clock,
   Layers,
 } from 'lucide-react';
 
 export default function QuotationCartPage() {
   const router = useRouter();
-  const { cart, removeFromCart, clearCart, addresses, submitQuotationRequest, currentUser } = useStore();
+  const { cart, removeFromCart, clearCart, addresses, submitQuotationRequest } = useStore();
 
   const [selectedAddressId, setSelectedAddressId] = useState<string>(() => {
     const defaultAddr = addresses.find((a) => a.isDefault);
@@ -64,28 +60,28 @@ export default function QuotationCartPage() {
 
   return (
     <CustomerLayout>
-      {/* Top Banner */}
-      <div className="bg-slate-900 text-white py-6 px-4 sm:px-6 border-b border-slate-800">
+      {/* Top Banner - Dark Chocolate Brown */}
+      <div className="bg-[#49352D] text-[#F1EAE1] py-6 px-4 sm:px-6 border-b border-[#343A3F]">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center space-x-2 text-xs text-slate-400 mb-2">
-            <Link href="/" className="hover:text-slate-200">Home</Link>
+          <div className="flex items-center space-x-2 text-xs text-[#A8ADB1] mb-2 font-medium">
+            <Link href="/" className="hover:text-[#F1EAE1] transition">Home</Link>
             <span>/</span>
-            <span className="text-blue-400 font-semibold">Quotation Cart</span>
+            <span className="text-[#B18A70] font-bold">Quotation Cart</span>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F1EAE1]">
                 Quotation Request Cart
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1">
+              <p className="text-xs sm:text-sm text-[#A8ADB1] mt-1 leading-relaxed">
                 Review your requested material combinations. Prices and delivery freight will be computed and issued by the FTI Trading Desk.
               </p>
             </div>
 
-            <div className="bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded text-xs flex items-center space-x-2 shrink-0">
-              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-              <span className="text-slate-300 font-medium">B2B Zero Retail Markup RFQ</span>
+            <div className="bg-[#343A3F] border border-[#737A7F] px-3 py-1.5 rounded text-xs flex items-center space-x-2 shrink-0 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
+              <span className="text-[#F1EAE1] font-semibold">B2B Zero Retail Markup RFQ</span>
             </div>
           </div>
         </div>
@@ -93,27 +89,27 @@ export default function QuotationCartPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {cart.length === 0 ? (
-          <div className="max-w-xl mx-auto text-center py-16 bg-white border border-slate-200 rounded-lg p-8 shadow-xs">
-            <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
+          <div className="max-w-xl mx-auto text-center py-16 bg-[#BAC0C5] border border-[#737A7F] rounded-lg p-8 shadow-xs">
+            <div className="w-16 h-16 rounded-full bg-[#858C92] text-[#252A2E] flex items-center justify-center mx-auto mb-4 border border-[#737A7F]">
               <FileSpreadsheet className="w-8 h-8" />
             </div>
-            <h2 className="text-lg font-bold text-slate-900">Your Quotation Cart is Empty</h2>
-            <p className="text-xs text-slate-500 mt-1 mb-6 max-w-sm mx-auto leading-relaxed">
+            <h2 className="text-lg font-extrabold text-[#252A2E]">Your Quotation Cart is Empty</h2>
+            <p className="text-xs text-[#49352D] mt-1 mb-6 max-w-sm mx-auto leading-relaxed font-medium">
               Explore our seven industrial raw material categories, configure specifications (diameter, length, grade), and add multiple combinations.
             </p>
             <Link
               href="/raw-materials"
-              className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-5 py-2.5 rounded shadow transition"
+              className="inline-flex items-center space-x-2 bg-[#76513F] hover:bg-[#604333] text-[#F1EAE1] text-xs font-bold px-5 py-2.5 rounded border border-[#B18A70] shadow transition cursor-pointer"
             >
-              <Layers className="w-4 h-4" />
+              <Layers className="w-4 h-4 text-[#F1EAE1]" />
               <span>Browse Raw Materials</span>
             </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmitQuotation}>
             {submissionError && (
-              <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="mb-6 p-4 bg-[#DC6262]/20 border border-[#DC6262] text-[#252A2E] text-xs rounded-lg flex items-center space-x-2 font-bold">
+                <AlertCircle className="w-4 h-4 text-[#DC6262] shrink-0" />
                 <span>{submissionError}</span>
               </div>
             )}
@@ -121,13 +117,13 @@ export default function QuotationCartPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               {/* Left Column: Cart Line Items (8 Cols) */}
               <div className="lg:col-span-8 space-y-4">
-                <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+                <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-lg p-5 shadow-xs text-[#252A2E]">
+                  <div className="flex items-center justify-between border-b border-[#737A7F] pb-3 mb-4">
                     <div>
-                      <h2 className="text-sm font-bold text-slate-900">
+                      <h2 className="text-sm font-extrabold text-[#252A2E]">
                         Requested Material Combinations ({cart.length})
                       </h2>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-[#49352D] font-medium">
                         Each item represents a distinct dimension, grade, and lot size.
                       </p>
                     </div>
@@ -135,7 +131,7 @@ export default function QuotationCartPage() {
                     <button
                       type="button"
                       onClick={clearCart}
-                      className="text-xs text-rose-600 hover:text-rose-800 font-medium"
+                      className="text-xs text-[#DC6262] hover:text-[#DC6262]/80 font-bold cursor-pointer"
                     >
                       Clear All
                     </button>
@@ -175,26 +171,26 @@ export default function QuotationCartPage() {
                       return (
                         <div
                           key={item.id}
-                          className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs hover:border-blue-300 hover:shadow-sm transition-all space-y-3.5"
+                          className="bg-[#A8ADB1] border border-[#737A7F] rounded-xl p-4 sm:p-5 shadow-xs hover:border-[#76513F] transition-all space-y-3.5"
                         >
                           {/* Top Row: Icon, Grade Header, and Delete */}
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-start space-x-3 min-w-0">
-                              <div className="w-11 h-11 rounded-lg bg-slate-100 border border-slate-200/80 p-1.5 flex items-center justify-center shrink-0">
+                              <div className="w-11 h-11 rounded-lg bg-[#858C92] border border-[#737A7F] p-1.5 flex items-center justify-center shrink-0">
                                 <ProductIcon slug={item.categorySlug} className="w-full h-full object-contain" />
                               </div>
 
                               <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded font-mono">
+                                  <span className="text-[10px] font-bold text-[#F1EAE1] bg-[#76513F] border border-[#B18A70] px-2 py-0.5 rounded font-mono">
                                     Combination #{index + 1}
                                   </span>
-                                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                                  <span className="text-xs font-bold text-[#49352D] uppercase tracking-wide">
                                     {item.categoryName}
                                   </span>
                                 </div>
 
-                                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-snug">
+                                <h3 className="text-sm sm:text-base font-extrabold text-[#252A2E] leading-snug">
                                   {item.grade}
                                 </h3>
                               </div>
@@ -203,7 +199,7 @@ export default function QuotationCartPage() {
                             <button
                               type="button"
                               onClick={() => removeFromCart(item.id)}
-                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition shrink-0 cursor-pointer"
+                              className="p-2 text-[#DC6262] hover:bg-[#BAC0C5] rounded-lg transition shrink-0 cursor-pointer"
                               title="Remove this combination"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -216,12 +212,12 @@ export default function QuotationCartPage() {
                               {dimensions.map(([k, v]) => (
                                 <div
                                   key={k}
-                                  className="inline-flex items-center space-x-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md text-xs"
+                                  className="inline-flex items-center space-x-1.5 bg-[#BAC0C5] border border-[#737A7F] px-2.5 py-1 rounded-md text-xs"
                                 >
-                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                  <span className="text-[10px] font-bold text-[#49352D] uppercase tracking-wider">
                                     {formatSpecKey(k)}:
                                   </span>
-                                  <span className="font-bold text-slate-900 font-mono">{v}</span>
+                                  <span className="font-bold text-[#252A2E] font-mono">{v}</span>
                                 </div>
                               ))}
                             </div>
@@ -229,13 +225,13 @@ export default function QuotationCartPage() {
 
                           {/* Technical Standards & Testing Conditions */}
                           {technicalSpecs.length > 0 && (
-                            <div className="bg-slate-50/70 border border-slate-200/80 rounded-lg p-3 space-y-2 text-xs">
+                            <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-lg p-3 space-y-2 text-xs">
                               {technicalSpecs.map(([k, v]) => (
                                 <div key={k} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 text-xs">
-                                  <span className="text-[11px] font-bold text-slate-500 shrink-0 sm:w-44 uppercase tracking-wider">
+                                  <span className="text-[11px] font-bold text-[#49352D] shrink-0 sm:w-44 uppercase tracking-wider">
                                     {formatSpecKey(k)}:
                                   </span>
-                                  <span className="text-slate-800 font-medium leading-relaxed">{v}</span>
+                                  <span className="text-[#252A2E] font-medium leading-relaxed">{v}</span>
                                 </div>
                               ))}
                             </div>
@@ -243,25 +239,25 @@ export default function QuotationCartPage() {
 
                           {/* Special Instructions Note */}
                           {item.specialInstructions && (
-                            <div className="text-xs text-amber-900 bg-amber-50/80 border border-amber-200 p-2.5 rounded-lg flex items-start space-x-2">
-                              <span className="font-bold shrink-0">Note:</span>
+                            <div className="text-xs text-[#252A2E] bg-[#E5A34B]/20 border border-[#E5A34B] p-2.5 rounded-lg flex items-start space-x-2 font-medium">
+                              <span className="font-bold shrink-0 text-[#49352D]">Note:</span>
                               <span className="leading-relaxed">{item.specialInstructions}</span>
                             </div>
                           )}
 
                           {/* Footer Strip: Quantity & Dispatch Status */}
-                          <div className="bg-blue-50/60 border border-blue-100 rounded-lg px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <div className="bg-[#858C92] border border-[#737A7F] rounded-lg px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                             <div className="flex items-center space-x-2">
-                              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-[#252A2E]">
                                 Requested Lot Size:
                               </span>
-                              <span className="text-sm font-black text-blue-950 font-mono bg-white px-2.5 py-0.5 rounded border border-blue-200 shadow-2xs">
+                              <span className="text-sm font-black text-[#252A2E] font-mono bg-[#F1EAE1] px-2.5 py-0.5 rounded border border-[#737A7F] shadow-xs">
                                 {item.quantity.toLocaleString('en-IN')} {item.unit}
                               </span>
                             </div>
 
-                            <div className="text-[11px] text-blue-700/80 font-medium flex items-center space-x-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                            <div className="text-[11px] text-[#252A2E] font-bold flex items-center space-x-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
                               <span>Zero Retail Markup • Ex-Kalamboli Yard</span>
                             </div>
                           </div>
@@ -270,18 +266,18 @@ export default function QuotationCartPage() {
                     })}
                   </div>
 
-                  <div className="mt-5 pt-4 border-t border-slate-200 flex items-center justify-between">
+                  <div className="mt-5 pt-4 border-t border-[#737A7F] flex items-center justify-between">
                     <Link
                       href="/raw-materials"
-                      className="text-xs font-semibold text-blue-600 hover:underline flex items-center"
+                      className="text-xs font-bold text-[#76513F] hover:text-[#604333] flex items-center"
                     >
                       <Plus className="w-3.5 h-3.5 mr-1" />
                       <span>Add More Specifications</span>
                     </Link>
 
                     <div className="text-right">
-                      <span className="text-[11px] text-slate-400 block">Pricing Status</span>
-                      <span className="text-xs font-bold text-slate-700">Official Quotation Only</span>
+                      <span className="text-[11px] text-[#49352D] block font-medium">Pricing Status</span>
+                      <span className="text-xs font-extrabold text-[#252A2E]">Official Quotation Only</span>
                     </div>
                   </div>
                 </div>
@@ -290,12 +286,12 @@ export default function QuotationCartPage() {
               {/* Right Column: Delivery Location & Quotation Request Submission (4 Cols) */}
               <div className="lg:col-span-4 space-y-4">
                 {/* 1. Delivery Location Selection */}
-                <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
-                    <MapPin className="w-4 h-4 text-blue-600" />
+                <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-lg p-5 shadow-xs text-[#252A2E]">
+                  <h3 className="text-xs font-extrabold text-[#252A2E] uppercase tracking-wider mb-2 flex items-center space-x-1.5">
+                    <MapPin className="w-4 h-4 text-[#76513F]" />
                     <span>Delivery Location</span>
                   </h3>
-                  <p className="text-[11px] text-slate-500 mb-3">
+                  <p className="text-[11px] text-[#49352D] mb-3 font-medium">
                     Freight charges will be calculated from our Kalamboli yard to this destination.
                   </p>
 
@@ -305,8 +301,8 @@ export default function QuotationCartPage() {
                         key={addr.id}
                         className={`block p-3 rounded border text-xs cursor-pointer transition ${
                           selectedAddressId === addr.id
-                            ? 'bg-blue-50 border-blue-600 ring-1 ring-blue-600 text-blue-900'
-                            : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                            ? 'bg-[#A8ADB1] border-2 border-[#76513F] ring-1 ring-[#76513F] text-[#252A2E]'
+                            : 'bg-[#A8ADB1]/60 border-[#737A7F] text-[#252A2E] hover:bg-[#A8ADB1]'
                         }`}
                       >
                         <div className="flex items-center space-x-2">
@@ -315,16 +311,16 @@ export default function QuotationCartPage() {
                             name="deliveryAddress"
                             checked={selectedAddressId === addr.id}
                             onChange={() => setSelectedAddressId(addr.id)}
-                            className="text-blue-600 focus:ring-blue-500"
+                            className="accent-[#76513F]"
                           />
-                          <span className="font-bold text-slate-900">{addr.recipientName}</span>
+                          <span className="font-bold text-[#252A2E]">{addr.recipientName}</span>
                           {addr.isDefault && (
-                            <span className="text-[9px] bg-slate-200 text-slate-700 font-bold px-1.5 rounded">
+                            <span className="text-[9px] bg-[#858C92] text-[#252A2E] font-bold px-1.5 rounded border border-[#737A7F]">
                               DEFAULT
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-slate-600 mt-1 pl-5 leading-tight">
+                        <p className="text-[11px] text-[#343A3F] mt-1 pl-5 leading-tight font-medium">
                           {addr.streetAddress}, {addr.city}, {addr.state} - {addr.pincode}
                         </p>
                       </label>
@@ -334,7 +330,7 @@ export default function QuotationCartPage() {
                   <div className="mt-3 text-right">
                     <Link
                       href="/profile?tab=addresses"
-                      className="text-[11px] text-blue-600 hover:underline font-semibold"
+                      className="text-[11px] text-[#76513F] hover:text-[#604333] font-bold"
                     >
                       + Add New Delivery Address
                     </Link>
@@ -342,11 +338,11 @@ export default function QuotationCartPage() {
                 </div>
 
                 {/* 2. Customer Notes / Delivery Timeline */}
-                <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1">
+                <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-lg p-5 shadow-xs text-[#252A2E]">
+                  <h3 className="text-xs font-extrabold text-[#252A2E] uppercase tracking-wider mb-1">
                     Special Requirements or Notes
                   </h3>
-                  <p className="text-[11px] text-slate-500 mb-2">
+                  <p className="text-[11px] text-[#49352D] mb-2 font-medium">
                     Mention required dispatch date, transit insurance, or packaging instructions.
                   </p>
                   <textarea
@@ -354,39 +350,39 @@ export default function QuotationCartPage() {
                     value={specialNotes}
                     onChange={(e) => setSpecialNotes(e.target.value)}
                     placeholder="e.g. Need delivery by next Tuesday. Crane unloading available at works gate 2..."
-                    className="w-full text-xs bg-slate-50 border border-slate-300 rounded p-2 text-slate-900 focus:ring-1 focus:ring-blue-500 focus:outline-hidden"
+                    className="w-full text-xs bg-[#A8ADB1] border border-[#737A7F] rounded p-2 text-[#252A2E] font-medium"
                   />
                 </div>
 
-                {/* 3. Official Quotation Submission Action */}
-                <div className="bg-slate-900 text-white rounded-lg p-5 shadow-md">
-                  <div className="flex items-center space-x-2 text-xs text-blue-400 font-semibold mb-2">
-                    <ShieldCheck className="w-4 h-4" />
+                {/* 3. Official Quotation Submission Action - Dark Chocolate Brown */}
+                <div className="bg-[#49352D] text-[#F1EAE1] rounded-lg p-5 shadow-md border border-[#343A3F]">
+                  <div className="flex items-center space-x-2 text-xs text-[#B18A70] font-bold mb-2">
+                    <ShieldCheck className="w-4 h-4 text-[#10B981]" />
                     <span>Direct Trading Desk Quotation</span>
                   </div>
-                  <h4 className="font-bold text-sm text-slate-100">
+                  <h4 className="font-extrabold text-sm text-[#F1EAE1]">
                     Ready to receive official pricing?
                   </h4>
-                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                  <p className="text-[11px] text-[#A8ADB1] mt-1 leading-relaxed font-medium">
                     Submitting this request creates an official Quotation Request. The trading desk assigns line prices, freight, and terms, then sends it back to your account for one-click acceptance.
                   </p>
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="mt-4 w-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white text-xs font-bold py-3 px-4 rounded shadow flex items-center justify-center space-x-2 transition"
+                    className="mt-4 w-full bg-[#76513F] hover:bg-[#604333] disabled:opacity-60 text-[#F1EAE1] text-xs font-bold py-3 px-4 rounded border border-[#B18A70] shadow-md flex items-center justify-center space-x-2 transition cursor-pointer"
                   >
                     {isSubmitting ? (
                       <span>Submitting Request...</span>
                     ) : (
                       <>
-                        <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                        <FileSpreadsheet className="w-4 h-4 text-[#10B981]" />
                         <span>Request a Quotation</span>
                       </>
                     )}
                   </button>
 
-                  <p className="mt-2 text-center text-[10px] text-slate-400">
+                  <p className="mt-2 text-center text-[10px] text-[#A8ADB1] font-medium">
                     Expected response: Within 2 hours during market hours
                   </p>
                 </div>
