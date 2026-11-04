@@ -45,6 +45,7 @@ import {
   Building2,
   MapPin,
   ArrowUpDown,
+  ArrowLeft,
 } from 'lucide-react';
 
 export default function MarketPage() {
@@ -63,6 +64,8 @@ export default function MarketPage() {
   const [historyLimit, setHistoryLimit] = useState<7 | 15 | 30 | 50>(50);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copiedBulletin, setCopiedBulletin] = useState(false);
+  // Mobile tab switcher ('mandis' vs 'history')
+  const [mobileTab, setMobileTab] = useState<'mandis' | 'history'>('mandis');
 
   // Manual refresh animation
   const handleManualRefresh = () => {
@@ -304,33 +307,33 @@ export default function MarketPage() {
           </div>
 
           {/* Bulletin Metadata Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-            <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg flex items-center space-x-2.5">
-              <span className="text-xl">🗓️</span>
-              <div>
-                <span className="text-[10px] text-slate-400 uppercase font-mono block">Trading Date</span>
-                <span className="text-xs sm:text-sm font-extrabold text-white font-mono">
-                  {mandiBulletin?.dateStr || '28-OCTOBER-2026'}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+            <div className="bg-slate-900/90 border border-slate-800 p-2 sm:p-2.5 rounded-lg flex items-center space-x-2 min-w-0">
+              <span className="text-lg sm:text-xl shrink-0">🗓️</span>
+              <div className="min-w-0">
+                <span className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-mono block">Date</span>
+                <span className="text-xs sm:text-sm font-extrabold text-white font-mono truncate block">
+                  {mandiBulletin?.dateStr || '28-OCT-2026'}
                 </span>
               </div>
             </div>
 
-            <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg flex items-center space-x-2.5">
-              <span className="text-xl">⏰</span>
-              <div>
-                <span className="text-[10px] text-slate-400 uppercase font-mono block">Fixing Time</span>
-                <span className="text-xs sm:text-sm font-extrabold text-white font-mono">
+            <div className="bg-slate-900/90 border border-slate-800 p-2 sm:p-2.5 rounded-lg flex items-center space-x-2 min-w-0">
+              <span className="text-lg sm:text-xl shrink-0">⏰</span>
+              <div className="min-w-0">
+                <span className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-mono block">Time</span>
+                <span className="text-xs sm:text-sm font-extrabold text-white font-mono truncate block">
                   {mandiBulletin?.timeStr || '12:00'} IST
                 </span>
               </div>
             </div>
 
-            <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg flex items-center space-x-2.5">
-              <span className="text-xl">
+            <div className="bg-slate-900/90 border border-slate-800 p-2 sm:p-2.5 rounded-lg flex items-center space-x-2 min-w-0">
+              <span className="text-lg sm:text-xl shrink-0">
                 {mandiBulletin?.overallTrend === 'up' ? '📈' : '📉'}
               </span>
-              <div>
-                <span className="text-[10px] text-slate-400 uppercase font-mono block">Overall Mandi Trend</span>
+              <div className="min-w-0">
+                <span className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-mono block">Mandi Trend</span>
                 <span
                   className={`text-xs sm:text-sm font-extrabold block truncate ${
                     mandiBulletin?.overallTrend === 'up' ? 'text-emerald-400' : 'text-rose-400'
@@ -341,12 +344,12 @@ export default function MarketPage() {
               </div>
             </div>
 
-            <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg flex items-center space-x-2.5">
-              <span className="text-xl">🇺🇸</span>
-              <div>
-                <span className="text-[10px] text-slate-400 uppercase font-mono block">USD / INR Benchmark</span>
-                <span className="text-xs sm:text-sm font-extrabold text-amber-400 font-mono">
-                  1 ($) = {mandiBulletin?.usdInrRate || 95.04} (₹) 🇮🇳
+            <div className="bg-slate-900/90 border border-slate-800 p-2 sm:p-2.5 rounded-lg flex items-center space-x-2 min-w-0">
+              <span className="text-lg sm:text-xl shrink-0">🇺🇸</span>
+              <div className="min-w-0">
+                <span className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-mono block">USD / INR</span>
+                <span className="text-xs sm:text-sm font-extrabold text-amber-400 font-mono truncate block">
+                  1$ = ₹{mandiBulletin?.usdInrRate || 95.04}
                 </span>
               </div>
             </div>
@@ -356,57 +359,57 @@ export default function MarketPage() {
 
       {/* 2. PRIMARY CATEGORY LEVEL 1: RAW MATERIAL vs SCRAP MATERIAL */}
       <div className="bg-slate-900 border-b border-slate-800 sticky top-14 z-20 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 py-3">
-            {/* Primary Category Switcher Tabs */}
-            <div className="flex items-center space-x-2">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 py-2.5 sm:py-3">
+            {/* Primary Category Switcher Tabs - Horizontally scrollable on mobile */}
+            <div className="flex items-center space-x-2 overflow-x-auto scrollbar-none w-full sm:w-auto pb-1 sm:pb-0">
               <button
                 onClick={() => handleCategoryChange('raw_materials')}
-                className={`px-4 py-2 text-xs sm:text-sm font-black rounded-lg transition flex items-center space-x-2 ${
+                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-black rounded-lg transition flex items-center space-x-1.5 sm:space-x-2 shrink-0 cursor-pointer ${
                   mainCategory === 'raw_materials'
                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-400/40'
                     : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
                 }`}
               >
-                <Building2 className="w-4 h-4 text-blue-300" />
-                <span>RAW MATERIALS</span>
-                <span className="text-xs font-mono bg-blue-900/60 text-blue-200 px-1.5 py-0.5 rounded">
+                <Building2 className="w-4 h-4 text-blue-300 shrink-0" />
+                <span className="whitespace-nowrap">RAW MATERIALS</span>
+                <span className="text-[10px] sm:text-xs font-mono bg-blue-900/60 text-blue-200 px-1.5 py-0.5 rounded">
                   {rawCount} Mandis
                 </span>
               </button>
 
               <button
                 onClick={() => handleCategoryChange('scrap_materials')}
-                className={`px-4 py-2 text-xs sm:text-sm font-black rounded-lg transition flex items-center space-x-2 ${
+                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-black rounded-lg transition flex items-center space-x-1.5 sm:space-x-2 shrink-0 cursor-pointer ${
                   mainCategory === 'scrap_materials'
                     ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 ring-2 ring-amber-400/40'
                     : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
                 }`}
               >
-                <Layers className="w-4 h-4 text-amber-300" />
-                <span>SCRAP MATERIALS</span>
-                <span className="text-xs font-mono bg-amber-900/60 text-amber-200 px-1.5 py-0.5 rounded">
+                <Layers className="w-4 h-4 text-amber-300 shrink-0" />
+                <span className="whitespace-nowrap">SCRAP MATERIALS</span>
+                <span className="text-[10px] sm:text-xs font-mono bg-amber-900/60 text-amber-200 px-1.5 py-0.5 rounded">
                   {scrapCount} Mandis
                 </span>
               </button>
 
               <button
                 onClick={() => handleCategoryChange('whatsapp')}
-                className={`px-3 py-2 text-xs font-bold rounded-lg transition flex items-center space-x-1.5 ${
+                className={`px-3 py-2 text-xs font-bold rounded-lg transition flex items-center space-x-1.5 shrink-0 cursor-pointer ${
                   mainCategory === 'whatsapp'
                     ? 'bg-emerald-600 text-white shadow-lg'
                     : 'bg-slate-800 text-emerald-400 hover:bg-slate-700 border border-slate-700'
                 }`}
               >
-                <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">WhatsApp Mandi Feed</span>
+                <MessageSquare className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="hidden sm:inline whitespace-nowrap">WhatsApp Mandi Feed</span>
                 <span className="sm:hidden">Feed</span>
               </button>
             </div>
 
             {/* Search & Ups / Downs Filter */}
             {mainCategory !== 'whatsapp' && (
-              <div className="flex items-center space-x-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                 <div className="relative w-full sm:w-56">
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
                   <input
@@ -436,7 +439,7 @@ export default function MarketPage() {
 
           {/* 3. SECONDARY LEVEL 2: MATERIAL NAME PILLS */}
           {mainCategory !== 'whatsapp' && (
-            <div className="py-2.5 border-t border-slate-800 flex items-center space-x-2 overflow-x-auto scrollbar-none">
+            <div className="py-2 border-t border-slate-800 flex items-center space-x-2 overflow-x-auto scrollbar-none">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 shrink-0 flex items-center space-x-1">
                 <Filter className="w-3 h-3 text-slate-400" />
                 <span>Materials:</span>
@@ -533,13 +536,36 @@ export default function MarketPage() {
             </div>
           </div>
         ) : (
-          /* ========================================================= */
-          /* 3-LEVEL STRUCTURE: Category -> Material Name -> Mandis    */
-          /* Left: Mandi Price Lists | Right: Past 50 Records Drawer   */
-          /* ========================================================= */
+          <>
+            {/* Mobile Segmented View Switcher (< lg) */}
+          <div className="flex lg:hidden bg-white p-1 rounded-xl border border-slate-200 shadow-xs mb-4">
+            <button
+              onClick={() => setMobileTab('mandis')}
+              className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 cursor-pointer ${
+                mobileTab === 'mandis'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Mandi Rates ({filteredMaterials.length})</span>
+            </button>
+            <button
+              onClick={() => setMobileTab('history')}
+              className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 cursor-pointer ${
+                mobileTab === 'history'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>50-Rec Analysis {selectedMaterial ? `(${selectedMaterial.mandiCity})` : ''}</span>
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Column (7 cols): Mandis and Places grouped by Material Name */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className={`lg:col-span-7 space-y-6 ${mobileTab === 'mandis' ? 'block' : 'hidden lg:block'}`}>
               {Object.keys(groupedByMaterial).length === 0 ? (
                 <div className="bg-white border border-slate-200 rounded-xl p-12 text-center text-slate-500">
                   <Search className="w-10 h-10 mx-auto mb-2 text-slate-300" />
@@ -612,7 +638,10 @@ export default function MarketPage() {
                               return (
                                 <tr
                                   key={mat.id}
-                                  onClick={() => setSelectedMaterial(mat)}
+                                  onClick={() => {
+                                    setSelectedMaterial(mat);
+                                    setMobileTab('history');
+                                  }}
                                   className={`cursor-pointer transition group ${
                                     isSelected
                                       ? 'bg-blue-50/90 font-semibold border-l-4 border-l-blue-600'
@@ -691,8 +720,9 @@ export default function MarketPage() {
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setSelectedMaterial(mat);
+                                        setMobileTab('history');
                                       }}
-                                      className="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-100 text-slate-700 hover:bg-blue-100 hover:text-blue-800 transition border border-slate-200"
+                                      className="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-100 text-slate-700 hover:bg-blue-100 hover:text-blue-800 transition border border-slate-200 cursor-pointer"
                                       title="View all 50 recorded price sessions"
                                     >
                                       50 Rec
@@ -720,9 +750,17 @@ export default function MarketPage() {
             </div>
 
             {/* Right Column (5 cols): Selected Mandi's Past 50 Historical Records Panel */}
-            <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-36">
+            <div className={`lg:col-span-5 space-y-4 lg:sticky lg:top-36 ${mobileTab === 'history' ? 'block' : 'hidden lg:block'}`}>
               {selectedMaterial ? (
-                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                <div className="bg-white border border-slate-200 rounded-xl p-3.5 sm:p-5 shadow-sm space-y-4">
+                  {/* Mobile Back Button */}
+                  <button
+                    onClick={() => setMobileTab('mandis')}
+                    className="lg:hidden w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 cursor-pointer border border-slate-200 mb-2"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>← Back to Mandi Rates List</span>
+                  </button>
                   {/* Selected Mandi Details Header */}
                   <div className="border-b border-slate-200 pb-4">
                     <div className="flex items-center justify-between">
@@ -972,7 +1010,8 @@ export default function MarketPage() {
               )}
             </div>
           </div>
-        )}
+        </>
+      )}
 
         {/* 5. Authentic Mandi Notes & Rumours Disclaimer */}
         <div className="bg-slate-900 text-white rounded-xl p-5 sm:p-6 border border-slate-800 space-y-4">

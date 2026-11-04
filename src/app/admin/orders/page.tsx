@@ -132,49 +132,32 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
-                <th className="py-3 px-4">Order ID & Date</th>
-                <th className="py-3 px-4">Client Company</th>
-                <th className="py-3 px-4">Fulfillment Status</th>
-                <th className="py-3 px-4">Payment</th>
-                <th className="py-3 px-4">Carrier & Tracking</th>
-                <th className="py-3 px-4 text-right">Grand Total (₹)</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {filtered.map((order) => {
-                const invoice = invoices.find((inv) => inv.orderId === order.id);
-                return (
-                  <tr key={order.id} className="hover:bg-slate-50">
-                    <td className="py-3 px-4">
-                      <span className="font-mono font-bold text-slate-900 block">
+      {/* Orders List Container */}
+      <div className="space-y-3">
+        {/* Mobile Orders Cards (< md screens) */}
+        <div className="md:hidden space-y-3">
+          {filtered.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-lg p-8 text-center text-xs text-slate-500">
+              No orders found matching filter.
+            </div>
+          ) : (
+            filtered.map((order) => {
+              const invoice = invoices.find((inv) => inv.orderId === order.id);
+              return (
+                <div key={order.id} className="bg-white border border-slate-200 rounded-lg p-3.5 space-y-2.5 text-xs shadow-xs">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="font-mono font-bold text-slate-900 text-sm block">
                         {order.orderNumber}
                       </span>
                       <span className="text-[10px] text-slate-400">
                         {formatIndianDate(order.createdAt)} • Ref: {order.quotationNumber}
                       </span>
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <p className="font-bold text-slate-900">{order.customerSnapshot.companyName}</p>
-                      <p className="text-[10px] text-slate-500">
-                        {order.customerSnapshot.fullName} ({order.shippingAddress.city})
-                      </p>
-                    </td>
-
-                    <td className="py-3 px-4">
+                    </div>
+                    <div className="flex items-center space-x-1">
                       <span className="bg-purple-100 text-purple-900 text-[10px] font-bold px-2 py-0.5 rounded capitalize">
                         {order.status.replace(/_/g, ' ')}
                       </span>
-                    </td>
-
-                    <td className="py-3 px-4">
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded capitalize ${
                           order.paymentStatus === 'paid'
@@ -184,58 +167,163 @@ export default function AdminOrdersPage() {
                       >
                         {order.paymentStatus}
                       </span>
-                    </td>
+                    </div>
+                  </div>
 
-                    <td className="py-3 px-4 text-[11px]">
-                      {order.trackingNumber ? (
-                        <div>
-                          <span className="font-mono font-bold text-blue-700 block">
-                            {order.trackingNumber}
-                          </span>
-                          <span className="text-[10px] text-slate-500">{order.trackingCarrier}</span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 italic">Pending Dispatch</span>
-                      )}
-                    </td>
-
-                    <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 text-sm">
-                      {formatINR(order.grandTotal)}
-                    </td>
-
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        {invoice && (
-                          <button
-                            onClick={() => generateInvoicePDF(invoice)}
-                            className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700"
-                            title="Download Tax Invoice PDF"
-                          >
-                            <Receipt className="w-3.5 h-3.5 text-blue-600" />
-                          </button>
-                        )}
-
-                        <button
-                          onClick={() => openOrderModal(order)}
-                          className="bg-slate-900 hover:bg-slate-800 text-white px-2.5 py-1 rounded text-xs font-semibold inline-flex items-center space-x-1"
-                        >
-                          <Edit className="w-3 h-3" />
-                          <span>Dispatch</span>
-                        </button>
+                  <div className="bg-slate-50 rounded p-2.5 border border-slate-200">
+                    <p className="font-bold text-slate-900">{order.customerSnapshot.companyName}</p>
+                    <p className="text-[11px] text-slate-600 mt-0.5">
+                      {order.customerSnapshot.fullName} ({order.shippingAddress.city})
+                    </p>
+                    {order.trackingNumber ? (
+                      <div className="mt-1.5 pt-1.5 border-t border-slate-200 flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500 truncate mr-2">{order.trackingCarrier}</span>
+                        <span className="font-mono font-bold text-blue-700 shrink-0">LR: {order.trackingNumber}</span>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    ) : (
+                      <p className="text-[10px] text-amber-600 mt-1 italic">Pending Dispatch Details</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div>
+                      <span className="text-slate-400 text-[10px] block">Grand Total:</span>
+                      <span className="font-mono font-bold text-slate-900 text-base">
+                        {formatINR(order.grandTotal)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      {invoice && (
+                        <button
+                          onClick={() => generateInvoicePDF(invoice)}
+                          className="p-2 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 touch-manipulation"
+                          title="Download Tax Invoice PDF"
+                        >
+                          <Receipt className="w-4 h-4 text-blue-600" />
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => openOrderModal(order)}
+                        className="bg-slate-900 hover:bg-slate-800 text-white px-3 py-2 rounded text-xs font-semibold inline-flex items-center space-x-1.5 touch-manipulation shadow-xs"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                        <span>Dispatch / Status</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop / Tablet Table (md and up) */}
+        <div className="hidden md:block bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
+                  <th className="py-3 px-4">Order ID & Date</th>
+                  <th className="py-3 px-4">Client Company</th>
+                  <th className="py-3 px-4">Fulfillment Status</th>
+                  <th className="py-3 px-4">Payment</th>
+                  <th className="py-3 px-4">Carrier & Tracking</th>
+                  <th className="py-3 px-4 text-right">Grand Total (₹)</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {filtered.map((order) => {
+                  const invoice = invoices.find((inv) => inv.orderId === order.id);
+                  return (
+                    <tr key={order.id} className="hover:bg-slate-50">
+                      <td className="py-3 px-4">
+                        <span className="font-mono font-bold text-slate-900 block">
+                          {order.orderNumber}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {formatIndianDate(order.createdAt)} • Ref: {order.quotationNumber}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <p className="font-bold text-slate-900">{order.customerSnapshot.companyName}</p>
+                        <p className="text-[10px] text-slate-500">
+                          {order.customerSnapshot.fullName} ({order.shippingAddress.city})
+                        </p>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <span className="bg-purple-100 text-purple-900 text-[10px] font-bold px-2 py-0.5 rounded capitalize">
+                          {order.status.replace(/_/g, ' ')}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded capitalize ${
+                            order.paymentStatus === 'paid'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {order.paymentStatus}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 text-[11px]">
+                        {order.trackingNumber ? (
+                          <div>
+                            <span className="font-mono font-bold text-blue-700 block">
+                              {order.trackingNumber}
+                            </span>
+                            <span className="text-[10px] text-slate-500">{order.trackingCarrier}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 italic">Pending Dispatch</span>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 text-sm">
+                        {formatINR(order.grandTotal)}
+                      </td>
+
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          {invoice && (
+                            <button
+                              onClick={() => generateInvoicePDF(invoice)}
+                              className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 touch-manipulation"
+                              title="Download Tax Invoice PDF"
+                            >
+                              <Receipt className="w-3.5 h-3.5 text-blue-600" />
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => openOrderModal(order)}
+                            className="bg-slate-900 hover:bg-slate-800 text-white px-2.5 py-1 rounded text-xs font-semibold inline-flex items-center space-x-1 touch-manipulation"
+                          >
+                            <Edit className="w-3 h-3" />
+                            <span>Dispatch</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       {/* Order Dispatch & Status Modal */}
       {modalOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-lg w-full p-6 shadow-2xl border border-slate-300">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-lg max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-slate-300 max-h-[90vh] overflow-y-auto">
             <h3 className="font-bold text-base text-slate-900 mb-1">
               Update Order #{selectedOrder.orderNumber}
             </h3>
@@ -244,7 +332,7 @@ export default function AdminOrdersPage() {
             </p>
 
             <form onSubmit={handleSaveOrderUpdate} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-800 mb-1">Fulfillment Status</label>
                   <select
@@ -289,7 +377,7 @@ export default function AdminOrdersPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-800 mb-1">Tracking / Docket Number (LR#)</label>
                   <input
@@ -323,17 +411,17 @@ export default function AdminOrdersPage() {
                 />
               </div>
 
-              <div className="flex justify-end space-x-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="bg-slate-100 text-slate-700 font-semibold px-4 py-2 rounded"
+                  className="w-full sm:w-auto bg-slate-100 text-slate-700 font-semibold px-4 py-2.5 rounded text-center touch-manipulation"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-2 rounded shadow"
+                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-2.5 rounded shadow text-center touch-manipulation"
                 >
                   Save Order Updates
                 </button>

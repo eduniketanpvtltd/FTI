@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
 import { useStore } from '@/lib/store-context';
 import { ProductIcon } from '@/components/ui/ProductIcon';
-import { formatINR, formatIndianDate, formatIndianDateTime } from '@/lib/utils';
 import {
   TrendingUp,
   ArrowRight,
@@ -13,7 +12,6 @@ import {
   Building2,
   Truck,
   CheckCircle2,
-  Clock,
   Layers,
   FileSpreadsheet,
   AlertCircle,
@@ -24,7 +22,7 @@ import {
 import { ProductCategory } from '@/types';
 
 export default function HomePage() {
-  const { marketMaterials, categories, lastMarketSyncTime } = useStore();
+  const { categories } = useStore();
   const [comingSoonModal, setComingSoonModal] = useState<string | null>(null);
 
   // Split categories: 3 primary cards on home
@@ -32,96 +30,41 @@ export default function HomePage() {
   const fastenersCat = categories.find((c: ProductCategory) => c.slug === 'fasteners');
   const tractorPartsCat = categories.find((c: ProductCategory) => c.slug === 'tractor-parts');
 
-  // Top market tickers
-  const topGainers = [...marketMaterials].sort((a, b) => b.percentageChange - a.percentageChange).slice(0, 4);
-
   return (
     <CustomerLayout>
       {/* 1. Hero / Industrial Intro Banner */}
       <section className="bg-gradient-to-b from-slate-900 to-slate-800 text-white border-b border-slate-700/60 py-8 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center space-x-2 bg-slate-900/90 border border-slate-700/80 px-3 py-1 rounded-full text-slate-200 text-xs font-semibold uppercase tracking-wider mb-3 shadow-sm">
-                <img src="/fti-logo.png" alt="FTI Logo" className="w-4 h-4 object-contain" />
-                <span className="text-red-400 font-bold">FieldFast Tech International</span>
-                <span className="text-slate-500">•</span>
-                <span>B2B Metal Trading Desk</span>
-              </div>
-              <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
-                Direct Mill Sourced Raw Materials & Live Scrap Price Index
-              </h1>
-              <p className="mt-3 text-sm sm:text-base text-slate-300 leading-relaxed">
-                Source certified Round Bars, Bright Bars, Plates, Flats, and TMT rebars directly from prime producers.
-                Submit custom dimension combinations for instant quotation preparation without public retail markups.
-              </p>
-
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  href="/raw-materials"
-                  className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-5 py-2.5 rounded-md shadow flex items-center space-x-2 transition"
-                >
-                  <Layers className="w-4 h-4" />
-                  <span>Explore Raw Materials</span>
-                </Link>
-                <Link
-                  href="/market"
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 text-sm font-semibold px-4 py-2.5 rounded-md flex items-center space-x-2 transition"
-                >
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
-                  <span>View Live Metal Index</span>
-                </Link>
-              </div>
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center space-x-2 bg-slate-900/90 border border-slate-700/80 px-3 py-1 rounded-full text-slate-200 text-xs font-semibold uppercase tracking-wider mb-3 shadow-sm">
+              <img src="/fti-logo.png" alt="FTI Logo" className="w-4 h-4 object-contain" />
+              <span className="text-red-400 font-bold">FieldFast Tech International</span>
+              <span className="text-slate-500">•</span>
+              <span>B2B Metal Trading Desk</span>
             </div>
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+              Direct Mill Sourced Raw Materials & Live Scrap Price Index
+            </h1>
+            <p className="mt-3 text-sm sm:text-base text-slate-300 leading-relaxed">
+              Source certified Round Bars, Bright Bars, Plates, Flats, and TMT rebars directly from prime producers.
+              Submit custom dimension combinations for instant quotation preparation without public retail markups.
+            </p>
 
-            {/* Quick Live Market Snapshot Card */}
-            <div className="w-full md:w-80 bg-slate-950/80 border border-slate-700/80 rounded-lg p-4 shadow-xl">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
-                <div className="flex items-center space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                    Mandi & Spot Highlights
-                  </span>
-                </div>
-                <Link href="/market" className="text-[11px] text-blue-400 hover:underline flex items-center">
-                  <span>View All</span>
-                  <ArrowRight className="w-3 h-3 ml-0.5" />
-                </Link>
-              </div>
-
-              <div className="space-y-2.5">
-                {topGainers.map((mat) => (
-                  <div key={mat.id} className="flex items-center justify-between text-xs py-1 border-b border-slate-900 last:border-none">
-                    <div>
-                      <p className="font-medium text-slate-200 truncate max-w-[150px]">{mat.name}</p>
-                      <p className="text-[10px] text-slate-500">{mat.symbol}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-slate-100">{formatINR(mat.currentPrice)}</p>
-                      <p
-                        className={`text-[10px] font-bold ${
-                          mat.percentageChange > 0
-                            ? 'text-emerald-400'
-                            : mat.percentageChange < 0
-                            ? 'text-rose-400'
-                            : 'text-slate-400'
-                        }`}
-                      >
-                        {mat.percentageChange > 0 ? '↑' : mat.percentageChange < 0 ? '↓' : '→'}{' '}
-                        {Math.abs(mat.percentageChange)}%
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500">
-                <span className="flex items-center space-x-1">
-                  <Clock className="w-3 h-3" />
-                  <span>Auto-sync active</span>
-                </span>
-                <span>{formatIndianDate(lastMarketSyncTime)}</span>
-              </div>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href="/raw-materials"
+                className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-5 py-2.5 rounded-md shadow flex items-center space-x-2 transition"
+              >
+                <Layers className="w-4 h-4" />
+                <span>Explore Raw Materials</span>
+              </Link>
+              <Link
+                href="/market"
+                className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 text-sm font-semibold px-4 py-2.5 rounded-md flex items-center space-x-2 transition"
+              >
+                <TrendingUp className="w-4 h-4 text-emerald-400" />
+                <span>View Live Metal Index</span>
+              </Link>
             </div>
           </div>
         </div>

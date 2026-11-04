@@ -44,6 +44,7 @@ import {
   BarChart3,
   ChevronRight,
   SlidersHorizontal,
+  ArrowLeft,
 } from 'lucide-react';
 
 export default function AdminMarketManagementPage() {
@@ -56,6 +57,9 @@ export default function AdminMarketManagementPage() {
     lastMarketSyncTime,
     refreshMarketPrices,
   } = useStore();
+
+  // Mobile View Switcher (< xl screens: 'mandis' vs 'inspector')
+  const [mobileTab, setMobileTab] = useState<'mandis' | 'inspector'>('mandis');
 
   // LEVEL 1: Primary Category ('raw_materials' vs 'scrap_materials')
   const [mainCategory, setMainCategory] = useState<MarketMainCategory>('raw_materials');
@@ -419,11 +423,11 @@ export default function AdminMarketManagementPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <Link
             href="/market"
             target="_blank"
-            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded shadow-xs flex items-center space-x-1.5 transition"
+            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded shadow-xs flex items-center justify-center space-x-1.5 transition"
           >
             <span>Customer View</span>
             <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
@@ -435,7 +439,7 @@ export default function AdminMarketManagementPage() {
               setParsePreview(null);
               setBroadcastModalOpen(true);
             }}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded shadow transition flex items-center space-x-1.5 cursor-pointer"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded shadow transition flex items-center justify-center space-x-1.5 cursor-pointer"
           >
             <MessageSquare className="w-4 h-4" />
             <span>Paste WhatsApp Broadcast</span>
@@ -443,7 +447,7 @@ export default function AdminMarketManagementPage() {
 
           <button
             onClick={() => setAddModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-2 rounded shadow transition flex items-center space-x-1.5 shrink-0 cursor-pointer"
+            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-2 rounded shadow transition flex items-center justify-center space-x-1.5 shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Single Mandi</span>
@@ -459,18 +463,18 @@ export default function AdminMarketManagementPage() {
       )}
 
       {/* Live Bulletin Summary Banner */}
-      <div className="bg-slate-900 text-white p-4 rounded-xl border border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
+      <div className="bg-slate-900 text-white p-3.5 sm:p-4 rounded-xl border border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-3 sm:gap-4 text-xs font-mono">
           <div>
             <span className="text-[10px] text-slate-400 block uppercase">Fixing Session</span>
-            <span className="font-bold text-white">
+            <span className="font-bold text-white text-[11px] sm:text-xs">
               🗓️ {mandiBulletin?.dateStr || '28-OCTOBER-2026'} ({mandiBulletin?.timeStr || '12:00'})
             </span>
           </div>
 
           <div>
             <span className="text-[10px] text-slate-400 block uppercase">USD / INR</span>
-            <span className="font-bold text-amber-400">
+            <span className="font-bold text-amber-400 text-[11px] sm:text-xs">
               🇺🇸 1($) = {mandiBulletin?.usdInrRate || 95.04} (₹)
             </span>
           </div>
@@ -478,7 +482,7 @@ export default function AdminMarketManagementPage() {
           <div>
             <span className="text-[10px] text-slate-400 block uppercase">Sentiment</span>
             <span
-              className={`font-bold ${
+              className={`font-bold text-[11px] sm:text-xs ${
                 mandiBulletin?.overallTrend === 'up' ? 'text-emerald-400' : 'text-rose-400'
               }`}
             >
@@ -488,7 +492,7 @@ export default function AdminMarketManagementPage() {
 
           <div>
             <span className="text-[10px] text-slate-400 block uppercase">Total Mandi Fixings</span>
-            <span className="font-bold text-blue-400">{marketMaterials.length} Hubs Tracked</span>
+            <span className="font-bold text-blue-400 text-[11px] sm:text-xs">{marketMaterials.length} Hubs Tracked</span>
           </div>
         </div>
 
@@ -498,7 +502,7 @@ export default function AdminMarketManagementPage() {
             setParsePreview(null);
             setBroadcastModalOpen(true);
           }}
-          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded text-xs font-bold transition flex items-center space-x-1.5 self-start md:self-auto cursor-pointer"
+          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded text-xs font-bold transition flex items-center justify-center space-x-1.5 self-stretch sm:self-start md:self-auto cursor-pointer"
         >
           <Edit className="w-3.5 h-3.5 text-blue-400" />
           <span>Update via Daily Broadcast</span>
@@ -511,22 +515,22 @@ export default function AdminMarketManagementPage() {
       <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           {/* Level 1 Tabs */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
             <button
               onClick={() => {
                 setMainCategory('raw_materials');
                 setSelectedMaterialGroup('all');
               }}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition flex items-center space-x-2 cursor-pointer ${
+              className={`flex-1 sm:flex-none justify-center px-3 sm:px-4 py-2 text-xs font-bold rounded-lg transition flex items-center space-x-1.5 sm:space-x-2 cursor-pointer ${
                 mainCategory === 'raw_materials'
                   ? 'bg-blue-600 text-white shadow-md'
                   : 'bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200'
               }`}
             >
-              <Building2 className="w-4 h-4" />
-              <span>1. Raw Materials</span>
+              <Building2 className="w-4 h-4 shrink-0" />
+              <span className="truncate">1. Raw Materials</span>
               <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                className={`text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold ${
                   mainCategory === 'raw_materials'
                     ? 'bg-blue-700 text-white'
                     : 'bg-blue-200 text-blue-900'
@@ -541,16 +545,16 @@ export default function AdminMarketManagementPage() {
                 setMainCategory('scrap_materials');
                 setSelectedMaterialGroup('all');
               }}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition flex items-center space-x-2 cursor-pointer ${
+              className={`flex-1 sm:flex-none justify-center px-3 sm:px-4 py-2 text-xs font-bold rounded-lg transition flex items-center space-x-1.5 sm:space-x-2 cursor-pointer ${
                 mainCategory === 'scrap_materials'
                   ? 'bg-amber-600 text-white shadow-md'
                   : 'bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200'
               }`}
             >
-              <Layers className="w-4 h-4" />
-              <span>1. Scrap Materials</span>
+              <Layers className="w-4 h-4 shrink-0" />
+              <span className="truncate">1. Scrap Materials</span>
               <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                className={`text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold ${
                   mainCategory === 'scrap_materials'
                     ? 'bg-amber-700 text-white'
                     : 'bg-amber-200 text-amber-900'
@@ -562,12 +566,12 @@ export default function AdminMarketManagementPage() {
           </div>
 
           {/* Search Bar & Trend Filter */}
-          <div className="flex items-center space-x-2">
-            <div className="relative max-w-xs w-full">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-60">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               <input
                 type="text"
-                placeholder="Search mandi, material, or symbol..."
+                placeholder="Search mandi, material..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
@@ -590,7 +594,7 @@ export default function AdminMarketManagementPage() {
         {/* ========================================================= */}
         {/* LEVEL 2: Material Name Pills (e.g. Ingot, Billet, TMT...) */}
         {/* ========================================================= */}
-        <div className="pt-2 border-t border-slate-100 flex items-center space-x-2 overflow-x-auto scrollbar-none">
+        <div className="pt-2 border-t border-slate-100 flex items-center space-x-2 overflow-x-auto scrollbar-none py-1">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0 flex items-center space-x-1">
             <Filter className="w-3 h-3 text-slate-400" />
             <span>2. Material:</span>
@@ -604,7 +608,7 @@ export default function AdminMarketManagementPage() {
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            All {mainCategory === 'raw_materials' ? 'Raw Materials' : 'Scraps'} ({categoryMaterials.length})
+            All ({categoryMaterials.length})
           </button>
 
           {availableMaterialNames.map((matName) => {
@@ -633,10 +637,36 @@ export default function AdminMarketManagementPage() {
         </div>
       </div>
 
+      {/* Mobile Segmented Switcher (< xl screens) */}
+      <div className="flex xl:hidden bg-white p-1 rounded-xl border border-slate-200 shadow-xs">
+        <button
+          onClick={() => setMobileTab('mandis')}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 cursor-pointer ${
+            mobileTab === 'mandis'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Building2 className="w-3.5 h-3.5" />
+          <span>Mandi Rates ({filteredMaterials.length})</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('inspector')}
+          className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 cursor-pointer ${
+            mobileTab === 'inspector'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <History className="w-3.5 h-3.5" />
+          <span>50-Rec Inspector {selectedMaterial ? `(${selectedMaterial.mandiCity})` : ''}</span>
+        </button>
+      </div>
+
       {/* Main Trading Desk Workspace: Split 7 / 5 Columns */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* LEFT COLUMN: Level 2 & 3 Grouped Material & Mandi Tables (7 cols) */}
-        <div className="xl:col-span-7 space-y-5">
+        <div className={`xl:col-span-7 space-y-5 ${mobileTab === 'mandis' ? 'block' : 'hidden xl:block'}`}>
           {Object.keys(groupedByMaterial).length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-xs text-slate-500 shadow-xs">
               No Mandi rates found matching your filters. Try selecting another material or clearing the search.
@@ -718,7 +748,10 @@ export default function AdminMarketManagementPage() {
                           return (
                             <tr
                               key={mat.id}
-                              onClick={() => setSelectedMaterial(mat)}
+                              onClick={() => {
+                                setSelectedMaterial(mat);
+                                setMobileTab('inspector');
+                              }}
                               className={`transition cursor-pointer ${
                                 isSelected
                                   ? 'bg-blue-50/70 font-semibold'
@@ -816,7 +849,10 @@ export default function AdminMarketManagementPage() {
                               >
                                 <div className="flex items-center justify-end space-x-1.5">
                                   <button
-                                    onClick={() => setSelectedMaterial(mat)}
+                                    onClick={() => {
+                                      setSelectedMaterial(mat);
+                                      setMobileTab('inspector');
+                                    }}
                                     className={`px-2 py-1 text-[10px] font-mono font-bold rounded border transition cursor-pointer ${
                                       isSelected
                                         ? 'bg-blue-600 text-white border-blue-600'
@@ -850,9 +886,17 @@ export default function AdminMarketManagementPage() {
         </div>
 
         {/* RIGHT COLUMN: Dedicated Past 50 Records Live Inspector (5 cols) */}
-        <div className="xl:col-span-5 sticky top-6 space-y-5">
+        <div id="audit-panel" className={`xl:col-span-5 sticky top-20 space-y-5 ${mobileTab === 'inspector' ? 'block' : 'hidden xl:block'}`}>
           {selectedMaterial ? (
-            <div className="bg-white border border-slate-200 rounded-xl shadow-xs p-5 space-y-5">
+            <div className="bg-white border border-slate-200 rounded-xl shadow-xs p-3.5 sm:p-5 space-y-5">
+              {/* Mobile Back Button */}
+              <button
+                onClick={() => setMobileTab('mandis')}
+                className="xl:hidden w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 cursor-pointer border border-slate-200"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>← Back to Mandi Rates List</span>
+              </button>
               {/* Material & Mandi Header */}
               <div className="border-b border-slate-200 pb-4">
                 <div className="flex items-center justify-between mb-1.5">
@@ -1211,11 +1255,11 @@ export default function AdminMarketManagementPage() {
               )}
             </div>
 
-            <div className="border-t border-slate-200 pt-3 flex items-center justify-between">
+            <div className="border-t border-slate-200 pt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={handlePreviewBroadcast}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs transition cursor-pointer"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs transition cursor-pointer text-center touch-manipulation"
               >
                 Validate / Preview
               </button>
@@ -1224,14 +1268,14 @@ export default function AdminMarketManagementPage() {
                 <button
                   type="button"
                   onClick={() => setBroadcastModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-md text-xs font-medium hover:bg-slate-50 cursor-pointer"
+                  className="flex-1 sm:flex-initial px-4 py-2 border border-slate-300 text-slate-700 rounded-md text-xs font-medium hover:bg-slate-50 cursor-pointer text-center touch-manipulation"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleApplyBroadcast}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs font-bold shadow transition flex items-center space-x-1.5 cursor-pointer"
+                  className="flex-1 sm:flex-initial px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs font-bold shadow transition flex items-center justify-center space-x-1.5 cursor-pointer touch-manipulation"
                 >
                   <Check className="w-4 h-4" />
                   <span>Update All Mandi Rates</span>
@@ -1246,8 +1290,8 @@ export default function AdminMarketManagementPage() {
       {/* Modal 2: Edit Single Material Price                       */}
       {/* ========================================================= */}
       {editModalOpen && editingMaterial && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-slate-300 space-y-4">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-300 space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 className="font-bold text-base text-slate-900">
               Update Spot Rate: {editingMaterial.materialName} ({editingMaterial.mandiCity}) ᵃˢᵗ
             </h3>
@@ -1291,13 +1335,13 @@ export default function AdminMarketManagementPage() {
                 <button
                   type="button"
                   onClick={() => setEditModalOpen(false)}
-                  className="px-3 py-1.5 border border-slate-300 text-slate-700 rounded text-xs hover:bg-slate-50 cursor-pointer"
+                  className="px-3.5 py-2 border border-slate-300 text-slate-700 rounded text-xs hover:bg-slate-50 cursor-pointer touch-manipulation"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold cursor-pointer touch-manipulation"
                 >
                   Save New Price
                 </button>
@@ -1311,8 +1355,8 @@ export default function AdminMarketManagementPage() {
       {/* Modal 3: Add New Mandi Price Rate                         */}
       {/* ========================================================= */}
       {addModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-slate-300 space-y-4">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-300 space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 className="font-bold text-base text-slate-900">
               Add New Mandi Price Rate
             </h3>
@@ -1418,13 +1462,13 @@ export default function AdminMarketManagementPage() {
                 <button
                   type="button"
                   onClick={() => setAddModalOpen(false)}
-                  className="px-3 py-1.5 border border-slate-300 text-slate-700 rounded text-xs hover:bg-slate-50 cursor-pointer"
+                  className="px-3.5 py-2 border border-slate-300 text-slate-700 rounded text-xs hover:bg-slate-50 cursor-pointer touch-manipulation"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold cursor-pointer touch-manipulation"
                 >
                   Add Mandi Price
                 </button>

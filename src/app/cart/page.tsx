@@ -143,64 +143,131 @@ export default function QuotationCartPage() {
 
                   {/* List of Cart Items */}
                   <div className="space-y-4">
-                    {cart.map((item, index) => (
-                      <div
-                        key={item.id}
-                        className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 hover:bg-slate-50 transition"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-start space-x-3">
-                            <ProductIcon slug={item.categorySlug} className="w-10 h-10 shrink-0 mt-0.5" />
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded font-mono">
-                                  #{index + 1}
-                                </span>
-                                <h3 className="text-sm font-bold text-slate-900">
-                                  {item.categoryName} – {item.grade}
-                                </h3>
+                    {cart.map((item, index) => {
+                      const specEntries = Object.entries(item.specifications);
+                      const dimensionKeys = ['diameter', 'length', 'thickness', 'width', 'size', 'outerdiameter', 'wallthickness'];
+                      const dimensions = specEntries.filter(([k]) => dimensionKeys.includes(k.toLowerCase()));
+                      const technicalSpecs = specEntries.filter(([k]) => !dimensionKeys.includes(k.toLowerCase()));
+
+                      const formatSpecKey = (key: string): string => {
+                        const map: Record<string, string> = {
+                          diameter: 'Diameter',
+                          length: 'Length',
+                          supplyCondition: 'Supply Condition',
+                          testingRequirement: 'Testing Requirement',
+                          tolerance: 'Tolerance Standard',
+                          surfaceFinish: 'Surface Finish',
+                          outerDiameter: 'Outer Diameter',
+                          wallThickness: 'Wall Thickness',
+                          width: 'Width',
+                          thickness: 'Thickness',
+                          size: 'Size / Dimension',
+                          temper: 'Temper / Hardness',
+                        };
+                        if (map[key]) return map[key];
+                        return key
+                          .replace(/([A-Z])/g, ' $1')
+                          .replace(/_/g, ' ')
+                          .trim()
+                          .replace(/^\w/, (c) => c.toUpperCase());
+                      };
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs hover:border-blue-300 hover:shadow-sm transition-all space-y-3.5"
+                        >
+                          {/* Top Row: Icon, Grade Header, and Delete */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start space-x-3 min-w-0">
+                              <div className="w-11 h-11 rounded-lg bg-slate-100 border border-slate-200/80 p-1.5 flex items-center justify-center shrink-0">
+                                <ProductIcon slug={item.categorySlug} className="w-full h-full object-contain" />
                               </div>
 
-                              {/* Specification Parameters */}
-                              <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                                {Object.entries(item.specifications).map(([key, value]) => (
-                                  <div key={key} className="bg-white px-2 py-1 rounded border border-slate-200">
-                                    <span className="text-[10px] text-slate-400 block uppercase capitalize">
-                                      {key}
-                                    </span>
-                                    <span className="font-semibold text-slate-800">{value}</span>
-                                  </div>
-                                ))}
-
-                                <div className="bg-blue-50 px-2 py-1 rounded border border-blue-200">
-                                  <span className="text-[10px] text-blue-600 block uppercase font-bold">
-                                    Quantity
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded font-mono">
+                                    Combination #{index + 1}
                                   </span>
-                                  <span className="font-bold text-blue-900">
-                                    {item.quantity} {item.unit}
+                                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                                    {item.categoryName}
                                   </span>
                                 </div>
-                              </div>
 
-                              {item.specialInstructions && (
-                                <p className="mt-2 text-[11px] text-slate-600 italic bg-amber-50/60 p-2 rounded border border-amber-200/60">
-                                  <span className="font-semibold text-amber-900">Note:</span> {item.specialInstructions}
-                                </p>
-                              )}
+                                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-snug">
+                                  {item.grade}
+                                </h3>
+                              </div>
                             </div>
+
+                            <button
+                              type="button"
+                              onClick={() => removeFromCart(item.id)}
+                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition shrink-0 cursor-pointer"
+                              title="Remove this combination"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => removeFromCart(item.id)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded transition"
-                            title="Remove combination"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {/* Primary Dimensions Strip */}
+                          {dimensions.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                              {dimensions.map(([k, v]) => (
+                                <div
+                                  key={k}
+                                  className="inline-flex items-center space-x-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md text-xs"
+                                >
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                    {formatSpecKey(k)}:
+                                  </span>
+                                  <span className="font-bold text-slate-900 font-mono">{v}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Technical Standards & Testing Conditions */}
+                          {technicalSpecs.length > 0 && (
+                            <div className="bg-slate-50/70 border border-slate-200/80 rounded-lg p-3 space-y-2 text-xs">
+                              {technicalSpecs.map(([k, v]) => (
+                                <div key={k} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 text-xs">
+                                  <span className="text-[11px] font-bold text-slate-500 shrink-0 sm:w-44 uppercase tracking-wider">
+                                    {formatSpecKey(k)}:
+                                  </span>
+                                  <span className="text-slate-800 font-medium leading-relaxed">{v}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Special Instructions Note */}
+                          {item.specialInstructions && (
+                            <div className="text-xs text-amber-900 bg-amber-50/80 border border-amber-200 p-2.5 rounded-lg flex items-start space-x-2">
+                              <span className="font-bold shrink-0">Note:</span>
+                              <span className="leading-relaxed">{item.specialInstructions}</span>
+                            </div>
+                          )}
+
+                          {/* Footer Strip: Quantity & Dispatch Status */}
+                          <div className="bg-blue-50/60 border border-blue-100 rounded-lg px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
+                                Requested Lot Size:
+                              </span>
+                              <span className="text-sm font-black text-blue-950 font-mono bg-white px-2.5 py-0.5 rounded border border-blue-200 shadow-2xs">
+                                {item.quantity.toLocaleString('en-IN')} {item.unit}
+                              </span>
+                            </div>
+
+                            <div className="text-[11px] text-blue-700/80 font-medium flex items-center space-x-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                              <span>Zero Retail Markup • Ex-Kalamboli Yard</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="mt-5 pt-4 border-t border-slate-200 flex items-center justify-between">

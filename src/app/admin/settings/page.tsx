@@ -94,7 +94,7 @@ export default function AdminSettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Settings Form (7 Cols) */}
         <div className="lg:col-span-7 space-y-5">
-          <form onSubmit={handleSaveSettings} className="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-4 text-xs">
+          <form onSubmit={handleSaveSettings} className="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-xs space-y-4 text-xs">
             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-2 flex items-center space-x-2">
               <Building2 className="w-4 h-4 text-blue-600" />
               <span>FTI Company Details & Invoicing Credentials</span>
@@ -239,7 +239,7 @@ export default function AdminSettingsPage() {
             <div className="pt-3 flex justify-end">
               <button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-6 rounded shadow transition"
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-6 rounded shadow transition touch-manipulation text-center"
               >
                 Save Settings
               </button>

@@ -11,7 +11,6 @@ import {
   User,
   ShieldCheck,
   Bell,
-  ArrowRightLeft,
   LayoutDashboard,
   ShoppingCart,
   Menu,
@@ -24,7 +23,7 @@ import {
 
 export function Header() {
   const pathname = usePathname();
-  const { currentUser, switchUserRole, cart, notifications, quotations } = useStore();
+  const { currentUser, cart, notifications, quotations } = useStore();
   const [mounted, setMounted] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
@@ -71,19 +70,6 @@ export function Header() {
                 <span className="sm:hidden">ISO 9001</span>
               </span>
             </div>
-
-            {/* Quick Role Switcher */}
-            <button
-              onClick={() => switchUserRole(isAdmin ? 'customer' : 'admin')}
-              className="flex items-center space-x-1 text-[10px] sm:text-[11px] bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 border border-blue-500/40 px-2 sm:px-2.5 py-0.5 rounded transition whitespace-nowrap font-medium cursor-pointer"
-              title="Click to toggle between Customer View and Admin View"
-            >
-              <ArrowRightLeft className="w-3 h-3 shrink-0" />
-              <span>
-                <span className="sm:hidden">{isAdmin ? 'Customer' : 'Admin'}</span>
-                <span className="hidden sm:inline">{isAdmin ? 'View as Customer' : 'Switch to Admin View'}</span>
-              </span>
-            </button>
           </div>
         </div>
       </div>
@@ -354,20 +340,6 @@ export function Header() {
                 <ExternalLink className="w-4 h-4 text-blue-400" />
               </Link>
             )}
-          </div>
-
-          {/* Quick role toggle in mobile drawer */}
-          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-            <span>Trading view: <strong className="text-slate-200 capitalize">{currentUser.role.replace('_', ' ')}</strong></span>
-            <button
-              onClick={() => {
-                switchUserRole(isAdmin ? 'customer' : 'admin');
-                setMobileMenuOpen(false);
-              }}
-              className="text-xs text-blue-400 hover:text-blue-300 font-medium underline cursor-pointer"
-            >
-              {isAdmin ? 'Switch to Customer View' : 'Switch to Admin View'}
-            </button>
           </div>
         </div>
       )}

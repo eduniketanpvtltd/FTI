@@ -417,8 +417,10 @@ function CategoryDetailContent() {
                       {/* Specification Details List */}
                       <div className="mt-2 text-[11px] text-slate-600 space-y-0.5 border-t border-slate-200/80 pt-2">
                         {Object.entries(item.specifications).map(([k, v]) => (
-                          <div key={k} className="flex justify-between">
-                            <span className="text-slate-500 capitalize">{k}:</span>
+                          <div key={k} className="flex justify-between text-xs">
+                            <span className="text-slate-500 capitalize">
+                              {k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}:
+                            </span>
                             <span className="font-medium text-slate-800">{v}</span>
                           </div>
                         ))}

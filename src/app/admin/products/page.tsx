@@ -4,16 +4,17 @@ import React, { useState } from 'react';
 import { useStore } from '@/lib/store-context';
 import { ProductIcon } from '@/components/ui/ProductIcon';
 import { ProductCategory } from '@/types';
-import { Boxes, Plus, Edit, CheckCircle2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Boxes, Plus, Edit, CheckCircle2, ShieldCheck, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 export default function AdminProductsPage() {
   const { categories } = useStore();
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | null>(categories[0] || null);
+  const [mobileTab, setMobileTab] = useState<'categories' | 'details'>('categories');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
             Product Catalog & Category Configurations
@@ -24,10 +25,37 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
+      {/* Mobile-only Segmented Control */}
+      <div className="lg:hidden flex rounded-lg bg-slate-200 p-1 shadow-inner text-xs">
+        <button
+          type="button"
+          onClick={() => setMobileTab('categories')}
+          className={`flex-1 py-2 font-bold rounded-md transition touch-manipulation flex items-center justify-center space-x-1.5 ${
+            mobileTab === 'categories'
+              ? 'bg-white text-blue-700 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Boxes className="w-4 h-4" />
+          <span>Categories ({categories.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('details')}
+          className={`flex-1 py-2 font-bold rounded-md transition touch-manipulation flex items-center justify-center space-x-1.5 ${
+            mobileTab === 'details'
+              ? 'bg-white text-blue-700 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <span>{selectedCategory ? selectedCategory.name : 'Details'}</span>
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Categories List (5 Cols) */}
-        <div className="lg:col-span-5 space-y-3">
-          <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
+        <div className={`lg:col-span-5 space-y-3 ${mobileTab === 'categories' ? 'block' : 'hidden lg:block'}`}>
+          <div className="bg-white border border-slate-200 rounded-lg p-3 sm:p-4 shadow-xs">
             <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
               Categories ({categories.length})
             </h2>
@@ -38,8 +66,11 @@ export default function AdminProductsPage() {
                 return (
                   <div
                     key={cat.id}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`cursor-pointer p-3 rounded-lg border flex items-center justify-between transition text-xs ${
+                    onClick={() => {
+                      setSelectedCategory(cat);
+                      setMobileTab('details');
+                    }}
+                    className={`cursor-pointer p-3 rounded-lg border flex items-center justify-between transition text-xs touch-manipulation ${
                       isSelected
                         ? 'bg-blue-50/80 border-blue-600 shadow-xs ring-1 ring-blue-600'
                         : 'bg-slate-50/60 border-slate-200 hover:bg-slate-50'
@@ -55,15 +86,18 @@ export default function AdminProductsPage() {
                       </div>
                     </div>
 
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                        cat.isComingSoon
-                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                          : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                      }`}
-                    >
-                      {cat.isComingSoon ? 'Coming Soon' : 'Active'}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                          cat.isComingSoon
+                            ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                            : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        }`}
+                      >
+                        {cat.isComingSoon ? 'Coming Soon' : 'Active'}
+                      </span>
+                      <span className="lg:hidden text-blue-600 font-bold text-xs">→</span>
+                    </div>
                   </div>
                 );
               })}
@@ -72,9 +106,20 @@ export default function AdminProductsPage() {
         </div>
 
         {/* Right Column: Category Configuration Details (7 Cols) */}
-        <div className="lg:col-span-7">
+        <div className={`lg:col-span-7 ${mobileTab === 'details' ? 'block' : 'hidden lg:block'}`}>
           {selectedCategory ? (
-            <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-5">
+            <div className="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-xs space-y-5">
+              {/* Mobile Back Button */}
+              <div className="lg:hidden flex items-center justify-between pb-2 border-b border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setMobileTab('categories')}
+                  className="inline-flex items-center space-x-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 px-2.5 py-1.5 rounded touch-manipulation"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to Categories</span>
+                </button>
+              </div>
               <div className="flex items-start justify-between border-b border-slate-200 pb-4">
                 <div className="flex items-center space-x-3">
                   <ProductIcon slug={selectedCategory.slug} className="w-12 h-12" />

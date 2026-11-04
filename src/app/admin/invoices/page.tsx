@@ -47,78 +47,149 @@ export default function AdminInvoicesPage() {
         </div>
       </div>
 
-      {/* Invoices Table */}
-      <div className="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
-                <th className="py-3 px-4">Invoice # & Date</th>
-                <th className="py-3 px-4">Order Ref</th>
-                <th className="py-3 px-4">Client Company</th>
-                <th className="py-3 px-4">GSTIN</th>
-                <th className="py-3 px-4 text-right">Tax (CGST+SGST)</th>
-                <th className="py-3 px-4 text-right">Grand Total (₹)</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-right">Download</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {filtered.map((inv) => (
-                <tr key={inv.id} className="hover:bg-slate-50">
-                  <td className="py-3 px-4 font-mono font-bold text-slate-900">
-                    {inv.invoiceNumber}
-                    <span className="block text-[10px] font-normal text-slate-400">
-                      {formatIndianDate(inv.invoiceDate)}
+      {/* Invoices List */}
+      <div className="space-y-3">
+        {/* Mobile Invoices Cards (< md screens) */}
+        <div className="md:hidden space-y-3">
+          {filtered.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-lg p-8 text-center text-xs text-slate-500">
+              No tax invoices found matching search.
+            </div>
+          ) : (
+            filtered.map((inv) => (
+              <div
+                key={inv.id}
+                className="bg-white border border-slate-200 rounded-lg p-3.5 space-y-3 text-xs shadow-xs"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="font-mono font-bold text-slate-900 text-sm block">
+                      {inv.invoiceNumber}
                     </span>
-                  </td>
+                    <span className="text-[10px] text-slate-400">
+                      {formatIndianDate(inv.invoiceDate)} • Ref: {inv.orderNumber}
+                    </span>
+                  </div>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                      inv.status === 'paid'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    {inv.status}
+                  </span>
+                </div>
 
-                  <td className="py-3 px-4 font-mono font-semibold text-blue-700">
-                    {inv.orderNumber}
-                  </td>
+                <div className="bg-slate-50 rounded p-2.5 border border-slate-200 space-y-1">
+                  <p className="font-bold text-slate-900">{inv.customerDetails.companyName}</p>
+                  <p className="text-[11px] text-slate-600">{inv.customerDetails.name}</p>
+                  <p className="text-[10px] font-mono text-slate-500 pt-1 border-t border-slate-200/80">
+                    GSTIN: {inv.customerDetails.gstin || 'Commercial'}
+                  </p>
+                </div>
 
-                  <td className="py-3 px-4">
-                    <p className="font-bold text-slate-900">{inv.customerDetails.companyName}</p>
-                    <p className="text-[10px] text-slate-500">{inv.customerDetails.name}</p>
-                  </td>
-
-                  <td className="py-3 px-4 font-mono text-slate-600">
-                    {inv.customerDetails.gstin || 'Commercial'}
-                  </td>
-
-                  <td className="py-3 px-4 text-right font-mono text-slate-700">
+                <div className="flex items-center justify-between text-[11px] text-slate-600">
+                  <span>Tax (CGST+SGST):</span>
+                  <span className="font-mono font-medium text-slate-800">
                     {formatINR(inv.cgstAmount + inv.sgstAmount + inv.igstAmount)}
-                  </td>
+                  </span>
+                </div>
 
-                  <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 text-sm">
-                    {formatINR(inv.grandTotal)}
-                  </td>
-
-                  <td className="py-3 px-4 text-center">
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                        inv.status === 'paid'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-amber-100 text-amber-800'
-                      }`}
-                    >
-                      {inv.status}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Invoice Total:</span>
+                    <span className="font-mono font-bold text-slate-900 text-base">
+                      {formatINR(inv.grandTotal)}
                     </span>
-                  </td>
+                  </div>
 
-                  <td className="py-3 px-4 text-right">
-                    <button
-                      onClick={() => generateInvoicePDF(inv)}
-                      className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-semibold inline-flex items-center space-x-1 shadow transition"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>PDF</span>
-                    </button>
-                  </td>
+                  <button
+                    onClick={() => generateInvoicePDF(inv)}
+                    className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded text-xs font-semibold inline-flex items-center space-x-1.5 shadow-xs transition touch-manipulation"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download PDF</span>
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop / Tablet Invoices Table (md and up) */}
+        <div className="hidden md:block bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
+                  <th className="py-3 px-4">Invoice # & Date</th>
+                  <th className="py-3 px-4">Order Ref</th>
+                  <th className="py-3 px-4">Client Company</th>
+                  <th className="py-3 px-4">GSTIN</th>
+                  <th className="py-3 px-4 text-right">Tax (CGST+SGST)</th>
+                  <th className="py-3 px-4 text-right">Grand Total (₹)</th>
+                  <th className="py-3 px-4 text-center">Status</th>
+                  <th className="py-3 px-4 text-right">Download</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {filtered.map((inv) => (
+                  <tr key={inv.id} className="hover:bg-slate-50">
+                    <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                      {inv.invoiceNumber}
+                      <span className="block text-[10px] font-normal text-slate-400">
+                        {formatIndianDate(inv.invoiceDate)}
+                      </span>
+                    </td>
+
+                    <td className="py-3 px-4 font-mono font-semibold text-blue-700">
+                      {inv.orderNumber}
+                    </td>
+
+                    <td className="py-3 px-4">
+                      <p className="font-bold text-slate-900">{inv.customerDetails.companyName}</p>
+                      <p className="text-[10px] text-slate-500">{inv.customerDetails.name}</p>
+                    </td>
+
+                    <td className="py-3 px-4 font-mono text-slate-600">
+                      {inv.customerDetails.gstin || 'Commercial'}
+                    </td>
+
+                    <td className="py-3 px-4 text-right font-mono text-slate-700">
+                      {formatINR(inv.cgstAmount + inv.sgstAmount + inv.igstAmount)}
+                    </td>
+
+                    <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 text-sm">
+                      {formatINR(inv.grandTotal)}
+                    </td>
+
+                    <td className="py-3 px-4 text-center">
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                          inv.status === 'paid'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {inv.status}
+                      </span>
+                    </td>
+
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => generateInvoicePDF(inv)}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-semibold inline-flex items-center space-x-1 shadow transition touch-manipulation"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>PDF</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

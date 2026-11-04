@@ -47,17 +47,17 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Link
             href="/admin/quotations"
-            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-2 rounded shadow transition flex items-center space-x-1.5"
+            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-2.5 rounded shadow transition flex items-center justify-center space-x-1.5 touch-manipulation"
           >
             <FileSpreadsheet className="w-4 h-4" />
             <span>Process Pending RFQs ({pendingQuotations.length})</span>
           </Link>
           <Link
             href="/admin/market"
-            className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3.5 py-2 rounded transition flex items-center space-x-1.5"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3.5 py-2.5 rounded transition flex items-center justify-center space-x-1.5 touch-manipulation"
           >
             <TrendingUp className="w-4 h-4 text-emerald-400" />
             <span>Update Spot Rates</span>
@@ -66,41 +66,41 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* 1. Key Metrics Cards (Section 11.1) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+        <div className="bg-white border border-slate-200 rounded-lg p-3 sm:p-3.5 shadow-xs">
           <span className="text-[10px] font-bold text-slate-400 uppercase">Total Quotations</span>
-          <p className="text-xl font-extrabold text-slate-900 font-mono mt-1">{totalQuotations}</p>
-          <span className="text-[10px] text-slate-500 mt-1 block">Lifetime Requests</span>
+          <p className="text-lg sm:text-xl font-extrabold text-slate-900 font-mono mt-0.5">{totalQuotations}</p>
+          <span className="text-[10px] text-slate-500 mt-0.5 block truncate">Lifetime Requests</span>
         </div>
 
-        <div className="bg-white border border-amber-300 bg-amber-50/20 rounded-lg p-3.5 shadow-xs">
+        <div className="bg-white border border-amber-300 bg-amber-50/20 rounded-lg p-3 sm:p-3.5 shadow-xs">
           <span className="text-[10px] font-bold text-amber-800 uppercase">Pending Review</span>
-          <p className="text-xl font-extrabold text-amber-700 font-mono mt-1">{pendingQuotations.length}</p>
-          <span className="text-[10px] text-amber-600 mt-1 block">Requires Pricing Desk</span>
+          <p className="text-lg sm:text-xl font-extrabold text-amber-700 font-mono mt-0.5">{pendingQuotations.length}</p>
+          <span className="text-[10px] text-amber-600 mt-0.5 block truncate">Pricing Desk</span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+        <div className="bg-white border border-slate-200 rounded-lg p-3 sm:p-3.5 shadow-xs">
           <span className="text-[10px] font-bold text-slate-400 uppercase">Quotations Sent</span>
-          <p className="text-xl font-extrabold text-blue-700 font-mono mt-1">{sentQuotations.length}</p>
-          <span className="text-[10px] text-slate-500 mt-1 block">Awaiting Client PO</span>
+          <p className="text-lg sm:text-xl font-extrabold text-blue-700 font-mono mt-0.5">{sentQuotations.length}</p>
+          <span className="text-[10px] text-slate-500 mt-0.5 block truncate">Awaiting Client</span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+        <div className="bg-white border border-slate-200 rounded-lg p-3 sm:p-3.5 shadow-xs">
           <span className="text-[10px] font-bold text-slate-400 uppercase">Accepted & Orders</span>
-          <p className="text-xl font-extrabold text-purple-700 font-mono mt-1">{totalOrders}</p>
-          <span className="text-[10px] text-slate-500 mt-1 block">Active POs</span>
+          <p className="text-lg sm:text-xl font-extrabold text-purple-700 font-mono mt-0.5">{totalOrders}</p>
+          <span className="text-[10px] text-slate-500 mt-0.5 block truncate">Active POs</span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-3.5 shadow-xs">
+        <div className="bg-white border border-slate-200 rounded-lg p-3 sm:p-3.5 shadow-xs">
           <span className="text-[10px] font-bold text-slate-400 uppercase">Pending Dispatch</span>
-          <p className="text-xl font-extrabold text-slate-800 font-mono mt-1">{pendingOrders.length}</p>
-          <span className="text-[10px] text-slate-500 mt-1 block">In Processing / Packing</span>
+          <p className="text-lg sm:text-xl font-extrabold text-slate-800 font-mono mt-0.5">{pendingOrders.length}</p>
+          <span className="text-[10px] text-slate-500 mt-0.5 block truncate">Processing Yard</span>
         </div>
 
-        <div className="bg-white border border-emerald-300 bg-emerald-50/20 rounded-lg p-3.5 shadow-xs">
+        <div className="bg-white border border-emerald-300 bg-emerald-50/20 rounded-lg p-3 sm:p-3.5 shadow-xs col-span-2 sm:col-span-1">
           <span className="text-[10px] font-bold text-emerald-800 uppercase">Realized Revenue</span>
-          <p className="text-lg font-extrabold text-emerald-700 font-mono mt-1">{formatINR(totalRevenue)}</p>
-          <span className="text-[10px] text-emerald-600 mt-1 block">Paid in Full</span>
+          <p className="text-base sm:text-lg font-extrabold text-emerald-700 font-mono mt-0.5 truncate">{formatINR(totalRevenue)}</p>
+          <span className="text-[10px] text-emerald-600 mt-0.5 block">Paid in Full</span>
         </div>
       </div>
 
@@ -108,7 +108,7 @@ export default function AdminDashboardPage() {
         {/* Left Column: Quotation Requests Action Queue (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
           <div className="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+            <div className="p-3.5 sm:p-4 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-bold text-slate-900">
                   Recent Quotation Requests
@@ -129,8 +129,8 @@ export default function AdminDashboardPage() {
 
             <div className="divide-y divide-slate-100">
               {quotations.slice(0, 5).map((q) => (
-                <div key={q.id} className="p-4 hover:bg-slate-50 transition text-xs flex items-center justify-between">
-                  <div>
+                <div key={q.id} className="p-3.5 sm:p-4 hover:bg-slate-50 transition text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="min-w-0">
                     <div className="flex items-center space-x-2">
                       <span className="font-mono font-bold text-slate-900">{q.quotationNumber}</span>
                       <span
@@ -145,15 +145,15 @@ export default function AdminDashboardPage() {
                         {q.status.replace(/_/g, ' ').toUpperCase()}
                       </span>
                     </div>
-                    <p className="text-slate-600 mt-0.5 font-medium">
-                      {q.customerSnapshot.companyName} ({q.customerSnapshot.fullName})
+                    <p className="text-slate-700 mt-1 font-semibold truncate">
+                      {q.customerSnapshot.companyName}
                     </p>
                     <p className="text-[11px] text-slate-400">
-                      {q.items.length} Combination(s) • {formatIndianDateTime(q.createdAt)}
+                      {q.customerSnapshot.fullName} • {q.items.length} Combination(s) • {formatIndianDateTime(q.createdAt)}
                     </p>
                   </div>
 
-                  <div className="text-right flex items-center space-x-3">
+                  <div className="flex items-center justify-between sm:justify-end space-x-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
                     {q.grandTotal ? (
                       <span className="font-mono font-bold text-slate-900">
                         {formatINR(q.grandTotal)}
@@ -166,7 +166,7 @@ export default function AdminDashboardPage() {
 
                     <Link
                       href={`/admin/quotations?selected=${q.id}`}
-                      className="bg-slate-900 text-white font-semibold px-3 py-1.5 rounded hover:bg-slate-800 transition"
+                      className="bg-slate-900 text-white font-semibold px-3 py-1.5 rounded hover:bg-slate-800 transition touch-manipulation"
                     >
                       {q.status === 'pending' ? 'Assign Prices' : 'View / Edit'}
                     </Link>
@@ -178,7 +178,7 @@ export default function AdminDashboardPage() {
 
           {/* Orders Section */}
           <div className="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+            <div className="p-3.5 sm:p-4 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-bold text-slate-900">Active Purchase Orders</h2>
                 <p className="text-xs text-slate-500">Confirmed orders requiring dispatch & tracking</p>
@@ -195,27 +195,29 @@ export default function AdminDashboardPage() {
 
             <div className="divide-y divide-slate-100">
               {orders.slice(0, 4).map((o) => (
-                <div key={o.id} className="p-4 hover:bg-slate-50 transition text-xs flex items-center justify-between">
-                  <div>
+                <div key={o.id} className="p-3.5 sm:p-4 hover:bg-slate-50 transition text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="min-w-0">
                     <div className="flex items-center space-x-2">
                       <span className="font-mono font-bold text-slate-900">{o.orderNumber}</span>
                       <span className="bg-purple-100 text-purple-900 text-[10px] font-bold px-1.5 py-0.2 rounded capitalize">
                         {o.status.replace(/_/g, ' ')}
                       </span>
                     </div>
-                    <p className="text-slate-600 mt-0.5">{o.customerSnapshot.companyName}</p>
-                    {o.trackingNumber && (
+                    <p className="text-slate-700 mt-1 font-semibold truncate">{o.customerSnapshot.companyName}</p>
+                    {o.trackingNumber ? (
                       <p className="text-[11px] text-blue-700 font-mono">
                         LR: {o.trackingNumber} ({o.trackingCarrier})
                       </p>
+                    ) : (
+                      <p className="text-[11px] text-slate-400">Ref: {o.quotationNumber}</p>
                     )}
                   </div>
 
-                  <div className="text-right flex items-center space-x-3">
+                  <div className="flex items-center justify-between sm:justify-end space-x-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
                     <span className="font-mono font-bold text-slate-900">{formatINR(o.grandTotal)}</span>
                     <Link
                       href="/admin/orders"
-                      className="bg-slate-900 text-white font-semibold px-3 py-1.5 rounded hover:bg-slate-800 transition"
+                      className="bg-slate-900 text-white font-semibold px-3 py-1.5 rounded hover:bg-slate-800 transition touch-manipulation"
                     >
                       Update
                     </Link>

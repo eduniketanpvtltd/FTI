@@ -19,6 +19,7 @@ import {
   Plus,
   Trash2,
   Eye,
+  ArrowLeft,
 } from 'lucide-react';
 import { generateQuotationPDF } from '@/lib/pdf-generator';
 
@@ -38,6 +39,7 @@ function AdminQuotationsContent() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [mobileTab, setMobileTab] = useState<'queue' | 'desk'>(preselectedId ? 'desk' : 'queue');
 
   // Currently opened quotation for pricing
   const [activeQuotation, setActiveQuotation] = useState<Quotation | null>(() => {
@@ -142,9 +144,9 @@ function AdminQuotationsContent() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
             Quotation Management & Pricing Desk
@@ -155,9 +157,37 @@ function AdminQuotationsContent() {
         </div>
       </div>
 
+      {/* Mobile-only Segmented View Switcher */}
+      <div className="lg:hidden flex rounded-lg bg-slate-200 p-1 shadow-inner text-xs">
+        <button
+          type="button"
+          onClick={() => setMobileTab('queue')}
+          className={`flex-1 py-2 font-bold rounded-md transition touch-manipulation flex items-center justify-center space-x-1.5 ${
+            mobileTab === 'queue'
+              ? 'bg-white text-blue-700 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <FileSpreadsheet className="w-4 h-4" />
+          <span>RFQ Queue ({filtered.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab('desk')}
+          className={`flex-1 py-2 font-bold rounded-md transition touch-manipulation flex items-center justify-center space-x-1.5 ${
+            mobileTab === 'desk'
+              ? 'bg-white text-blue-700 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Edit3 className="w-4 h-4" />
+          <span>Pricing Desk {activeQuotation ? `(${activeQuotation.quotationNumber.slice(-4)})` : ''}</span>
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Quotation Requests Queue (4 Cols) */}
-        <div className="lg:col-span-4 space-y-3">
+        <div className={`lg:col-span-4 space-y-3 ${mobileTab === 'queue' ? 'block' : 'hidden lg:block'}`}>
           <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-xs space-y-2">
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
@@ -170,15 +200,15 @@ function AdminQuotationsContent() {
               />
             </div>
 
-            <div className="flex items-center space-x-1 text-[11px] overflow-x-auto pb-1">
+            <div className="flex items-center space-x-1 text-[11px] overflow-x-auto pb-1 scrollbar-none">
               {['all', 'pending', 'quotation_sent', 'accepted'].map((st) => (
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st)}
-                  className={`px-2 py-0.5 rounded font-medium whitespace-nowrap ${
+                  className={`px-2.5 py-1 rounded font-medium whitespace-nowrap touch-manipulation ${
                     statusFilter === st
                       ? 'bg-blue-600 text-white font-bold'
-                      : 'bg-slate-100 text-slate-600'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
                   {st === 'all' ? 'All' : st.replace('_', ' ')}
@@ -188,61 +218,90 @@ function AdminQuotationsContent() {
           </div>
 
           <div className="space-y-2 max-h-[75vh] overflow-y-auto">
-            {filtered.map((q) => {
-              const isSelected = activeQuotation?.id === q.id;
-              return (
-                <div
-                  key={q.id}
-                  onClick={() => setActiveQuotation(q)}
-                  className={`cursor-pointer p-3.5 rounded-lg border text-xs transition ${
-                    isSelected
-                      ? 'bg-blue-50/80 border-blue-600 shadow-xs ring-1 ring-blue-600'
-                      : 'bg-white border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-mono font-bold text-slate-900">{q.quotationNumber}</span>
-                    <span
-                      className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
-                        q.status === 'pending'
-                          ? 'bg-amber-100 text-amber-800'
-                          : q.status === 'quotation_sent'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {q.status.replace(/_/g, ' ')}
-                    </span>
-                  </div>
+            {filtered.length === 0 ? (
+              <div className="bg-white border border-slate-200 rounded-lg p-6 text-center text-xs text-slate-500">
+                No quotation requests found matching filter.
+              </div>
+            ) : (
+              filtered.map((q) => {
+                const isSelected = activeQuotation?.id === q.id;
+                return (
+                  <div
+                    key={q.id}
+                    onClick={() => {
+                      setActiveQuotation(q);
+                      setMobileTab('desk');
+                    }}
+                    className={`cursor-pointer p-3.5 rounded-lg border text-xs transition touch-manipulation ${
+                      isSelected
+                        ? 'bg-blue-50/80 border-blue-600 shadow-xs ring-1 ring-blue-600'
+                        : 'bg-white border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-mono font-bold text-slate-900">{q.quotationNumber}</span>
+                      <span
+                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                          q.status === 'pending'
+                            ? 'bg-amber-100 text-amber-800'
+                            : q.status === 'quotation_sent'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {q.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
 
-                  <p className="font-semibold text-slate-800 truncate">
-                    {q.customerSnapshot.companyName}
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    {q.items.length} Combination(s) • {formatIndianDate(q.createdAt)}
-                  </p>
+                    <p className="font-semibold text-slate-800 truncate">
+                      {q.customerSnapshot.companyName}
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {q.customerSnapshot.fullName} • {q.items.length} Combination(s) • {formatIndianDate(q.createdAt)}
+                    </p>
 
-                  <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                    <span className="text-slate-400">Total:</span>
-                    <span className="font-mono font-bold text-slate-900">
-                      {q.grandTotal ? formatINR(q.grandTotal) : 'Unpriced'}
-                    </span>
+                    <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                      <span className="text-slate-400">Total:</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-mono font-bold text-slate-900">
+                          {q.grandTotal ? formatINR(q.grandTotal) : 'Unpriced'}
+                        </span>
+                        <span className="lg:hidden text-blue-600 font-bold text-[10px]">
+                          Edit →
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
         {/* Right Column: Pricing & Quotation Preparation Desk (8 Cols) */}
-        <div className="lg:col-span-8">
+        <div className={`lg:col-span-8 ${mobileTab === 'desk' ? 'block' : 'hidden lg:block'}`}>
           {activeQuotation ? (
-            <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-xs space-y-6">
+            <div className="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-xs space-y-5 sm:space-y-6">
+              {/* Mobile Back to Queue Button */}
+              <div className="lg:hidden flex items-center justify-between pb-2 border-b border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setMobileTab('queue')}
+                  className="inline-flex items-center space-x-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 px-2.5 py-1.5 rounded touch-manipulation"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to RFQ Queue</span>
+                </button>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {filtered.findIndex((q) => q.id === activeQuotation.id) + 1} of {filtered.length}
+                </span>
+              </div>
+
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-slate-200 pb-4">
                 <div>
                   <div className="flex items-center space-x-2">
-                    <h2 className="text-lg font-bold text-slate-900 font-mono">
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900 font-mono">
                       {activeQuotation.quotationNumber}
                     </h2>
                     <span className="bg-slate-100 text-slate-700 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
@@ -252,19 +311,19 @@ function AdminQuotationsContent() {
                   <p className="text-xs text-slate-500 mt-0.5">
                     Client: <span className="font-bold text-slate-800">{activeQuotation.customerSnapshot.companyName}</span> ({activeQuotation.customerSnapshot.fullName})
                   </p>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-400 break-words mt-0.5">
                     Delivery To: {activeQuotation.customerSnapshot.deliveryAddress}
                   </p>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 shrink-0">
                   <button
                     onClick={() => generateQuotationPDF(activeQuotation)}
-                    className="p-2 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center space-x-1"
+                    className="p-2 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center space-x-1 touch-manipulation"
                     title="Download Quotation PDF"
                   >
                     <Download className="w-4 h-4 text-slate-600" />
-                    <span>PDF</span>
+                    <span>Download PDF</span>
                   </button>
                 </div>
               </div>
@@ -276,13 +335,15 @@ function AdminQuotationsContent() {
                 </div>
               )}
 
-              {/* Line Items Pricing Table */}
+              {/* Line Items Pricing */}
               <div>
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">
                   Line Items Specification & Unit Price Assignment
                 </h3>
-                <div className="border border-slate-200 rounded-lg overflow-hidden">
-                  <table className="w-full text-left text-xs">
+
+                {/* Desktop/Tablet Table View */}
+                <div className="hidden md:block border border-slate-200 rounded-lg overflow-x-auto">
+                  <table className="w-full text-left text-xs min-w-[500px]">
                     <thead>
                       <tr className="bg-slate-100 text-slate-700 font-bold text-[10px] uppercase border-b border-slate-200">
                         <th className="py-2.5 px-3">#</th>
@@ -336,6 +397,75 @@ function AdminQuotationsContent() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Cards View */}
+                <div className="md:hidden space-y-3">
+                  {itemsPricing.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2.5 text-xs shadow-xs"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <span className="font-bold text-slate-900 text-sm">{item.categoryName}</span>
+                          <span className="block font-mono text-xs text-blue-700 font-semibold">{item.grade}</span>
+                        </div>
+                        <span className="bg-slate-200 text-slate-700 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
+                          Item #{idx + 1}
+                        </span>
+                      </div>
+
+                      {/* Specs pills */}
+                      <div className="bg-white rounded p-2 border border-slate-200 space-y-1 text-[11px] text-slate-600">
+                        {Object.entries(item.specifications).map(([k, v]) => (
+                          <div key={k} className="flex justify-between">
+                            <span className="text-slate-400 capitalize">{k}:</span>
+                            <span className="font-medium text-slate-800">{v}</span>
+                          </div>
+                        ))}
+                        {item.specialInstructions && (
+                          <p className="italic text-[10px] text-amber-700 pt-1 border-t border-slate-100">
+                            Req: {item.specialInstructions}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Quantity & Unit Rate Inputs */}
+                      <div className="grid grid-cols-2 gap-2.5 pt-1 items-end">
+                        <div>
+                          <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">
+                            Quantity ({item.unit})
+                          </label>
+                          <div className="font-mono font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-2 text-xs">
+                            {item.quantity} {item.unit}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] uppercase font-bold text-blue-900 block mb-1">
+                            Unit Price (₹/{item.unit})
+                          </label>
+                          <input
+                            type="number"
+                            step="500"
+                            value={item.unitPrice || ''}
+                            onChange={(e) =>
+                              handlePriceChange(idx, parseFloat(e.target.value) || 0)
+                            }
+                            className="w-full px-2.5 py-1.5 text-xs bg-white border-2 border-blue-500 rounded font-mono font-bold text-slate-900 focus:outline-hidden"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Line Total */}
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                        <span className="text-slate-500 font-medium">Item Total:</span>
+                        <span className="font-mono font-bold text-slate-900 text-sm">
+                          {formatINR(item.lineTotal || 0)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -434,11 +564,11 @@ function AdminQuotationsContent() {
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={() => handleSaveQuotation('quotation_prepared')}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold px-4 py-2.5 rounded border border-slate-300 transition"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold px-4 py-2.5 rounded border border-slate-300 transition text-center touch-manipulation"
                 >
                   Save as Draft (Do Not Send)
                 </button>
@@ -446,10 +576,10 @@ function AdminQuotationsContent() {
                 <button
                   type="button"
                   onClick={() => handleSaveQuotation('quotation_sent')}
-                  className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-6 py-2.5 rounded shadow flex items-center space-x-2 transition"
+                  className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-6 py-2.5 rounded shadow flex items-center justify-center space-x-2 transition touch-manipulation"
                 >
                   <Send className="w-4 h-4" />
-                  <span>Issue & Send Official Quotation to Customer</span>
+                  <span>Issue & Send Official Quotation</span>
                 </button>
               </div>
             </div>
