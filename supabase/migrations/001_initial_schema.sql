@@ -224,7 +224,10 @@ CREATE TABLE IF NOT EXISTS invoices (
 -- 10. MARKET MODULE
 CREATE TABLE IF NOT EXISTS market_materials (
   id VARCHAR(128) PRIMARY KEY DEFAULT uuid_generate_v4()::text,
-  category_slug VARCHAR(50) NOT NULL, -- 'raw_materials' or 'scrap_materials'
+  main_category VARCHAR(50) DEFAULT 'raw_materials', -- 'raw_materials' or 'scrap_materials'
+  material_name VARCHAR(100), -- 'Ingot', 'Billet', 'TMT Rebar', 'Melting Scrap', 'Old Scrap'
+  mandi_city VARCHAR(100), -- 'Mandi Gobindgarh', 'Ludhiana', 'Raipur', etc.
+  category_slug VARCHAR(50) NOT NULL,
   category_name VARCHAR(100) NOT NULL,
   name VARCHAR(255) NOT NULL,
   symbol VARCHAR(50) UNIQUE NOT NULL,
@@ -242,6 +245,7 @@ CREATE TABLE IF NOT EXISTS market_materials (
   display_order INT DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
   notes TEXT,
+  historical_prices JSONB DEFAULT '[]'::jsonb, -- Past 50 records stored as JSON
   last_updated_at TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -6,10 +6,22 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
+    const mainCategory = searchParams.get('mainCategory');
+    const materialName = searchParams.get('materialName');
 
     const dbMaterials = await fetchDbMarketMaterials();
     let materials = dbMaterials || INITIAL_MARKET_MATERIALS;
 
+    if (mainCategory) {
+      materials = materials.filter((m) => m.mainCategory === mainCategory);
+    }
+    if (materialName) {
+      materials = materials.filter(
+        (m) =>
+          m.materialName?.toLowerCase() === materialName.toLowerCase() ||
+          m.categoryName?.toLowerCase() === materialName.toLowerCase()
+      );
+    }
     if (category) {
       materials = materials.filter((m) => m.categorySlug === category);
     }

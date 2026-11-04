@@ -78,29 +78,48 @@ export async function fetchDbMarketMaterials(): Promise<MarketMaterial[] | null>
 
     if (!data || data.length === 0) return null;
 
-    return data.map((row: any) => ({
-      id: row.id,
-      categorySlug: row.category_slug,
-      categoryName: row.category_name,
-      name: row.name,
-      symbol: row.symbol,
-      hubCity: row.hub_city,
-      unit: row.unit || '₹ / Metric Ton',
-      currentPrice: Number(row.current_price),
-      previousPrice: Number(row.previous_price),
-      priceChange: Number(row.price_change),
-      percentageChange: Number(row.percentage_change),
-      movementDirection: row.movement_direction,
-      highPrice: Number(row.high_price),
-      lowPrice: Number(row.low_price),
-      averagePrice: Number(row.average_price),
-      volatility: Number(row.volatility || 1.2),
-      lastUpdatedAt: row.last_updated_at || new Date().toISOString(),
-      displayOrder: row.display_order,
-      isActive: row.is_active,
-      notes: row.notes,
-      historicalPrices: [],
-    }));
+    return data.map((row: any) => {
+      const isScrap =
+        row.main_category === 'scrap_materials' ||
+        row.category_slug === 'scrap' ||
+        row.category_slug === 'scrap_materials' ||
+        (row.name && row.name.toLowerCase().includes('scrap'));
+      const mainCategory = isScrap ? 'scrap_materials' : 'raw_materials';
+      const materialName =
+        row.material_name ||
+        (row.name?.includes('-') ? row.name.split('-')[0].trim() : row.category_name || 'Ingot');
+      const mandiCity = row.mandi_city || row.hub_city || 'Mandi Gobindgarh';
+
+      return {
+        id: row.id,
+        mainCategory,
+        materialName,
+        mandiCity,
+        categorySlug: row.category_slug,
+        categoryName: materialName,
+        name: row.name || `${materialName} - ${mandiCity}`,
+        symbol: row.symbol,
+        hubCity: mandiCity,
+        specification: row.specification,
+        unit: row.unit || '₹ / Metric Ton',
+        currentPrice: Number(row.current_price),
+        previousPrice: Number(row.previous_price),
+        priceChange: Number(row.price_change),
+        percentageChange: Number(row.percentage_change),
+        movementDirection: row.movement_direction,
+        highPrice: Number(row.high_price),
+        lowPrice: Number(row.low_price),
+        averagePrice: Number(row.average_price),
+        volatility: Number(row.volatility || 1.2),
+        lastUpdatedAt: row.last_updated_at || new Date().toISOString(),
+        displayOrder: row.display_order,
+        isActive: row.is_active,
+        notes: row.notes,
+        historicalPrices: Array.isArray(row.historical_prices) && row.historical_prices.length > 0
+          ? row.historical_prices.slice(-50)
+          : [],
+      };
+    });
   } catch (err) {
     console.warn('Supabase market materials error:', err);
     return null;

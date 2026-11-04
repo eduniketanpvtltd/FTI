@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
 import { useStore } from '@/lib/store-context';
 import { formatINR, formatIndianDate } from '@/lib/utils';
-import { MarketMaterial } from '@/types';
+import { MarketMaterial, MarketMainCategory } from '@/types';
 import {
   LineChart,
   Line,
@@ -36,17 +36,31 @@ import {
   Sparkles,
   ExternalLink,
   Info,
+  Calendar,
+  Clock,
+  ChevronRight,
+  Filter,
+  BarChart3,
+  History,
+  Building2,
+  MapPin,
+  ArrowUpDown,
 } from 'lucide-react';
 
 export default function MarketPage() {
   const { marketMaterials, mandiBulletin, lastMarketSyncTime, refreshMarketPrices } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'all' | 'ingot' | 'scrap' | 'billet' | 'benchmark' | 'whatsapp'>('all');
+  // Primary Level 1: 'raw_materials' vs 'scrap_materials' (or 'whatsapp')
+  const [mainCategory, setMainCategory] = useState<MarketMainCategory | 'whatsapp'>('raw_materials');
+
+  // Secondary Level 2: Specific Material Name filter (e.g. 'All', 'Ingot', 'Billet', 'Melting Scrap')
+  const [selectedMaterialGroup, setSelectedMaterialGroup] = useState<string>('all');
+
   const [searchTerm, setSearchTerm] = useState('');
   const [movementFilter, setMovementFilter] = useState<'all' | 'up' | 'down' | 'neutral'>('all');
   const [selectedMaterial, setSelectedMaterial] = useState<MarketMaterial | null>(null);
   const [chartType, setChartType] = useState<'area' | 'line'>('area');
-  const [timeRange, setTimeRange] = useState<'1D' | '1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL'>('1M');
+  const [historyLimit, setHistoryLimit] = useState<7 | 15 | 30 | 50>(50);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copiedBulletin, setCopiedBulletin] = useState(false);
 
@@ -67,70 +81,119 @@ export default function MarketPage() {
     setTimeout(() => setCopiedBulletin(false), 2500);
   };
 
-  // Filter materials
-  const filteredMaterials = useMemo(() => {
-    return marketMaterials.filter((m) => {
-      // Tab filter
-      const matchesTab = activeTab === 'all' || activeTab === 'whatsapp' || m.categorySlug === activeTab;
+  // Reset secondary filter when primary category changes
+  const handleCategoryChange = (cat: MarketMainCategory | 'whatsapp') => {
+    setMainCategory(cat);
+    setSelectedMaterialGroup('all');
+  };
 
-      // Search filter (name, city, symbol, grade)
+  // 1. Available materials in active primary category
+  const categoryMaterials = useMemo(() => {
+    if (mainCategory === 'whatsapp') return [];
+    return marketMaterials.filter((m) => {
+      if (m.mainCategory) return m.mainCategory === mainCategory;
+      // Fallback
+      if (mainCategory === 'scrap_materials') {
+        return (
+          m.categorySlug === 'scrap' ||
+          m.categorySlug === 'scrap_materials' ||
+          m.name.toLowerCase().includes('scrap')
+        );
+      }
+      return (
+        m.categorySlug !== 'scrap' &&
+        m.categorySlug !== 'scrap_materials' &&
+        !m.name.toLowerCase().includes('scrap')
+      );
+    });
+  }, [marketMaterials, mainCategory]);
+
+  // 2. Distinct Material Names for Level 2 selector
+  const availableMaterialNames = useMemo(() => {
+    const set = new Set<string>();
+    categoryMaterials.forEach((m) => {
+      if (m.materialName) set.add(m.materialName);
+      else if (m.categoryName) set.add(m.categoryName);
+    });
+    return Array.from(set);
+  }, [categoryMaterials]);
+
+  // 3. Filtered materials (Level 3: Mandis & Places)
+  const filteredMaterials = useMemo(() => {
+    return categoryMaterials.filter((m) => {
+      // Level 2 Material Group filter
+      const matchesGroup =
+        selectedMaterialGroup === 'all' ||
+        m.materialName === selectedMaterialGroup ||
+        m.categoryName === selectedMaterialGroup;
+
+      // Search filter
       const matchesSearch =
+        searchTerm === '' ||
         m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.mandiCity.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (m.hubCity && m.hubCity.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (m.specification && m.specification.toLowerCase().includes(searchTerm.toLowerCase())) ||
         m.symbol.toLowerCase().includes(searchTerm.toLowerCase());
 
-      // Movement direction filter
+      // Movement direction filter (ups vs downs)
       const matchesMovement =
         movementFilter === 'all' || m.movementDirection === movementFilter;
 
-      return matchesTab && matchesSearch && matchesMovement;
+      return matchesGroup && matchesSearch && matchesMovement;
     });
-  }, [marketMaterials, activeTab, searchTerm, movementFilter]);
+  }, [categoryMaterials, selectedMaterialGroup, searchTerm, movementFilter]);
 
-  // Mandi Gobindgarh Benchmark Hub Materials (Top highlight)
-  const benchmarkMaterials = useMemo(() => {
-    return marketMaterials.filter((m) => m.categorySlug === 'benchmark');
-  }, [marketMaterials]);
+  // Group materials by Material Name for clean organized sections
+  const groupedByMaterial = useMemo(() => {
+    const groups: Record<string, MarketMaterial[]> = {};
+    filteredMaterials.forEach((m) => {
+      const key = m.materialName || m.categoryName || 'Other Rates';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(m);
+    });
+    return groups;
+  }, [filteredMaterials]);
 
-  // Auto-select first item
-  React.useEffect(() => {
-    if (!selectedMaterial && filteredMaterials.length > 0) {
-      setSelectedMaterial(filteredMaterials[0]);
+  // Auto-select first item on mount or filter change
+  useEffect(() => {
+    if (filteredMaterials.length > 0) {
+      if (!selectedMaterial || !filteredMaterials.some((m) => m.id === selectedMaterial.id)) {
+        setSelectedMaterial(filteredMaterials[0]);
+      }
     }
-  }, [selectedMaterial, filteredMaterials]);
+  }, [filteredMaterials, selectedMaterial]);
 
-  // Historical chart data
+  // Historical chart data for selected material (Past 50 records)
   const chartData = useMemo(() => {
     if (!selectedMaterial || !selectedMaterial.historicalPrices) return [];
     const prices = [...selectedMaterial.historicalPrices];
     const total = prices.length;
+    const sliceCount = Math.min(historyLimit, total);
 
-    let sliceCount = total;
-    if (timeRange === '1D') sliceCount = Math.min(2, total);
-    else if (timeRange === '1W') sliceCount = Math.min(7, total);
-    else if (timeRange === '1M') sliceCount = Math.min(30, total);
-    else if (timeRange === '3M') sliceCount = Math.min(45, total);
-    else if (timeRange === '6M') sliceCount = Math.min(60, total);
-    else if (timeRange === '1Y') sliceCount = Math.min(90, total);
-
-    return prices.slice(total - sliceCount).map((p) => ({
+    return prices.slice(total - sliceCount).map((p, idx) => ({
+      index: idx + 1,
       date: p.date,
       formattedDate: formatIndianDate(p.date),
       price: p.price,
+      change: p.priceChange || 0,
+      direction: p.movementDirection || (p.priceChange && p.priceChange > 0 ? 'up' : 'down'),
+      notes: p.notes || `Trading session #${idx + 1}`,
     }));
-  }, [selectedMaterial, timeRange]);
+  }, [selectedMaterial, historyLimit]);
 
-  // Export CSV
+  // Export CSV of past 50 records
   const handleExportCSV = (mat: MarketMaterial) => {
-    const headers = ['Date', 'Price (INR)', 'Unit', 'Hub / Material', 'Symbol', 'Category'];
-    const rows = mat.historicalPrices.map((p) => [
+    const headers = ['Record #', 'Date', 'Price (INR / MT)', 'Change (INR)', 'Direction', 'Material', 'Mandi / Place', 'Notes'];
+    const rows = (mat.historicalPrices || []).slice(-50).map((p, idx) => [
+      idx + 1,
       p.date,
       p.price,
-      mat.unit,
-      `"${mat.name}"`,
-      mat.symbol,
-      mat.categoryName,
+      p.priceChange || 0,
+      p.movementDirection || 'neutral',
+      `"${mat.materialName || mat.categoryName}"`,
+      `"${mat.mandiCity || mat.hubCity}"`,
+      `"${p.notes || mat.notes || ''}"`,
     ]);
 
     const csvContent =
@@ -138,17 +201,25 @@ export default function MarketPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `${mat.symbol}_mandi_spot_history.csv`);
+    link.setAttribute('download', `${mat.symbol}_past_50_market_records.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // Category counts
-  const countIngot = marketMaterials.filter((m) => m.categorySlug === 'ingot').length;
-  const countScrap = marketMaterials.filter((m) => m.categorySlug === 'scrap').length;
-  const countBillet = marketMaterials.filter((m) => m.categorySlug === 'billet').length;
-  const countBenchmark = benchmarkMaterials.length;
+  // Summary counts
+  const rawCount = marketMaterials.filter(
+    (m) =>
+      m.mainCategory === 'raw_materials' ||
+      (m.categorySlug !== 'scrap' && !m.name.toLowerCase().includes('scrap'))
+  ).length;
+
+  const scrapCount = marketMaterials.filter(
+    (m) =>
+      m.mainCategory === 'scrap_materials' ||
+      m.categorySlug === 'scrap' ||
+      m.name.toLowerCase().includes('scrap')
+  ).length;
 
   return (
     <CustomerLayout>
@@ -156,14 +227,18 @@ export default function MarketPage() {
       <div className="bg-slate-950 text-white py-6 px-4 sm:px-6 border-b border-slate-800">
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex items-center space-x-2 text-xs text-slate-400">
-            <Link href="/" className="hover:text-slate-200">Home</Link>
+            <Link href="/" className="hover:text-slate-200">
+              Home
+            </Link>
             <span>/</span>
-            <span className="text-emerald-400 font-semibold">Live Mandi Steel & Scrap Benchmark</span>
+            <span className="text-emerald-400 font-semibold">
+              Live Mandi Steel & Scrap Trading Desk
+            </span>
           </div>
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <div className="flex flex-wrap items-center gap-2 mb-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1.5">
                 <span className="text-[11px] font-mono font-bold tracking-wider uppercase text-blue-400 bg-blue-950/80 border border-blue-800/60 px-2 py-0.5 rounded">
                   FIELDFAST TECH INTERNATIONAL
                 </span>
@@ -171,13 +246,18 @@ export default function MarketPage() {
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                   <span>LIVE MANDI SPOT BENCHMARK</span>
                 </span>
+                <span className="bg-indigo-500/20 text-indigo-300 text-xs font-semibold px-2.5 py-0.5 rounded border border-indigo-500/30 flex items-center space-x-1">
+                  <History className="w-3.5 h-3.5" />
+                  <span>PAST 50 RECORDS SAVED</span>
+                </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                Mandi Gobindgarh & National Steel Hub Price Desk
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                Industrial Raw Materials & Scrap Mandi Price Desk
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
-                Daily live spot fixings for Billet, Ingot, and Melting Scrap across Mandi Gobindgarh, Ludhiana,
-                Muzaffarnagar, Raipur, Ghaziabad, and major industrial hubs.
+              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                Live spot rates categorized by <strong>Raw Materials</strong> & <strong>Scrap Materials</strong>,
+                broken down by material and tracked across Mandi Gobindgarh, Ludhiana, Raipur, Muzaffarnagar,
+                and national trading hubs with full 50-record audit history.
               </p>
             </div>
 
@@ -223,20 +303,18 @@ export default function MarketPage() {
             </div>
           </div>
 
-          {/* Authentic Live Bulletin Strip (Date, Time, Trend, USD-INR) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
-            {/* 1. Date */}
+          {/* Bulletin Metadata Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
             <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg flex items-center space-x-2.5">
               <span className="text-xl">🗓️</span>
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-mono block">Bulletin Date</span>
+                <span className="text-[10px] text-slate-400 uppercase font-mono block">Trading Date</span>
                 <span className="text-xs sm:text-sm font-extrabold text-white font-mono">
                   {mandiBulletin?.dateStr || '28-OCTOBER-2026'}
                 </span>
               </div>
             </div>
 
-            {/* 2. Time */}
             <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg flex items-center space-x-2.5">
               <span className="text-xl">⏰</span>
               <div>
@@ -247,18 +325,15 @@ export default function MarketPage() {
               </div>
             </div>
 
-            {/* 3. Overall Market Trend */}
             <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg flex items-center space-x-2.5">
               <span className="text-xl">
                 {mandiBulletin?.overallTrend === 'up' ? '📈' : '📉'}
               </span>
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-mono block">Market Sentiment</span>
+                <span className="text-[10px] text-slate-400 uppercase font-mono block">Overall Mandi Trend</span>
                 <span
                   className={`text-xs sm:text-sm font-extrabold block truncate ${
-                    mandiBulletin?.overallTrend === 'up'
-                      ? 'text-emerald-400'
-                      : 'text-rose-400'
+                    mandiBulletin?.overallTrend === 'up' ? 'text-emerald-400' : 'text-rose-400'
                   }`}
                 >
                   {mandiBulletin?.trendText || 'Mandi Trend downwards'}
@@ -266,11 +341,10 @@ export default function MarketPage() {
               </div>
             </div>
 
-            {/* 4. USD-INR Forex Spot */}
             <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg flex items-center space-x-2.5">
               <span className="text-xl">🇺🇸</span>
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-mono block">USD / INR Spot</span>
+                <span className="text-[10px] text-slate-400 uppercase font-mono block">USD / INR Benchmark</span>
                 <span className="text-xs sm:text-sm font-extrabold text-amber-400 font-mono">
                   1 ($) = {mandiBulletin?.usdInrRate || 95.04} (₹) 🇮🇳
                 </span>
@@ -280,190 +354,142 @@ export default function MarketPage() {
         </div>
       </div>
 
-      {/* 2. Key Benchmark Highlights: Mandi Gobindgarh Trend & Core Benchmarks */}
-      <div className="bg-slate-900 py-4 px-4 sm:px-6 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-3">
+      {/* 2. PRIMARY CATEGORY LEVEL 1: RAW MATERIAL vs SCRAP MATERIAL */}
+      <div className="bg-slate-900 border-b border-slate-800 sticky top-14 z-20 shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 py-3">
+            {/* Primary Category Switcher Tabs */}
             <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
-              <h2 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-200">
-                Mandi Gobindgarh Core Benchmarks ᵃˢᵗ
-              </h2>
+              <button
+                onClick={() => handleCategoryChange('raw_materials')}
+                className={`px-4 py-2 text-xs sm:text-sm font-black rounded-lg transition flex items-center space-x-2 ${
+                  mainCategory === 'raw_materials'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-400/40'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                }`}
+              >
+                <Building2 className="w-4 h-4 text-blue-300" />
+                <span>RAW MATERIALS</span>
+                <span className="text-xs font-mono bg-blue-900/60 text-blue-200 px-1.5 py-0.5 rounded">
+                  {rawCount} Mandis
+                </span>
+              </button>
+
+              <button
+                onClick={() => handleCategoryChange('scrap_materials')}
+                className={`px-4 py-2 text-xs sm:text-sm font-black rounded-lg transition flex items-center space-x-2 ${
+                  mainCategory === 'scrap_materials'
+                    ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 ring-2 ring-amber-400/40'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                }`}
+              >
+                <Layers className="w-4 h-4 text-amber-300" />
+                <span>SCRAP MATERIALS</span>
+                <span className="text-xs font-mono bg-amber-900/60 text-amber-200 px-1.5 py-0.5 rounded">
+                  {scrapCount} Mandis
+                </span>
+              </button>
+
+              <button
+                onClick={() => handleCategoryChange('whatsapp')}
+                className={`px-3 py-2 text-xs font-bold rounded-lg transition flex items-center space-x-1.5 ${
+                  mainCategory === 'whatsapp'
+                    ? 'bg-emerald-600 text-white shadow-lg'
+                    : 'bg-slate-800 text-emerald-400 hover:bg-slate-700 border border-slate-700'
+                }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">WhatsApp Mandi Feed</span>
+                <span className="sm:hidden">Feed</span>
+              </button>
             </div>
-            <span className="text-[11px] font-mono text-slate-400">
-              ᵃˢᵗ =&gt; Applicable Sales Tax Extra (Spot)
-            </span>
-          </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {benchmarkMaterials.map((mat) => {
-              const isSelected = selectedMaterial?.id === mat.id;
-              const isUp = mat.movementDirection === 'up';
-              const isDown = mat.movementDirection === 'down';
-
-              return (
-                <div
-                  key={mat.id}
-                  onClick={() => {
-                    setSelectedMaterial(mat);
-                    if (activeTab === 'whatsapp') setActiveTab('all');
-                  }}
-                  className={`cursor-pointer p-3 rounded-lg border transition ${
-                    isSelected
-                      ? 'bg-blue-950/80 border-blue-500 ring-2 ring-blue-500/30'
-                      : 'bg-slate-950/80 border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[11px] text-slate-400">
-                    <span className="font-bold text-slate-300">{mat.name} ᵃˢᵗ</span>
-                    <span className="font-mono text-[10px] text-slate-500">Spot</span>
-                  </div>
-
-                  <div className="mt-1.5 flex items-baseline justify-between">
-                    <span className="text-base sm:text-lg font-black text-white font-mono">
-                      {formatINR(mat.currentPrice)}
-                    </span>
-                    <span
-                      className={`inline-flex items-center text-xs font-bold font-mono ${
-                        isUp
-                          ? 'text-emerald-400'
-                          : isDown
-                          ? 'text-rose-400'
-                          : 'text-slate-400'
-                      }`}
-                    >
-                      {mat.priceChange > 0 ? `+${mat.priceChange}` : mat.priceChange}
-                      {isUp ? (
-                        <ArrowUpRight className="w-3.5 h-3.5 ml-0.5" />
-                      ) : isDown ? (
-                        <ArrowDownRight className="w-3.5 h-3.5 ml-0.5" />
-                      ) : (
-                        <Minus className="w-3.5 h-3.5 ml-0.5" />
-                      )}
-                    </span>
-                  </div>
+            {/* Search & Ups / Downs Filter */}
+            {mainCategory !== 'whatsapp' && (
+              <div className="flex items-center space-x-2">
+                <div className="relative w-full sm:w-56">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                  <input
+                    type="text"
+                    placeholder="Search Mandi or city..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-950 border border-slate-700 rounded-md text-white placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                  />
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
 
-      {/* 3. Category Tabs & Search Bar */}
-      <div className="bg-white border-b border-slate-200 sticky top-14 z-20 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 py-2.5">
-          {/* Category Tabs */}
-          <div className="flex items-center space-x-1 sm:space-x-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition whitespace-nowrap ${
-                activeTab === 'all'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              All Hubs ({marketMaterials.length})
-            </button>
-
-            <button
-              onClick={() => setActiveTab('ingot')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition whitespace-nowrap flex items-center space-x-1 ${
-                activeTab === 'ingot'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span>Ingot💬</span>
-              <span className="text-[10px] opacity-80">({countIngot})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('scrap')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition whitespace-nowrap flex items-center space-x-1 ${
-                activeTab === 'scrap'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span>Scrap💬</span>
-              <span className="text-[10px] opacity-80">({countScrap})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('billet')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition whitespace-nowrap flex items-center space-x-1 ${
-                activeTab === 'billet'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span>Billet💬</span>
-              <span className="text-[10px] opacity-80">({countBillet})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('benchmark')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition whitespace-nowrap ${
-                activeTab === 'benchmark'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              Mandi Benchmark ({countBenchmark})
-            </button>
-
-            <button
-              onClick={() => setActiveTab('whatsapp')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition whitespace-nowrap flex items-center space-x-1.5 ${
-                activeTab === 'whatsapp'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
-              }`}
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
-              <span>WhatsApp Bulletin View 📲</span>
-            </button>
+                {/* Ups or Downs Trend Filter */}
+                <select
+                  value={movementFilter}
+                  onChange={(e) => setMovementFilter(e.target.value as any)}
+                  aria-label="Filter by price movement"
+                  className="py-1.5 px-2.5 text-xs bg-slate-950 border border-slate-700 rounded-md text-slate-200 focus:outline-hidden"
+                >
+                  <option value="all">All Movements</option>
+                  <option value="up">Only Ups (Gainers ▲)</option>
+                  <option value="down">Only Downs (Losers ▼)</option>
+                  <option value="neutral">Neutral (Unchanged ▬)</option>
+                </select>
+              </div>
+            )}
           </div>
 
-          {/* Search & Movement Filter */}
-          <div className="flex items-center space-x-2">
-            <div className="relative w-full sm:w-60">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
-              <input
-                type="text"
-                placeholder="Search hub / city (e.g. Ludhiana)..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-3 py-1 text-xs bg-slate-50 border border-slate-300 rounded text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-              />
+          {/* 3. SECONDARY LEVEL 2: MATERIAL NAME PILLS */}
+          {mainCategory !== 'whatsapp' && (
+            <div className="py-2.5 border-t border-slate-800 flex items-center space-x-2 overflow-x-auto scrollbar-none">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 shrink-0 flex items-center space-x-1">
+                <Filter className="w-3 h-3 text-slate-400" />
+                <span>Materials:</span>
+              </span>
+
+              <button
+                onClick={() => setSelectedMaterialGroup('all')}
+                className={`px-3 py-1 text-xs font-bold rounded-full transition shrink-0 ${
+                  selectedMaterialGroup === 'all'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                All {mainCategory === 'raw_materials' ? 'Raw Materials' : 'Scrap Materials'} ({categoryMaterials.length})
+              </button>
+
+              {availableMaterialNames.map((matName) => {
+                const count = categoryMaterials.filter(
+                  (m) => m.materialName === matName || m.categoryName === matName
+                ).length;
+                const isSelected = selectedMaterialGroup === matName;
+
+                return (
+                  <button
+                    key={matName}
+                    onClick={() => setSelectedMaterialGroup(matName)}
+                    className={`px-3 py-1 text-xs font-bold rounded-full transition shrink-0 flex items-center space-x-1.5 ${
+                      isSelected
+                        ? mainCategory === 'raw_materials'
+                          ? 'bg-blue-500 text-white shadow-sm'
+                          : 'bg-amber-500 text-slate-950 shadow-sm'
+                        : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    <span>{matName}</span>
+                    <span className="text-[10px] opacity-80 font-mono">({count})</span>
+                  </button>
+                );
+              })}
             </div>
-
-            {/* Movement filter selector */}
-            <select
-              value={movementFilter}
-              onChange={(e) => setMovementFilter(e.target.value as any)}
-              aria-label="Filter by movement direction"
-              className="py-1 px-2 text-xs bg-slate-50 border border-slate-300 rounded text-slate-700 focus:outline-hidden"
-            >
-              <option value="all">All Trends</option>
-              <option value="down">Losers 🔻</option>
-              <option value="up">Gainers 🔼</option>
-              <option value="neutral">Neutral ⏺️</option>
-            </select>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* 4. Main Body */}
+      {/* 4. MAIN BODY CONTAINER */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {activeTab === 'whatsapp' ? (
+        {mainCategory === 'whatsapp' ? (
           /* ========================================================= */
           /* Dedicated WhatsApp Broadcast View                        */
           /* ========================================================= */
           <div className="max-w-3xl mx-auto space-y-4">
             <div className="bg-[#0b141a] text-slate-100 rounded-xl shadow-xl overflow-hidden border border-[#202c33]">
-              {/* WhatsApp Mock Header */}
-              <div className="bg-[#202c33] p-3 px-4 flex items-center justify-between border-b border-[#2a3942]">
+              <div className="bg-[#202c33] p-3.5 px-4 flex items-center justify-between border-b border-[#2a3942]">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-black text-sm">
                     FTI
@@ -477,27 +503,23 @@ export default function MarketPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={handleCopyBulletin}
-                    className="px-3 py-1.5 bg-[#00a884] hover:bg-[#008f6f] text-slate-950 font-bold text-xs rounded flex items-center space-x-1.5 transition cursor-pointer"
-                  >
-                    {copiedBulletin ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedBulletin ? 'Copied!' : 'Copy Broadcast'}</span>
-                  </button>
-                </div>
+                <button
+                  onClick={handleCopyBulletin}
+                  className="px-3 py-1.5 bg-[#00a884] hover:bg-[#008f6f] text-slate-950 font-bold text-xs rounded flex items-center space-x-1.5 transition cursor-pointer"
+                >
+                  {copiedBulletin ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedBulletin ? 'Copied!' : 'Copy Broadcast'}</span>
+                </button>
               </div>
 
-              {/* Message bubble */}
-              <div className="p-4 sm:p-6 bg-[#0b141a] bg-radial from-[#111b21] to-[#0b141a]">
-                <div className="max-w-xl bg-[#202c33] rounded-lg p-4 sm:p-5 shadow border border-[#2a3942]/60 font-mono text-xs text-slate-200 whitespace-pre-wrap leading-relaxed select-all">
+              <div className="p-4 sm:p-6 bg-[#0b141a]">
+                <div className="max-w-xl mx-auto bg-[#202c33] rounded-lg p-4 sm:p-5 shadow border border-[#2a3942]/60 font-mono text-xs text-slate-200 whitespace-pre-wrap leading-relaxed select-all">
                   {mandiBulletin?.rawMessageText}
                 </div>
               </div>
 
-              {/* WhatsApp Footer */}
               <div className="p-3 bg-[#111b21] border-t border-[#202c33] flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-400 gap-2">
-                <span>Verified Trading Desk broadcast updated {mandiBulletin?.dateStr} at {mandiBulletin?.timeStr}</span>
+                <span>Updated {mandiBulletin?.dateStr} at {mandiBulletin?.timeStr}</span>
                 <a
                   href="https://wa.me/919780830333"
                   target="_blank"
@@ -512,168 +534,234 @@ export default function MarketPage() {
           </div>
         ) : (
           /* ========================================================= */
-          /* Two-Column Grid: Left (Hub Rates List) & Right (Analytics) */
+          /* 3-LEVEL STRUCTURE: Category -> Material Name -> Mandis    */
+          /* Left: Mandi Price Lists | Right: Past 50 Records Drawer   */
           /* ========================================================= */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left Column: Live City Rates Board */}
-            <div className="lg:col-span-6 space-y-4">
-              <div className="bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
-                <div className="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-                  <div>
-                    <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider">
-                      {activeTab === 'all'
-                        ? 'All Mandi Steel & Scrap City Rates'
-                        : `${activeTab.toUpperCase()} Spot Benchmark Board`}
-                    </h2>
-                    <p className="text-[11px] text-slate-500">
-                      Showing {filteredMaterials.length} hub fixings. Click any row to view price analytics.
-                    </p>
-                  </div>
-                  <span className="text-[10px] font-mono font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded">
-                    ₹ / Metric Ton
-                  </span>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column (7 cols): Mandis and Places grouped by Material Name */}
+            <div className="lg:col-span-7 space-y-6">
+              {Object.keys(groupedByMaterial).length === 0 ? (
+                <div className="bg-white border border-slate-200 rounded-xl p-12 text-center text-slate-500">
+                  <Search className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                  <p className="font-semibold text-slate-800 text-sm">No matching Mandi prices found</p>
+                  <p className="text-xs text-slate-500 mt-1">Try adjusting your material or search filter.</p>
                 </div>
+              ) : (
+                Object.entries(groupedByMaterial).map(([materialName, mandis]) => {
+                  const avgPrice = Math.round(
+                    mandis.reduce((acc, m) => acc + m.currentPrice, 0) / mandis.length
+                  );
+                  const minPrice = Math.min(...mandis.map((m) => m.currentPrice));
+                  const maxPrice = Math.max(...mandis.map((m) => m.currentPrice));
 
-                <div className="overflow-x-auto max-h-[640px] overflow-y-auto divide-y divide-slate-100">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead className="sticky top-0 bg-slate-100 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200 z-10">
-                      <tr>
-                        <th className="py-2.5 px-3">City / Market Hub</th>
-                        <th className="py-2.5 px-3">Category</th>
-                        <th className="py-2.5 px-3 text-right">Price / MT ᵃˢᵗ</th>
-                        <th className="py-2.5 px-3 text-right">Change (₹)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {filteredMaterials.map((mat) => {
-                        const isSelected = selectedMaterial?.id === mat.id;
-                        const isUp = mat.movementDirection === 'up';
-                        const isDown = mat.movementDirection === 'down';
-
-                        return (
-                          <tr
-                            key={mat.id}
-                            onClick={() => setSelectedMaterial(mat)}
-                            className={`cursor-pointer transition ${
-                              isSelected
-                                ? 'bg-blue-50/90 font-semibold border-l-4 border-l-blue-600'
-                                : 'hover:bg-slate-50'
+                  return (
+                    <div
+                      key={materialName}
+                      className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden"
+                    >
+                      {/* Material Name Group Header */}
+                      <div className="bg-slate-50 border-b border-slate-200 p-3.5 px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div className="flex items-center space-x-2.5">
+                          <span
+                            className={`w-3 h-3 rounded-full ${
+                              mainCategory === 'raw_materials' ? 'bg-blue-600' : 'bg-amber-600'
                             }`}
-                          >
-                            <td className="py-2.5 px-3">
-                              <div className="flex items-center space-x-2">
-                                {isSelected ? (
-                                  <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0" />
-                                ) : (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />
-                                )}
-                                <div>
-                                  <p className="font-bold text-slate-900 text-xs">
-                                    {mat.name} <span className="text-[10px] font-normal text-slate-400">ᵃˢᵗ</span>
-                                  </p>
-                                  <p className="text-[10px] text-slate-400 font-mono">
-                                    {mat.symbol}
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
-
-                            <td className="py-2.5 px-3">
-                              <span
-                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase font-mono ${
-                                  mat.categorySlug === 'ingot'
-                                    ? 'bg-purple-100 text-purple-800'
-                                    : mat.categorySlug === 'scrap'
-                                    ? 'bg-amber-100 text-amber-900'
-                                    : mat.categorySlug === 'billet'
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : 'bg-emerald-100 text-emerald-800'
-                                }`}
-                              >
-                                {mat.categoryName}
+                          />
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <h3 className="text-sm font-black text-slate-900 uppercase tracking-wide">
+                                {materialName}
+                              </h3>
+                              <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-slate-200 text-slate-700">
+                                {mandis.length} {mandis.length === 1 ? 'Mandi' : 'Mandis & Places'}
                               </span>
-                            </td>
+                            </div>
+                            <p className="text-[11px] text-slate-500">
+                              Price Range: <strong className="text-slate-700">{formatINR(minPrice)}</strong> –{' '}
+                              <strong className="text-slate-700">{formatINR(maxPrice)}</strong> / MT ᵃˢᵗ
+                            </p>
+                          </div>
+                        </div>
 
-                            <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 text-xs sm:text-sm">
-                              {formatINR(mat.currentPrice)}
-                            </td>
+                        <div className="text-left sm:text-right">
+                          <span className="text-[10px] uppercase font-mono text-slate-400 block">Avg Spot</span>
+                          <span className="text-xs sm:text-sm font-extrabold text-slate-900 font-mono">
+                            {formatINR(avgPrice)} / MT
+                          </span>
+                        </div>
+                      </div>
 
-                            <td className="py-2.5 px-3 text-right">
-                              <span
-                                className={`inline-flex items-center space-x-0.5 px-2 py-0.5 rounded text-[11px] font-bold font-mono ${
-                                  isUp
-                                    ? 'bg-emerald-100 text-emerald-800'
-                                    : isDown
-                                    ? 'bg-rose-100 text-rose-800'
-                                    : 'bg-slate-100 text-slate-600'
-                                }`}
-                              >
-                                {isUp ? (
-                                  <ArrowUpRight className="w-3 h-3" />
-                                ) : isDown ? (
-                                  <ArrowDownRight className="w-3 h-3" />
-                                ) : (
-                                  <Minus className="w-3 h-3" />
-                                )}
-                                <span>
-                                  {mat.priceChange > 0 ? `+${mat.priceChange}` : mat.priceChange}
-                                </span>
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                      {/* Mandis & Places List Table */}
+                      <div className="divide-y divide-slate-100 overflow-x-auto">
+                        <table className="w-full text-left border-collapse text-xs">
+                          <thead className="bg-slate-50/70 text-slate-500 font-bold uppercase text-[10px] border-b border-slate-100">
+                            <tr>
+                              <th className="py-2 px-3.5">Mandi / Place</th>
+                              <th className="py-2 px-3 text-right">Spot Price ᵃˢᵗ</th>
+                              <th className="py-2 px-3 text-right">Ups / Downs</th>
+                              <th className="py-2 px-3 text-right hidden sm:table-cell">Prev. Session</th>
+                              <th className="py-2 px-3.5 text-center">Audit</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {mandis.map((mat) => {
+                              const isSelected = selectedMaterial?.id === mat.id;
+                              const isUp = mat.movementDirection === 'up';
+                              const isDown = mat.movementDirection === 'down';
 
-                {filteredMaterials.length === 0 && (
-                  <div className="p-8 text-center text-xs text-slate-500">
-                    No mandi rates found matching "{searchTerm}". Try clearing your search filter.
-                  </div>
-                )}
-              </div>
+                              return (
+                                <tr
+                                  key={mat.id}
+                                  onClick={() => setSelectedMaterial(mat)}
+                                  className={`cursor-pointer transition group ${
+                                    isSelected
+                                      ? 'bg-blue-50/90 font-semibold border-l-4 border-l-blue-600'
+                                      : 'hover:bg-slate-50'
+                                  }`}
+                                >
+                                  {/* Place / Mandi Name */}
+                                  <td className="py-2.5 px-3.5">
+                                    <div className="flex items-center space-x-2">
+                                      <MapPin
+                                        className={`w-3.5 h-3.5 shrink-0 ${
+                                          isSelected ? 'text-blue-600' : 'text-slate-400'
+                                        }`}
+                                      />
+                                      <div>
+                                        <p className="font-bold text-slate-900 text-xs flex items-center space-x-1">
+                                          <span>{mat.mandiCity}</span>
+                                          <span className="text-[10px] font-normal text-slate-400 font-mono">
+                                            ᵃˢᵗ
+                                          </span>
+                                        </p>
+                                        <p className="text-[10px] text-slate-400 font-mono">
+                                          {mat.symbol}
+                                          {mat.specification ? ` • ${mat.specification}` : ''}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </td>
 
-              {/* Informational Box */}
-              <div className="p-3.5 bg-blue-50/70 border border-blue-200/80 rounded-lg text-xs text-blue-900 flex items-start space-x-2.5">
+                                  {/* Spot Price */}
+                                  <td className="py-2.5 px-3 text-right font-mono font-black text-slate-900 text-xs sm:text-sm">
+                                    {formatINR(mat.currentPrice)}
+                                  </td>
+
+                                  {/* Ups / Downs Badge */}
+                                  <td className="py-2.5 px-3 text-right">
+                                    <span
+                                      className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-md text-[11px] font-black font-mono shadow-xs ${
+                                        isUp
+                                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+                                          : isDown
+                                          ? 'bg-rose-50 text-rose-700 border border-rose-300'
+                                          : 'bg-slate-100 text-slate-600 border border-slate-200'
+                                      }`}
+                                    >
+                                      {isUp ? (
+                                        <>
+                                          <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />
+                                          <span>+₹{mat.priceChange}</span>
+                                          <span className="text-[9px] opacity-80">(+{mat.percentageChange}%)</span>
+                                        </>
+                                      ) : isDown ? (
+                                        <>
+                                          <ArrowDownRight className="w-3.5 h-3.5 text-rose-600" />
+                                          <span>-₹{Math.abs(mat.priceChange)}</span>
+                                          <span className="text-[9px] opacity-80">({mat.percentageChange}%)</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Minus className="w-3.5 h-3.5 text-slate-400" />
+                                          <span>₹0</span>
+                                          <span className="text-[9px] opacity-80">(0.0%)</span>
+                                        </>
+                                      )}
+                                    </span>
+                                  </td>
+
+                                  {/* Previous Price */}
+                                  <td className="py-2.5 px-3 text-right text-slate-500 font-mono text-xs hidden sm:table-cell">
+                                    {formatINR(mat.previousPrice)}
+                                  </td>
+
+                                  {/* Past 50 Records Indicator */}
+                                  <td className="py-2.5 px-3.5 text-center">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedMaterial(mat);
+                                      }}
+                                      className="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-slate-100 text-slate-700 hover:bg-blue-100 hover:text-blue-800 transition border border-slate-200"
+                                      title="View all 50 recorded price sessions"
+                                    >
+                                      50 Rec
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+
+              {/* Informational Disclaimer Box */}
+              <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-start space-x-2.5">
                 <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <div className="leading-relaxed">
-                  <strong>Trade Benchmarks Note:</strong> All rates represent primary & secondary induction spot trade fixings.
-                  Applicable Sales Tax (ast) is extra as per destination state rules. Prices fluctuate during morning and evening trading sessions.
+                  <strong>Spot Fixing Rules:</strong> All Mandi and place benchmark spot prices are quoted in INR per Metric Ton (MT).
+                  Applicable Sales Tax (ast) is extra. Rates reflect morning & afternoon primary/secondary furnace sessions.
                 </div>
               </div>
             </div>
 
-            {/* Right Column: Interactive Stock-Market Style Chart & Analytics */}
-            <div className="lg:col-span-6 space-y-4">
+            {/* Right Column (5 cols): Selected Mandi's Past 50 Historical Records Panel */}
+            <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-36">
               {selectedMaterial ? (
-                <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-4">
-                  {/* Selected Material Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-slate-200 pb-4">
-                    <div>
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                  {/* Selected Mandi Details Header */}
+                  <div className="border-b border-slate-200 pb-4">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 font-mono">
                           {selectedMaterial.symbol}
                         </span>
-                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded uppercase font-mono">
-                          {selectedMaterial.categoryName}
+                        <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded uppercase font-mono">
+                          {selectedMaterial.mainCategory === 'raw_materials' ? 'Raw Material' : 'Scrap Material'}
                         </span>
                       </div>
-                      <h3 className="text-xl font-black text-slate-900 mt-1">
-                        {selectedMaterial.name} <span className="text-sm font-normal text-slate-400">ᵃˢᵗ</span>
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        {selectedMaterial.notes || 'Secondary & Primary Indian Mill Benchmark ex-hub.'}
-                      </p>
+
+                      <button
+                        onClick={() => handleExportCSV(selectedMaterial)}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold flex items-center space-x-1 transition"
+                        title="Download Past 50 Records as CSV"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Export 50 Rec</span>
+                      </button>
                     </div>
 
-                    <div className="text-left sm:text-right">
-                      <span className="text-2xl sm:text-3xl font-black text-slate-900 font-mono block">
-                        {formatINR(selectedMaterial.currentPrice)}
-                      </span>
-                      <div className="flex items-center sm:justify-end space-x-1.5 text-xs font-bold">
+                    <div className="mt-2 flex items-baseline justify-between">
+                      <div>
+                        <h2 className="text-xl font-black text-slate-900">
+                          {selectedMaterial.materialName}
+                        </h2>
+                        <p className="text-xs font-semibold text-slate-600 flex items-center space-x-1">
+                          <MapPin className="w-3 h-3 text-red-500" />
+                          <span>{selectedMaterial.mandiCity} Spot Market</span>
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-2xl font-black text-slate-900 font-mono block">
+                          {formatINR(selectedMaterial.currentPrice)}
+                        </span>
                         <span
-                          className={`inline-flex items-center ${
+                          className={`inline-flex items-center text-xs font-black font-mono ${
                             selectedMaterial.movementDirection === 'up'
                               ? 'text-emerald-600'
                               : selectedMaterial.movementDirection === 'down'
@@ -681,187 +769,204 @@ export default function MarketPage() {
                               : 'text-slate-500'
                           }`}
                         >
-                          {selectedMaterial.priceChange > 0 ? '+' : ''}
-                          {selectedMaterial.priceChange} ({selectedMaterial.percentageChange}%)
+                          {selectedMaterial.movementDirection === 'up' && '▲ +'}
+                          {selectedMaterial.movementDirection === 'down' && '▼ '}
+                          {selectedMaterial.movementDirection === 'neutral' && '▬ '}
+                          ₹{Math.abs(selectedMaterial.priceChange)} ({selectedMaterial.percentageChange}%)
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Timeframe Filters & Chart Switcher */}
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-md text-xs font-semibold">
-                      {(['1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'] as const).map((range) => (
+                  {/* Past 50 Records Chart Control */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center space-x-1">
+                      <History className="w-4 h-4 text-slate-500" />
+                      <span className="text-xs font-bold text-slate-800">
+                        Past 50 Records Trend
+                      </span>
+                    </div>
+
+                    <div className="flex items-center space-x-1 bg-slate-100 p-0.5 rounded text-xs font-bold font-mono">
+                      {([7, 15, 30, 50] as const).map((count) => (
                         <button
-                          key={range}
-                          onClick={() => setTimeRange(range)}
-                          className={`px-2.5 py-1 rounded transition text-xs ${
-                            timeRange === range
+                          key={count}
+                          onClick={() => setHistoryLimit(count)}
+                          className={`px-2 py-0.5 rounded transition ${
+                            historyLimit === count
                               ? 'bg-blue-600 text-white shadow-xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
-                          {range}
+                          {count}
                         </button>
                       ))}
                     </div>
-
-                    <div className="flex items-center space-x-2 text-xs">
-                      <button
-                        onClick={() => setChartType(chartType === 'area' ? 'line' : 'area')}
-                        className="px-2.5 py-1 rounded border border-slate-200 bg-slate-50 text-slate-700 font-medium hover:bg-slate-100 transition"
-                      >
-                        {chartType === 'area' ? 'Area Chart' : 'Line Chart'}
-                      </button>
-
-                      <button
-                        onClick={() => handleExportCSV(selectedMaterial)}
-                        className="p-1.5 rounded border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition flex items-center space-x-1"
-                        title="Download CSV Price Report"
-                      >
-                        <Download className="w-3.5 h-3.5 text-slate-600" />
-                        <span className="text-[11px] font-semibold">CSV</span>
-                      </button>
-                    </div>
                   </div>
 
-                  {/* Interactive Recharts Graph */}
-                  <div className="h-64 w-full bg-slate-50/50 rounded-lg p-2 border border-slate-100">
+                  {/* Recharts Historical Curve */}
+                  <div className="h-56 w-full bg-slate-50 rounded-lg p-2 border border-slate-100">
                     <ResponsiveContainer width="100%" height="100%">
-                      {chartType === 'area' ? (
-                        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="mandiGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} />
-                              <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis
-                            dataKey="date"
-                            tick={{ fontSize: 10, fill: '#64748b' }}
-                            tickLine={false}
-                            axisLine={{ stroke: '#cbd5e1' }}
-                          />
-                          <YAxis
-                            domain={['auto', 'auto']}
-                            tick={{ fontSize: 10, fill: '#64748b' }}
-                            tickLine={false}
-                            axisLine={{ stroke: '#cbd5e1' }}
-                            tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
-                          />
-                          <Tooltip
-                            formatter={(value: any) => [formatINR(Number(value)), 'Spot Price / MT']}
-                            labelFormatter={(label) => `Date: ${label}`}
-                            contentStyle={{
-                              backgroundColor: '#0f172a',
-                              borderColor: '#334155',
-                              color: '#ffffff',
-                              borderRadius: '6px',
-                              fontSize: '11px',
-                            }}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="price"
-                            stroke="#2563eb"
-                            strokeWidth={2}
-                            fillOpacity={1}
-                            fill="url(#mandiGradient)"
-                          />
-                        </AreaChart>
-                      ) : (
-                        <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis
-                            dataKey="date"
-                            tick={{ fontSize: 10, fill: '#64748b' }}
-                            tickLine={false}
-                            axisLine={{ stroke: '#cbd5e1' }}
-                          />
-                          <YAxis
-                            domain={['auto', 'auto']}
-                            tick={{ fontSize: 10, fill: '#64748b' }}
-                            tickLine={false}
-                            axisLine={{ stroke: '#cbd5e1' }}
-                            tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
-                          />
-                          <Tooltip
-                            formatter={(value: any) => [formatINR(Number(value)), 'Spot Price / MT']}
-                            labelFormatter={(label) => `Date: ${label}`}
-                            contentStyle={{
-                              backgroundColor: '#0f172a',
-                              borderColor: '#334155',
-                              color: '#ffffff',
-                              borderRadius: '6px',
-                              fontSize: '11px',
-                            }}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="price"
-                            stroke="#2563eb"
-                            strokeWidth={2.5}
-                            dot={{ r: 2 }}
-                            activeDot={{ r: 5 }}
-                          />
-                        </LineChart>
-                      )}
+                      <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="historyGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop
+                              offset="5%"
+                              stopColor={selectedMaterial.movementDirection === 'up' ? '#10b981' : '#2563eb'}
+                              stopOpacity={0.35}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor={selectedMaterial.movementDirection === 'up' ? '#10b981' : '#2563eb'}
+                              stopOpacity={0.0}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fontSize: 9, fill: '#64748b' }}
+                          tickLine={false}
+                          axisLine={{ stroke: '#cbd5e1' }}
+                        />
+                        <YAxis
+                          domain={['auto', 'auto']}
+                          tick={{ fontSize: 9, fill: '#64748b' }}
+                          tickLine={false}
+                          axisLine={{ stroke: '#cbd5e1' }}
+                          tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
+                        />
+                        <Tooltip
+                          formatter={(value: any) => [formatINR(Number(value)), 'Price / MT']}
+                          labelFormatter={(label) => `Session Date: ${label}`}
+                          contentStyle={{
+                            backgroundColor: '#0f172a',
+                            borderColor: '#334155',
+                            color: '#ffffff',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="price"
+                          stroke={selectedMaterial.movementDirection === 'up' ? '#059669' : '#2563eb'}
+                          strokeWidth={2}
+                          fillOpacity={1}
+                          fill="url(#historyGradient)"
+                        />
+                      </AreaChart>
                     </ResponsiveContainer>
                   </div>
 
-                  {/* Stock Statistics Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                    <div className="bg-slate-50 p-2.5 rounded border border-slate-200">
-                      <span className="text-[10px] text-slate-400 block uppercase font-mono">Previous Fixing</span>
-                      <span className="font-mono font-bold text-slate-800">
+                  {/* 50-Record Statistics Bar */}
+                  <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                    <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                      <span className="text-[9px] text-slate-400 uppercase font-mono block">Previous</span>
+                      <span className="font-mono font-bold text-slate-800 text-xs">
                         {formatINR(selectedMaterial.previousPrice)}
                       </span>
                     </div>
 
-                    <div className="bg-slate-50 p-2.5 rounded border border-slate-200">
-                      <span className="text-[10px] text-slate-400 block uppercase font-mono">Period High</span>
-                      <span className="font-mono font-bold text-emerald-700">
+                    <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                      <span className="text-[9px] text-slate-400 uppercase font-mono block">50-Rec High</span>
+                      <span className="font-mono font-bold text-emerald-700 text-xs">
                         {formatINR(selectedMaterial.highPrice)}
                       </span>
                     </div>
 
-                    <div className="bg-slate-50 p-2.5 rounded border border-slate-200">
-                      <span className="text-[10px] text-slate-400 block uppercase font-mono">Period Low</span>
-                      <span className="font-mono font-bold text-rose-700">
+                    <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                      <span className="text-[9px] text-slate-400 uppercase font-mono block">50-Rec Low</span>
+                      <span className="font-mono font-bold text-rose-700 text-xs">
                         {formatINR(selectedMaterial.lowPrice)}
                       </span>
                     </div>
 
-                    <div className="bg-slate-50 p-2.5 rounded border border-slate-200">
-                      <span className="text-[10px] text-slate-400 block uppercase font-mono">Volatility</span>
-                      <span className="font-mono font-bold text-slate-800">
+                    <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                      <span className="text-[9px] text-slate-400 uppercase font-mono block">Volatility</span>
+                      <span className="font-mono font-bold text-blue-700 text-xs">
                         {selectedMaterial.volatility}%
                       </span>
                     </div>
                   </div>
 
-                  {/* Action CTA: Lock Physical Material Quotation */}
-                  <div className="p-3.5 bg-slate-900 rounded-lg text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  {/* TABULAR AUDIT LIST OF PAST 50 RECORDS */}
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
+                    <div className="bg-slate-100 p-2 px-3 flex items-center justify-between text-xs font-bold text-slate-800">
+                      <span className="flex items-center space-x-1">
+                        <History className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Chronological Past 50 Records</span>
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        {(selectedMaterial.historicalPrices || []).length} Records Total
+                      </span>
+                    </div>
+
+                    <div className="max-h-56 overflow-y-auto divide-y divide-slate-100 text-xs">
+                      {chartData
+                        .slice()
+                        .reverse()
+                        .map((point) => (
+                          <div
+                            key={point.index}
+                            className="p-2 px-3 flex items-center justify-between hover:bg-slate-50 transition"
+                          >
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <span className="font-mono text-[10px] text-slate-400 font-bold">
+                                  #{point.index}
+                                </span>
+                                <span className="font-bold text-slate-800 text-xs">{point.date}</span>
+                              </div>
+                              <p className="text-[10px] text-slate-500 truncate max-w-[200px]">
+                                {point.notes}
+                              </p>
+                            </div>
+
+                            <div className="text-right">
+                              <span className="font-mono font-bold text-slate-900 block text-xs">
+                                {formatINR(point.price)}
+                              </span>
+                              <span
+                                className={`text-[10px] font-mono font-bold inline-flex items-center ${
+                                  point.direction === 'up'
+                                    ? 'text-emerald-600'
+                                    : point.direction === 'down'
+                                    ? 'text-rose-600'
+                                    : 'text-slate-400'
+                                }`}
+                              >
+                                {point.direction === 'up' && '▲ +'}
+                                {point.direction === 'down' && '▼ -'}
+                                ₹{Math.abs(point.change)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+
+                  {/* Physical Material Sourcing CTA */}
+                  <div className="p-3.5 bg-slate-900 rounded-lg text-white flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-bold">Lock Spot Quotation for this Hub</p>
-                      <p className="text-[11px] text-slate-300">
-                        Submit custom grade combinations directly to FTI dispatch desk.
+                      <p className="text-xs font-bold">Source Material at this Spot Rate</p>
+                      <p className="text-[10px] text-slate-300">
+                        Lock custom specs for dispatch from {selectedMaterial.mandiCity}.
                       </p>
                     </div>
                     <Link
                       href={`/raw-materials`}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold text-xs shadow transition text-center shrink-0"
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold text-xs shadow transition text-center shrink-0"
                     >
-                      Request Quotation
+                      Request Quote
                     </Link>
                   </div>
                 </div>
               ) : (
-                <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-400">
+                <div className="bg-white border border-slate-200 rounded-xl p-12 text-center text-slate-400">
                   <Activity className="w-10 h-10 mx-auto mb-2 text-slate-300" />
                   <p className="text-xs font-semibold text-slate-600">
-                    Select any hub rate to view historical stock-market style graph.
+                    Click any Mandi or Place on the left to view the past 50 historical price records.
                   </p>
                 </div>
               )}
@@ -869,7 +974,7 @@ export default function MarketPage() {
           </div>
         )}
 
-        {/* 5. Authentic Mandi Notes, Rumours Disclaimer & Alert Channels Footer */}
+        {/* 5. Authentic Mandi Notes & Rumours Disclaimer */}
         <div className="bg-slate-900 text-white rounded-xl p-5 sm:p-6 border border-slate-800 space-y-4">
           <div className="border-b border-slate-800 pb-3 flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -884,7 +989,6 @@ export default function MarketPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-300">
-            {/* Notes Section */}
             <div className="space-y-1.5 font-mono bg-slate-950/60 p-3.5 rounded-lg border border-slate-800">
               <p className="font-bold text-amber-300 mb-1">*_Note_*</p>
               <p>• # All Rates Are Quoted, Estimated (As per Rumours)</p>
@@ -893,56 +997,29 @@ export default function MarketPage() {
               <p>• # 💯% Reliability and Top Service</p>
               <p>• # Best Service, Right Time, Right People</p>
               <p className="text-slate-100 font-bold mt-2">
-                # Support 24×7: <a href="tel:+919780830333" className="text-blue-400 underline">+91-9780830333</a>
+                # Support 24×7:{' '}
+                <a href="tel:+919780830333" className="text-blue-400 underline">
+                  +91-9780830333
+                </a>
               </p>
             </div>
 
-            {/* Live Alerts Desk */}
-            <div className="space-y-3 bg-slate-950/60 p-3.5 rounded-lg border border-slate-800 flex flex-col justify-between">
+            <div className="space-y-2 bg-slate-950/60 p-3.5 rounded-lg border border-slate-800 flex flex-col justify-between">
               <div>
-                <p className="font-bold text-emerald-400 mb-2">👉🏻 Live Mandi Alerts Channels</p>
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between p-2 bg-slate-900 rounded border border-slate-800">
-                    <span className="font-bold text-slate-200">👉🏻 SMS ALERTS💬</span>
-                    <a href="sms:+919780830333" className="font-mono text-blue-400 hover:text-blue-300">
-                      📲 +91-9780830333
-                    </a>
-                  </div>
-
-                  <div className="p-2 bg-slate-900 rounded border border-slate-800 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-200">👉🏻 Whatsapp Alerts💬</span>
-                      <a href="https://wa.me/919780830333" target="_blank" rel="noreferrer" className="font-mono text-emerald-400 hover:text-emerald-300">
-                        📲 +91-9780830333
-                      </a>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] text-slate-400">Secondary Desk</span>
-                      <a href="https://wa.me/919589971567" target="_blank" rel="noreferrer" className="font-mono text-emerald-400 hover:text-emerald-300">
-                        📲 +91-9589971567
-                      </a>
-                    </div>
-                  </div>
-                </div>
+                <p className="font-bold text-emerald-300 mb-1">Direct Mandi Alert Channels</p>
+                <p className="text-slate-300 leading-relaxed">
+                  Subscribe to instant morning and afternoon spot price SMS & WhatsApp notifications
+                  for primary induction billets, ingots, rebar, and foundry melting scrap.
+                </p>
               </div>
 
-              <div className="pt-2 flex items-center space-x-2">
-                <a
-                  href="tel:+919780830333"
-                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded text-center text-xs flex items-center justify-center space-x-1.5 transition"
-                >
-                  <PhoneCall className="w-3.5 h-3.5" />
-                  <span>Call Trading Desk</span>
-                </a>
-                <a
-                  href="https://wa.me/919780830333?text=Hi%20FTI,%20Please%20subscribe%20me%20to%20Mandi%20Live%20Rates"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-center text-xs flex items-center justify-center space-x-1.5 transition"
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>Subscribe on WhatsApp</span>
-                </a>
+              <div className="pt-2 border-t border-slate-800/80 flex flex-wrap gap-2 text-xs font-mono">
+                <span className="bg-slate-900 px-2 py-1 rounded text-slate-300 border border-slate-800">
+                  SMS: +91-9780830333
+                </span>
+                <span className="bg-slate-900 px-2 py-1 rounded text-slate-300 border border-slate-800">
+                  WA: +91-9589971567
+                </span>
               </div>
             </div>
           </div>

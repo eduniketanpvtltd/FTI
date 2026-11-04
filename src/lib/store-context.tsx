@@ -24,6 +24,8 @@ import {
   QuotationStatus,
   OrderStatus,
   PaymentStatus,
+  MovementDirection,
+  MarketPricePoint,
 } from '@/types';
 import { generateRefId, numberToIndianWords } from './utils';
 import {
@@ -751,14 +753,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const prevPrice = material.currentPrice;
         const priceChange = newPrice - prevPrice;
         const percentageChange = Number(((priceChange / prevPrice) * 100).toFixed(2));
-        const movementDirection = priceChange > 0 ? 'up' : priceChange < 0 ? 'down' : 'neutral';
+        const movementDirection: MovementDirection =
+          priceChange > 0 ? 'up' : priceChange < 0 ? 'down' : 'neutral';
 
         const now = new Date();
-        const newPoint = {
+        const newPoint: MarketPricePoint = {
           date: now.toISOString().split('T')[0],
           timestamp: now.getTime(),
           price: newPrice,
+          previousPrice: prevPrice,
+          priceChange,
+          percentageChange,
+          movementDirection,
+          notes: notes || `Trading Update: ${movementDirection.toUpperCase()} ${priceChange >= 0 ? '+' : ''}₹${priceChange}`,
         };
+
+        const updatedHistory = [...(material.historicalPrices || []), newPoint].slice(-50);
 
         const updatedMaterial: MarketMaterial = {
           ...material,
@@ -771,7 +781,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           lowPrice: Math.min(material.lowPrice, newPrice),
           lastUpdatedAt: now.toISOString(),
           notes: notes || material.notes,
-          historicalPrices: [...material.historicalPrices, newPoint],
+          historicalPrices: updatedHistory,
         };
 
         return {

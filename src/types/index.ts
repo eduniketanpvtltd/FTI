@@ -257,12 +257,21 @@ export interface MarketPricePoint {
   date: string; // ISO date or formatted
   timestamp: number;
   price: number;
+  previousPrice?: number;
+  priceChange?: number;
+  percentageChange?: number;
+  movementDirection?: MovementDirection;
+  notes?: string;
 }
 
 export type MovementDirection = 'up' | 'down' | 'neutral';
+export type MarketMainCategory = 'raw_materials' | 'scrap_materials';
 
 export interface MarketMaterial {
   id: string;
+  mainCategory: MarketMainCategory; // Level 1: 'raw_materials' | 'scrap_materials'
+  materialName: string; // Level 2: 'Ingot', 'Billet', 'TMT Rebar', 'Melting Scrap', 'Old Scrap', etc.
+  mandiCity: string; // Level 3: 'Mandi Gobindgarh', 'Ludhiana', 'Raipur', 'Muzaffarnagar', etc.
   categorySlug: 'ingot' | 'scrap' | 'billet' | 'benchmark' | 'raw_materials' | 'scrap_materials' | string;
   categoryName: string;
   name: string;
@@ -283,7 +292,7 @@ export interface MarketMaterial {
   displayOrder: number;
   isActive: boolean;
   notes?: string;
-  historicalPrices: MarketPricePoint[];
+  historicalPrices: MarketPricePoint[]; // Past 50 records
 }
 
 export interface MandiBulletinData {
