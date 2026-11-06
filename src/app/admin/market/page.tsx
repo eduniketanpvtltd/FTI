@@ -5,7 +5,11 @@ import Link from 'next/link';
 import { useStore } from '@/lib/store-context';
 import { formatINR, formatIndianDate, formatIndianDateTime } from '@/lib/utils';
 import { MarketMaterial, MarketMainCategory } from '@/types';
-import { DEFAULT_MANDI_BULLETIN_TEXT, parseMandiBroadcast } from '@/lib/mandi-parser';
+import {
+  DEFAULT_MANDI_BULLETIN_TEXT,
+  parseMandiBroadcast,
+  formatIstBulletinDateTime,
+} from '@/lib/mandi-parser';
 import {
   LineChart,
   Line,
@@ -57,6 +61,22 @@ export default function AdminMarketManagementPage() {
     lastMarketSyncTime,
     refreshMarketPrices,
   } = useStore();
+
+  const [isRefreshingAdmin, setIsRefreshingAdmin] = useState(false);
+  const latestSyncDisplay = useMemo(
+    () => formatIstBulletinDateTime(lastMarketSyncTime),
+    [lastMarketSyncTime]
+  );
+
+  const handleAdminRefresh = async () => {
+    if (isRefreshingAdmin) return;
+    setIsRefreshingAdmin(true);
+    try {
+      await refreshMarketPrices();
+    } finally {
+      setTimeout(() => setIsRefreshingAdmin(false), 500);
+    }
+  };
 
   // Mobile View Switcher (< xl screens: 'mandis' vs 'inspector')
   const [mobileTab, setMobileTab] = useState<'mandis' | 'inspector'>('mandis');
@@ -112,6 +132,10 @@ export default function AdminMarketManagementPage() {
   // 1. Available materials in active primary category (Level 1)
   const categoryMaterials = useMemo(() => {
     return marketMaterials.filter((m) => {
+      // Safety guard: Never show legacy "Mandi Benchmark" pseudo-material
+      if (m.materialName === 'Mandi Benchmark' || m.categoryName === 'Mandi Benchmark') {
+        return false;
+      }
       if (m.mainCategory) return m.mainCategory === mainCategory;
       if (mainCategory === 'scrap_materials') {
         return (
@@ -406,31 +430,31 @@ export default function AdminMarketManagementPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2 mb-1">
-            <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+          <div className="flex items-center space-x-2 mb-1.5">
+            <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-[#E8732A] bg-[#251811] border border-[#E06924]/40 px-2.5 py-0.5 rounded-md">
               ADMIN LIVE TRADING DESK
             </span>
-            <span className="bg-indigo-50 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded border border-indigo-200 flex items-center space-x-1">
-              <History className="w-3.5 h-3.5" />
+            <span className="bg-[#191F28] text-[#CBD5E1] text-xs font-bold px-2.5 py-0.5 rounded-md border border-[#2A3342] flex items-center space-x-1">
+              <History className="w-3.5 h-3.5 text-[#E8732A]" />
               <span>Past 50 Records Live Audit</span>
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            Mandi Gobindgarh Spot Rate Desk & Multi-City Manager
+          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+            Mandi Gobindgarh <span className="text-[#E8732A]">Spot Rate Desk</span> & Multi-City Manager
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Strict 3-Level Architecture: <strong>1. Raw / Scrap Category</strong> → <strong>2. Material Name</strong> → <strong>3. Mandis & Places</strong> with live Ups/Downs and 50 past session records.
+          <p className="text-xs text-[#94A3B8] mt-0.5">
+            Strict 3-Level Architecture: <strong className="text-white">1. Raw / Scrap Category</strong> → <strong className="text-white">2. Material Name</strong> → <strong className="text-white">3. Mandis & Places</strong> with live Ups/Downs and 50 past session records.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto">
+        <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
           <Link
             href="/market"
             target="_blank"
-            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded shadow-xs flex items-center justify-center space-x-1.5 transition"
+            className="px-3.5 py-2 bg-[#191F28] hover:bg-[#222936] text-[#CBD5E1] hover:text-white border border-[#2A3342] text-xs font-bold rounded-xl shadow-xs flex items-center justify-center space-x-1.5 transition"
           >
             <span>Customer View</span>
-            <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+            <ExternalLink className="w-3.5 h-3.5 text-[#E8732A]" />
           </Link>
 
           <button
@@ -439,15 +463,15 @@ export default function AdminMarketManagementPage() {
               setParsePreview(null);
               setBroadcastModalOpen(true);
             }}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded shadow transition flex items-center justify-center space-x-1.5 cursor-pointer"
+            className="bg-[#122D21] hover:bg-[#163829] text-[#4ADE80] border border-[#22C55E]/40 text-xs font-extrabold px-3.5 py-2 rounded-xl shadow transition flex items-center justify-center space-x-1.5 cursor-pointer"
           >
-            <MessageSquare className="w-4 h-4" />
+            <MessageSquare className="w-4 h-4 text-[#22C55E]" />
             <span>Paste WhatsApp Broadcast</span>
           </button>
 
           <button
             onClick={() => setAddModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-2 rounded shadow transition flex items-center justify-center space-x-1.5 shrink-0 cursor-pointer"
+            className="bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border border-[#F59352]/50 text-xs font-extrabold px-3.5 py-2 rounded-xl shadow transition flex items-center justify-center space-x-1.5 shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Single Mandi</span>
@@ -456,63 +480,75 @@ export default function AdminMarketManagementPage() {
       </div>
 
       {updateSuccess && (
-        <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs rounded-md flex items-center space-x-2 animate-in fade-in shadow-xs">
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-          <span className="font-semibold">{updateSuccess}</span>
+        <div className="p-3.5 bg-[#122D21] border border-[#22C55E]/40 text-[#4ADE80] text-xs rounded-xl flex items-center space-x-2 shadow-xs">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-[#22C55E]" />
+          <span className="font-bold">{updateSuccess}</span>
         </div>
       )}
 
       {/* Live Bulletin Summary Banner */}
-      <div className="bg-slate-900 text-white p-3.5 sm:p-4 rounded-xl border border-slate-800 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm">
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-3 sm:gap-4 text-xs font-mono">
+      <div className="bg-[#14181F] text-white p-4 rounded-2xl border border-[#28303E] flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-lg">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-3 sm:gap-5 text-xs font-mono">
           <div>
-            <span className="text-[10px] text-slate-400 block uppercase">Fixing Session</span>
+            <span className="text-[10px] text-[#94A3B8] block uppercase">Fixing Session (Auto 3m)</span>
             <span className="font-bold text-white text-[11px] sm:text-xs">
-              🗓️ {mandiBulletin?.dateStr || '28-OCTOBER-2026'} ({mandiBulletin?.timeStr || '12:00'})
+              🗓️ {latestSyncDisplay.dateStr || mandiBulletin?.dateStr} ({latestSyncDisplay.timeStr || mandiBulletin?.timeStr} IST)
             </span>
           </div>
 
           <div>
-            <span className="text-[10px] text-slate-400 block uppercase">USD / INR</span>
-            <span className="font-bold text-amber-400 text-[11px] sm:text-xs">
+            <span className="text-[10px] text-[#94A3B8] block uppercase">USD / INR</span>
+            <span className="font-bold text-[#E58A3C] text-[11px] sm:text-xs">
               🇺🇸 1($) = {mandiBulletin?.usdInrRate || 95.04} (₹)
             </span>
           </div>
 
           <div>
-            <span className="text-[10px] text-slate-400 block uppercase">Sentiment</span>
+            <span className="text-[10px] text-[#94A3B8] block uppercase">Sentiment</span>
             <span
               className={`font-bold text-[11px] sm:text-xs ${
-                mandiBulletin?.overallTrend === 'up' ? 'text-emerald-400' : 'text-rose-400'
+                mandiBulletin?.overallTrend === 'up' ? 'text-[#4ADE80]' : 'text-[#F87171]'
               }`}
             >
-              {mandiBulletin?.trendText || 'Mandi Trend downwards'}
+              {mandiBulletin?.trendText || 'Mandi Gobindgarh ↓'}
             </span>
           </div>
 
           <div>
-            <span className="text-[10px] text-slate-400 block uppercase">Total Mandi Fixings</span>
-            <span className="font-bold text-blue-400 text-[11px] sm:text-xs">{marketMaterials.length} Hubs Tracked</span>
+            <span className="text-[10px] text-[#94A3B8] block uppercase">Total Mandi Fixings</span>
+            <span className="font-bold text-[#E8732A] text-[11px] sm:text-xs">{marketMaterials.length} Hubs Tracked</span>
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            setRawBroadcastInput(mandiBulletin?.rawMessageText || DEFAULT_MANDI_BULLETIN_TEXT);
-            setParsePreview(null);
-            setBroadcastModalOpen(true);
-          }}
-          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded text-xs font-bold transition flex items-center justify-center space-x-1.5 self-stretch sm:self-start md:self-auto cursor-pointer"
-        >
-          <Edit className="w-3.5 h-3.5 text-blue-400" />
-          <span>Update via Daily Broadcast</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-stretch sm:self-start md:self-auto">
+          <button
+            type="button"
+            onClick={handleAdminRefresh}
+            disabled={isRefreshingAdmin}
+            className="px-3.5 py-2 bg-[#191F28] hover:bg-[#222936] text-white border border-[#2A3342] hover:border-[#E06924]/50 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-75"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-[#E8732A] ${isRefreshingAdmin ? 'animate-spin' : ''}`} />
+            <span>{isRefreshingAdmin ? 'Syncing...' : 'Refresh Rates'}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setRawBroadcastInput(mandiBulletin?.rawMessageText || DEFAULT_MANDI_BULLETIN_TEXT);
+              setParsePreview(null);
+              setBroadcastModalOpen(true);
+            }}
+            className="px-3.5 py-2 bg-[#191F28] hover:bg-[#222936] text-white border border-[#2A3342] hover:border-[#E06924]/50 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 cursor-pointer"
+          >
+            <Edit className="w-3.5 h-3.5 text-[#E8732A]" />
+            <span>Update via Daily Broadcast</span>
+          </button>
+        </div>
       </div>
 
       {/* ========================================================= */}
       {/* LEVEL 1: Primary Category Tabs (Raw vs Scrap)             */}
       {/* ========================================================= */}
-      <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-xs space-y-3">
+      <div className="bg-[#14181F] border border-[#28303E] rounded-2xl p-4 shadow-lg space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           {/* Level 1 Tabs */}
           <div className="flex items-center space-x-2 w-full sm:w-auto">
@@ -521,10 +557,10 @@ export default function AdminMarketManagementPage() {
                 setMainCategory('raw_materials');
                 setSelectedMaterialGroup('all');
               }}
-              className={`flex-1 sm:flex-none justify-center px-3 sm:px-4 py-2 text-xs font-bold rounded-lg transition flex items-center space-x-1.5 sm:space-x-2 cursor-pointer ${
+              className={`flex-1 sm:flex-none justify-center px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition flex items-center space-x-1.5 sm:space-x-2 cursor-pointer ${
                 mainCategory === 'raw_materials'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-200'
+                  ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border border-[#F59352]/40 shadow-md'
+                  : 'bg-[#191F28] text-[#CBD5E1] hover:text-white border border-[#2A3342]'
               }`}
             >
               <Building2 className="w-4 h-4 shrink-0" />
@@ -532,8 +568,8 @@ export default function AdminMarketManagementPage() {
               <span
                 className={`text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold ${
                   mainCategory === 'raw_materials'
-                    ? 'bg-blue-700 text-white'
-                    : 'bg-blue-200 text-blue-900'
+                    ? 'bg-[#0B0E11]/40 text-white'
+                    : 'bg-[#14181F] text-[#E8732A]'
                 }`}
               >
                 {rawCount}
@@ -545,10 +581,10 @@ export default function AdminMarketManagementPage() {
                 setMainCategory('scrap_materials');
                 setSelectedMaterialGroup('all');
               }}
-              className={`flex-1 sm:flex-none justify-center px-3 sm:px-4 py-2 text-xs font-bold rounded-lg transition flex items-center space-x-1.5 sm:space-x-2 cursor-pointer ${
+              className={`flex-1 sm:flex-none justify-center px-3.5 sm:px-4 py-2 text-xs font-bold rounded-xl transition flex items-center space-x-1.5 sm:space-x-2 cursor-pointer ${
                 mainCategory === 'scrap_materials'
-                  ? 'bg-amber-600 text-white shadow-md'
-                  : 'bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200'
+                  ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border border-[#F59352]/40 shadow-md'
+                  : 'bg-[#191F28] text-[#CBD5E1] hover:text-white border border-[#2A3342]'
               }`}
             >
               <Layers className="w-4 h-4 shrink-0" />
@@ -556,8 +592,8 @@ export default function AdminMarketManagementPage() {
               <span
                 className={`text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-mono font-bold ${
                   mainCategory === 'scrap_materials'
-                    ? 'bg-amber-700 text-white'
-                    : 'bg-amber-200 text-amber-900'
+                    ? 'bg-[#0B0E11]/40 text-white'
+                    : 'bg-[#14181F] text-[#E8732A]'
                 }`}
               >
                 {scrapCount}
@@ -568,20 +604,20 @@ export default function AdminMarketManagementPage() {
           {/* Search Bar & Trend Filter */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <div className="relative w-full sm:w-60">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-2.5" />
               <input
                 type="text"
                 placeholder="Search mandi, material..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                className="w-full pl-9 pr-3 py-2 text-xs bg-[#191F28] border border-[#2A3342] rounded-xl text-white placeholder-[#64748B]"
               />
             </div>
 
             <select
               value={movementFilter}
               onChange={(e) => setMovementFilter(e.target.value as any)}
-              className="py-1.5 px-2.5 text-xs bg-slate-50 border border-slate-300 rounded text-slate-700 font-medium"
+              className="py-2 px-3 text-xs bg-[#191F28] border border-[#2A3342] rounded-xl text-white font-medium"
             >
               <option value="all">All Movements</option>
               <option value="up">▲ Ups Only</option>
@@ -594,9 +630,9 @@ export default function AdminMarketManagementPage() {
         {/* ========================================================= */}
         {/* LEVEL 2: Material Name Pills (e.g. Ingot, Billet, TMT...) */}
         {/* ========================================================= */}
-        <div className="pt-2 border-t border-slate-100 flex items-center space-x-2 overflow-x-auto scrollbar-none py-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0 flex items-center space-x-1">
-            <Filter className="w-3 h-3 text-slate-400" />
+        <div className="pt-2.5 border-t border-[#222934] flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#94A3B8] shrink-0 flex items-center space-x-1">
+            <Filter className="w-3 h-3 text-[#E8732A]" />
             <span>2. Material:</span>
           </span>
 
@@ -604,8 +640,8 @@ export default function AdminMarketManagementPage() {
             onClick={() => setSelectedMaterialGroup('all')}
             className={`px-3 py-1 text-xs font-bold rounded-full transition shrink-0 cursor-pointer ${
               selectedMaterialGroup === 'all'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border border-[#F59352]/40 shadow-xs'
+                : 'bg-[#191F28] text-[#CBD5E1] hover:bg-[#222936] border border-[#2A3342]'
             }`}
           >
             All ({categoryMaterials.length})
@@ -623,10 +659,8 @@ export default function AdminMarketManagementPage() {
                 onClick={() => setSelectedMaterialGroup(matName)}
                 className={`px-3 py-1 text-xs font-bold rounded-full transition shrink-0 flex items-center space-x-1.5 cursor-pointer ${
                   isSelected
-                    ? mainCategory === 'raw_materials'
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-amber-600 text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border border-[#F59352]/40 shadow-xs'
+                    : 'bg-[#191F28] text-[#CBD5E1] hover:bg-[#222936] border border-[#2A3342]'
                 }`}
               >
                 <span>{matName}</span>
@@ -638,13 +672,13 @@ export default function AdminMarketManagementPage() {
       </div>
 
       {/* Mobile Segmented Switcher (< xl screens) */}
-      <div className="flex xl:hidden bg-white p-1 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex xl:hidden bg-[#14181F] p-1 rounded-xl border border-[#28303E] shadow-xs">
         <button
           onClick={() => setMobileTab('mandis')}
           className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 cursor-pointer ${
             mobileTab === 'mandis'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white shadow-xs'
+              : 'text-[#94A3B8] hover:text-white'
           }`}
         >
           <Building2 className="w-3.5 h-3.5" />
@@ -654,8 +688,8 @@ export default function AdminMarketManagementPage() {
           onClick={() => setMobileTab('inspector')}
           className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 cursor-pointer ${
             mobileTab === 'inspector'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white shadow-xs'
+              : 'text-[#94A3B8] hover:text-white'
           }`}
         >
           <History className="w-3.5 h-3.5" />
@@ -668,7 +702,7 @@ export default function AdminMarketManagementPage() {
         {/* LEFT COLUMN: Level 2 & 3 Grouped Material & Mandi Tables (7 cols) */}
         <div className={`xl:col-span-7 space-y-5 ${mobileTab === 'mandis' ? 'block' : 'hidden xl:block'}`}>
           {Object.keys(groupedByMaterial).length === 0 ? (
-            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-xs text-slate-500 shadow-xs">
+            <div className="bg-[#14181F] border border-[#28303E] rounded-2xl p-8 text-center text-xs text-[#94A3B8] shadow-lg">
               No Mandi rates found matching your filters. Try selecting another material or clearing the search.
             </div>
           ) : (
@@ -682,45 +716,35 @@ export default function AdminMarketManagementPage() {
               return (
                 <div
                   key={materialName}
-                  className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden transition-all"
+                  className="bg-[#14181F] border border-[#28303E] rounded-2xl shadow-lg overflow-hidden transition-all"
                 >
                   {/* LEVEL 2: Material Name Header */}
-                  <div className="bg-slate-50/80 px-4 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                  <div className="bg-[#191F28] px-4 py-3.5 border-b border-[#28303E] flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center space-x-2.5">
-                      <span
-                        className={`w-2.5 h-2.5 rounded-full ${
-                          mainCategory === 'raw_materials' ? 'bg-blue-600' : 'bg-amber-600'
-                        }`}
-                      />
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#E8732A]" />
                       <div>
                         <div className="flex items-center space-x-2">
-                          <h3 className="font-black text-sm text-slate-900 tracking-tight">
+                          <h3 className="font-black text-sm text-white tracking-tight">
                             {materialName}
                           </h3>
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase font-mono ${
-                              mainCategory === 'raw_materials'
-                                ? 'bg-blue-100 text-blue-900 border border-blue-200'
-                                : 'bg-amber-100 text-amber-900 border border-amber-200'
-                            }`}
-                          >
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase font-mono bg-[#251811] text-[#E8732A] border border-[#E06924]/40">
                             {mainCategory === 'raw_materials' ? 'Raw Material' : 'Scrap Material'}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
-                          Tracking <strong>{mandis.length} Mandi Hubs</strong> • Avg: <strong className="text-slate-800 font-mono">{formatINR(avgPrice)}</strong>
+                        <p className="text-[11px] text-[#94A3B8] mt-0.5">
+                          Tracking <strong className="text-white">{mandis.length} Mandi Hubs</strong> • Avg: <strong className="text-[#E8732A] font-mono">{formatINR(avgPrice)}</strong>
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center space-x-2 text-[11px] font-mono">
                       {upCount > 0 && (
-                        <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">
+                        <span className="px-2 py-0.5 rounded-md bg-[#122D21] text-[#4ADE80] border border-[#22C55E]/40 font-bold">
                           ▲ {upCount} Ups
                         </span>
                       )}
                       {downCount > 0 && (
-                        <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200 font-bold">
+                        <span className="px-2 py-0.5 rounded-md bg-[#2F1619] text-[#F87171] border border-[#EF4444]/40 font-bold">
                           ▼ {downCount} Downs
                         </span>
                       )}
@@ -730,16 +754,16 @@ export default function AdminMarketManagementPage() {
                   {/* LEVEL 3: Mandis & Places Table */}
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs">
-                      <thead className="bg-slate-100/70 text-slate-600 font-bold uppercase text-[10px] border-b border-slate-200">
+                      <thead className="bg-[#191F28]/60 text-[#94A3B8] font-bold uppercase text-[10px] border-b border-[#222934]">
                         <tr>
-                          <th className="py-2.5 px-3">Mandi / Place</th>
-                          <th className="py-2.5 px-2.5 text-right">Current Spot ᵃˢᵗ</th>
-                          <th className="py-2.5 px-2.5 text-right">Ups / Downs</th>
-                          <th className="py-2.5 px-2 text-center">Desk Steppers</th>
-                          <th className="py-2.5 px-3 text-right">Actions</th>
+                          <th className="py-3 px-3">Mandi / Place</th>
+                          <th className="py-3 px-2.5 text-right">Current Spot ᵃˢᵗ</th>
+                          <th className="py-3 px-2.5 text-right">Ups / Downs</th>
+                          <th className="py-3 px-2 text-center">Desk Steppers</th>
+                          <th className="py-3 px-3 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-[#222934]">
                         {mandis.map((mat) => {
                           const isUp = mat.movementDirection === 'up';
                           const isDown = mat.movementDirection === 'down';
@@ -754,23 +778,23 @@ export default function AdminMarketManagementPage() {
                               }}
                               className={`transition cursor-pointer ${
                                 isSelected
-                                  ? 'bg-blue-50/70 font-semibold'
-                                  : 'hover:bg-slate-50'
+                                  ? 'bg-[#251811]/70 font-semibold'
+                                  : 'hover:bg-[#191F28]/60'
                               }`}
                             >
                               {/* Mandi / Place Name */}
-                              <td className="py-2.5 px-3">
+                              <td className="py-3 px-3">
                                 <div className="flex items-center space-x-2">
                                   <span
                                     className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                      isSelected ? 'bg-blue-600 ring-2 ring-blue-300' : 'bg-slate-300'
+                                      isSelected ? 'bg-[#E8732A] ring-2 ring-[#E8732A]/40' : 'bg-[#64748B]'
                                     }`}
                                   />
                                   <div>
-                                    <p className="font-bold text-slate-900 text-xs flex items-center space-x-1">
+                                    <p className="font-bold text-white text-xs flex items-center space-x-1">
                                       <span>{mat.mandiCity}</span>
                                     </p>
-                                    <p className="text-[10px] text-slate-400 font-mono">
+                                    <p className="text-[10px] text-[#94A3B8] font-mono">
                                       {mat.symbol}
                                     </p>
                                   </div>
@@ -778,22 +802,22 @@ export default function AdminMarketManagementPage() {
                               </td>
 
                               {/* Spot Price */}
-                              <td className="py-2.5 px-2.5 text-right font-mono font-black text-slate-900 text-xs sm:text-sm">
+                              <td className="py-3 px-2.5 text-right font-mono font-black text-white text-xs sm:text-sm">
                                 <div>{formatINR(mat.currentPrice)}</div>
-                                <div className="text-[10px] text-slate-400 font-normal">
+                                <div className="text-[10px] text-[#94A3B8] font-normal">
                                   Prev: {formatINR(mat.previousPrice || mat.currentPrice)}
                                 </div>
                               </td>
 
                               {/* Ups or Downs Indicator */}
-                              <td className="py-2.5 px-2.5 text-right">
+                              <td className="py-3 px-2.5 text-right">
                                 <span
-                                  className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold font-mono ${
+                                  className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[11px] font-bold font-mono ${
                                     isUp
-                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                      ? 'bg-[#122D21] text-[#4ADE80] border border-[#22C55E]/40'
                                       : isDown
-                                      ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                                      : 'bg-slate-100 text-slate-600 border border-slate-200'
+                                      ? 'bg-[#2F1619] text-[#F87171] border border-[#EF4444]/40'
+                                      : 'bg-[#191F28] text-[#94A3B8] border border-[#2A3342]'
                                   }`}
                                 >
                                   {isUp && <ArrowUpRight className="w-3 h-3" />}
@@ -807,34 +831,34 @@ export default function AdminMarketManagementPage() {
 
                               {/* Quick Desk Adjust Steppers (-200, -100, +100, +200) */}
                               <td
-                                className="py-2.5 px-2 text-center"
+                                className="py-3 px-2 text-center"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <div className="inline-flex items-center space-x-1 font-mono text-[10px]">
                                   <button
                                     onClick={() => handleQuickAdjust(mat, -200)}
-                                    className="px-1.5 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold transition cursor-pointer"
+                                    className="px-1.5 py-0.5 rounded bg-[#2F1619] hover:bg-[#3F1D21] text-[#F87171] border border-[#EF4444]/40 font-bold transition cursor-pointer"
                                     title="Decrease price by ₹200"
                                   >
                                     -200
                                   </button>
                                   <button
                                     onClick={() => handleQuickAdjust(mat, -100)}
-                                    className="px-1.5 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold transition cursor-pointer"
+                                    className="px-1.5 py-0.5 rounded bg-[#2F1619] hover:bg-[#3F1D21] text-[#F87171] border border-[#EF4444]/40 font-bold transition cursor-pointer"
                                     title="Decrease price by ₹100"
                                   >
                                     -100
                                   </button>
                                   <button
                                     onClick={() => handleQuickAdjust(mat, 100)}
-                                    className="px-1.5 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold transition cursor-pointer"
+                                    className="px-1.5 py-0.5 rounded bg-[#122D21] hover:bg-[#173A2B] text-[#4ADE80] border border-[#22C55E]/40 font-bold transition cursor-pointer"
                                     title="Increase price by ₹100"
                                   >
                                     +100
                                   </button>
                                   <button
                                     onClick={() => handleQuickAdjust(mat, 200)}
-                                    className="px-1.5 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold transition cursor-pointer"
+                                    className="px-1.5 py-0.5 rounded bg-[#122D21] hover:bg-[#173A2B] text-[#4ADE80] border border-[#22C55E]/40 font-bold transition cursor-pointer"
                                     title="Increase price by ₹200"
                                   >
                                     +200
@@ -844,7 +868,7 @@ export default function AdminMarketManagementPage() {
 
                               {/* Actions */}
                               <td
-                                className="py-2.5 px-3 text-right"
+                                className="py-3 px-3 text-right"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <div className="flex items-center justify-end space-x-1.5">
@@ -853,10 +877,10 @@ export default function AdminMarketManagementPage() {
                                       setSelectedMaterial(mat);
                                       setMobileTab('inspector');
                                     }}
-                                    className={`px-2 py-1 text-[10px] font-mono font-bold rounded border transition cursor-pointer ${
+                                    className={`px-2 py-1 text-[10px] font-mono font-bold rounded-lg border transition cursor-pointer ${
                                       isSelected
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border-slate-200'
+                                        ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border-[#F59352]/40'
+                                        : 'bg-[#191F28] hover:bg-[#222936] text-[#CBD5E1] hover:text-white border-[#2A3342]'
                                     }`}
                                     title="Inspect 50 records in right panel"
                                   >
@@ -865,7 +889,7 @@ export default function AdminMarketManagementPage() {
 
                                   <button
                                     onClick={() => openPriceUpdateModal(mat)}
-                                    className="px-2.5 py-1 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition flex items-center space-x-1 cursor-pointer"
+                                    className="px-2.5 py-1 text-xs font-bold text-[#E8732A] bg-[#251811] hover:bg-[#312016] rounded-lg border border-[#E06924]/40 transition flex items-center space-x-1 cursor-pointer"
                                     title="Edit price and notes"
                                   >
                                     <Edit className="w-3 h-3" />
@@ -888,61 +912,55 @@ export default function AdminMarketManagementPage() {
         {/* RIGHT COLUMN: Dedicated Past 50 Records Live Inspector (5 cols) */}
         <div id="audit-panel" className={`xl:col-span-5 sticky top-20 space-y-5 ${mobileTab === 'inspector' ? 'block' : 'hidden xl:block'}`}>
           {selectedMaterial ? (
-            <div className="bg-white border border-slate-200 rounded-xl shadow-xs p-3.5 sm:p-5 space-y-5">
+            <div className="bg-[#14181F] border border-[#28303E] rounded-2xl shadow-lg p-4 sm:p-5 space-y-5">
               {/* Mobile Back Button */}
               <button
                 onClick={() => setMobileTab('mandis')}
-                className="xl:hidden w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg transition flex items-center justify-center space-x-1.5 cursor-pointer border border-slate-200"
+                className="xl:hidden w-full py-2 px-3 bg-[#191F28] hover:bg-[#222936] text-white text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1.5 cursor-pointer border border-[#2A3342]"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className="w-3.5 h-3.5 text-[#E8732A]" />
                 <span>← Back to Mandi Rates List</span>
               </button>
               {/* Material & Mandi Header */}
-              <div className="border-b border-slate-200 pb-4">
+              <div className="border-b border-[#222934] pb-4">
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center space-x-2">
-                    <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase ${
-                        selectedMaterial.mainCategory === 'scrap_materials'
-                          ? 'bg-amber-100 text-amber-900 border border-amber-200'
-                          : 'bg-blue-100 text-blue-900 border border-blue-200'
-                      }`}
-                    >
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md uppercase bg-[#251811] text-[#E8732A] border border-[#E06924]/40">
                       {selectedMaterial.mainCategory === 'scrap_materials' ? 'Scrap Material' : 'Raw Material'}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-500 font-bold">
+                    <span className="text-[10px] font-mono text-[#94A3B8] font-bold">
                       {selectedMaterial.symbol}
                     </span>
                   </div>
 
-                  <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded font-mono">
+                  <span className="text-[10px] font-bold text-[#4ADE80] bg-[#122D21] border border-[#22C55E]/40 px-2 py-0.5 rounded-md font-mono">
                     50 Records Active
                   </span>
                 </div>
 
                 <div className="flex items-baseline justify-between">
                   <div>
-                    <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                    <h2 className="text-lg font-black text-white tracking-tight">
                       {selectedMaterial.materialName}
                     </h2>
-                    <p className="text-xs text-slate-500 flex items-center space-x-1 mt-0.5">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                    <p className="text-xs text-[#94A3B8] flex items-center space-x-1 mt-0.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#E8732A]" />
                       <span>{selectedMaterial.mandiCity} Spot Benchmark ᵃˢᵗ</span>
                     </p>
                   </div>
 
                   <div className="text-right">
-                    <div className="text-xl font-mono font-black text-slate-900">
+                    <div className="text-xl font-mono font-black text-white">
                       {formatINR(selectedMaterial.currentPrice)}
                     </div>
                     <div className="flex items-center justify-end space-x-1 mt-0.5">
                       <span
                         className={`text-xs font-mono font-bold inline-flex items-center space-x-0.5 ${
                           selectedMaterial.movementDirection === 'up'
-                            ? 'text-emerald-700'
+                            ? 'text-[#4ADE80]'
                             : selectedMaterial.movementDirection === 'down'
-                            ? 'text-rose-700'
-                            : 'text-slate-500'
+                            ? 'text-[#F87171]'
+                            : 'text-[#94A3B8]'
                         }`}
                       >
                         {selectedMaterial.movementDirection === 'up' && '▲ +'}
@@ -956,27 +974,27 @@ export default function AdminMarketManagementPage() {
 
               {/* 50-Record Metric Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">50-Rec High</span>
-                  <span className="font-mono font-bold text-xs text-emerald-700">
+                <div className="bg-[#191F28] p-2.5 rounded-xl border border-[#2A3342]">
+                  <span className="text-[10px] uppercase font-bold text-[#94A3B8] block">50-Rec High</span>
+                  <span className="font-mono font-bold text-xs text-[#4ADE80]">
                     {formatINR(selectedMaterial.highPrice || selectedMaterial.currentPrice)}
                   </span>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">50-Rec Low</span>
-                  <span className="font-mono font-bold text-xs text-rose-700">
+                <div className="bg-[#191F28] p-2.5 rounded-xl border border-[#2A3342]">
+                  <span className="text-[10px] uppercase font-bold text-[#94A3B8] block">50-Rec Low</span>
+                  <span className="font-mono font-bold text-xs text-[#F87171]">
                     {formatINR(selectedMaterial.lowPrice || selectedMaterial.currentPrice)}
                   </span>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Prev Session</span>
-                  <span className="font-mono font-bold text-xs text-slate-800">
+                <div className="bg-[#191F28] p-2.5 rounded-xl border border-[#2A3342]">
+                  <span className="text-[10px] uppercase font-bold text-[#94A3B8] block">Prev Session</span>
+                  <span className="font-mono font-bold text-xs text-white">
                     {formatINR(selectedMaterial.previousPrice || selectedMaterial.currentPrice)}
                   </span>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Volatility</span>
-                  <span className="font-mono font-bold text-xs text-blue-700">
+                <div className="bg-[#191F28] p-2.5 rounded-xl border border-[#2A3342]">
+                  <span className="text-[10px] uppercase font-bold text-[#94A3B8] block">Volatility</span>
+                  <span className="font-mono font-bold text-xs text-[#E8732A]">
                     ±{selectedMaterial.volatility || 1.2}%
                   </span>
                 </div>
@@ -985,20 +1003,20 @@ export default function AdminMarketManagementPage() {
               {/* Chart Controls & Recharts Visualization */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-700">
-                    <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
+                  <div className="flex items-center space-x-1.5 text-xs font-bold text-white">
+                    <BarChart3 className="w-3.5 h-3.5 text-[#E8732A]" />
                     <span>Price Trend History</span>
                   </div>
 
-                  <div className="flex items-center space-x-1 bg-slate-100 p-0.5 rounded text-[11px] font-mono font-bold">
+                  <div className="flex items-center space-x-1 bg-[#191F28] border border-[#2A3342] p-0.5 rounded-lg text-[11px] font-mono font-bold">
                     {([7, 15, 30, 50] as const).map((limit) => (
                       <button
                         key={limit}
                         onClick={() => setHistoryLimit(limit)}
-                        className={`px-2 py-0.5 rounded transition cursor-pointer ${
+                        className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
                           historyLimit === limit
-                            ? 'bg-blue-600 text-white shadow-xs'
-                            : 'text-slate-600 hover:text-slate-900'
+                            ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white shadow-xs'
+                            : 'text-[#94A3B8] hover:text-white'
                         }`}
                       >
                         {limit}R
@@ -1007,7 +1025,7 @@ export default function AdminMarketManagementPage() {
                   </div>
                 </div>
 
-                <div className="h-44 w-full bg-slate-50/50 rounded-lg p-1 border border-slate-100">
+                <div className="h-44 w-full bg-[#191F28] rounded-xl p-1.5 border border-[#2A3342]">
                   <ResponsiveContainer width="100%" height="100%">
                     {chartType === 'area' ? (
                       <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -1015,26 +1033,26 @@ export default function AdminMarketManagementPage() {
                           <linearGradient id="adminChartGrad" x1="0" y1="0" x2="0" y2="1">
                             <stop
                               offset="5%"
-                              stopColor={selectedMaterial.movementDirection === 'down' ? '#e11d48' : '#2563eb'}
-                              stopOpacity={0.3}
+                              stopColor={selectedMaterial.movementDirection === 'down' ? '#EF4444' : '#E8732A'}
+                              stopOpacity={0.35}
                             />
                             <stop
                               offset="95%"
-                              stopColor={selectedMaterial.movementDirection === 'down' ? '#e11d48' : '#2563eb'}
+                              stopColor={selectedMaterial.movementDirection === 'down' ? '#EF4444' : '#E8732A'}
                               stopOpacity={0}
                             />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#222934" />
                         <XAxis
                           dataKey="formattedDate"
-                          tick={{ fontSize: 9, fill: '#64748b' }}
+                          tick={{ fontSize: 9, fill: '#94A3B8' }}
                           tickLine={false}
                           interval="preserveStartEnd"
                         />
                         <YAxis
                           domain={['dataMin - 300', 'dataMax + 300']}
-                          tick={{ fontSize: 9, fill: '#64748b' }}
+                          tick={{ fontSize: 9, fill: '#94A3B8' }}
                           tickLine={false}
                           tickFormatter={(val) => `₹${Math.round(val / 1000)}k`}
                         />
@@ -1043,10 +1061,10 @@ export default function AdminMarketManagementPage() {
                             if (active && payload && payload.length) {
                               const data = payload[0].payload;
                               return (
-                                <div className="bg-slate-900 text-white p-2 rounded shadow text-[11px] font-mono">
-                                  <p className="font-bold">{data.date}</p>
-                                  <p className="text-emerald-400 font-bold">{formatINR(data.price)}</p>
-                                  <p className="text-slate-400 text-[10px]">Change: ₹{data.change}</p>
+                                <div className="bg-[#0E1217] border border-[#2A3342] text-white p-2.5 rounded-xl shadow-xl text-[11px] font-mono">
+                                  <p className="font-bold text-[#CBD5E1]">{data.date}</p>
+                                  <p className="text-[#E8732A] font-extrabold">{formatINR(data.price)}</p>
+                                  <p className="text-[#94A3B8] text-[10px]">Change: ₹{data.change}</p>
                                 </div>
                               );
                             }
@@ -1056,7 +1074,7 @@ export default function AdminMarketManagementPage() {
                         <Area
                           type="monotone"
                           dataKey="price"
-                          stroke={selectedMaterial.movementDirection === 'down' ? '#e11d48' : '#2563eb'}
+                          stroke={selectedMaterial.movementDirection === 'down' ? '#EF4444' : '#E8732A'}
                           strokeWidth={2}
                           fillOpacity={1}
                           fill="url(#adminChartGrad)"
@@ -1064,11 +1082,11 @@ export default function AdminMarketManagementPage() {
                       </AreaChart>
                     ) : (
                       <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                        <XAxis dataKey="formattedDate" tick={{ fontSize: 9 }} />
-                        <YAxis tick={{ fontSize: 9 }} tickFormatter={(val) => `₹${Math.round(val / 1000)}k`} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#222934" />
+                        <XAxis dataKey="formattedDate" tick={{ fontSize: 9, fill: '#94A3B8' }} />
+                        <YAxis tick={{ fontSize: 9, fill: '#94A3B8' }} tickFormatter={(val) => `₹${Math.round(val / 1000)}k`} />
                         <Tooltip />
-                        <Line type="monotone" dataKey="price" stroke="#2563eb" strokeWidth={2} dot={false} />
+                        <Line type="monotone" dataKey="price" stroke="#E8732A" strokeWidth={2} dot={false} />
                       </LineChart>
                     )}
                   </ResponsiveContainer>
@@ -1078,19 +1096,19 @@ export default function AdminMarketManagementPage() {
               {/* Quick Session Fixing Recorder (Inserts into 50 Records) */}
               <form
                 onSubmit={handleDeskRecordSession}
-                className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2.5"
+                className="bg-[#191F28] border border-[#2A3342] rounded-xl p-3.5 space-y-2.5"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 flex items-center space-x-1">
-                    <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="text-xs font-bold text-white flex items-center space-x-1.5">
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-[#E8732A]" />
                     <span>Record New Fixing Session</span>
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">Appends to 50 Records</span>
+                  <span className="text-[10px] text-[#94A3B8] font-mono">Appends to 50 Records</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
                   <div className="sm:col-span-6 relative">
-                    <span className="absolute left-2.5 top-2 font-mono font-bold text-slate-400 text-xs">₹</span>
+                    <span className="absolute left-3 top-2 font-mono font-bold text-[#94A3B8] text-xs">₹</span>
                     <input
                       type="number"
                       step="50"
@@ -1098,14 +1116,14 @@ export default function AdminMarketManagementPage() {
                       value={deskPriceInput}
                       onChange={(e) => setDeskPriceInput(e.target.value)}
                       placeholder="Spot Rate"
-                      className="w-full pl-6 pr-2 py-1.5 text-xs font-mono font-bold bg-white border border-slate-300 rounded text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                      className="w-full pl-7 pr-2 py-1.5 text-xs font-mono font-bold bg-[#14181F] border border-[#28303E] rounded-lg text-white"
                     />
                   </div>
 
                   <div className="sm:col-span-6">
                     <button
                       type="submit"
-                      className="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold shadow-xs transition flex items-center justify-center space-x-1 cursor-pointer"
+                      className="w-full py-1.5 px-3 bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border border-[#F59352]/40 rounded-lg text-xs font-extrabold shadow-xs transition flex items-center justify-center space-x-1 cursor-pointer"
                     >
                       <Check className="w-3.5 h-3.5" />
                       <span>Save Session Fix</span>
@@ -1118,61 +1136,61 @@ export default function AdminMarketManagementPage() {
                   value={deskNotesInput}
                   onChange={(e) => setDeskNotesInput(e.target.value)}
                   placeholder="Session notes (e.g. Afternoon fixing, buyers cautious)"
-                  className="w-full px-2.5 py-1 text-[11px] bg-white border border-slate-300 rounded text-slate-800"
+                  className="w-full px-2.5 py-1.5 text-[11px] bg-[#14181F] border border-[#28303E] rounded-lg text-white placeholder-[#64748B]"
                 />
               </form>
 
               {/* Full 50 Records Audit Table */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 flex items-center space-x-1">
-                    <History className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="text-xs font-bold text-white flex items-center space-x-1.5">
+                    <History className="w-3.5 h-3.5 text-[#E8732A]" />
                     <span>Past 50 Recorded Sessions</span>
                   </span>
 
                   <button
                     onClick={() => handleExportCSV(selectedMaterial)}
-                    className="text-[11px] font-bold text-blue-700 hover:text-blue-800 flex items-center space-x-1 cursor-pointer"
+                    className="text-[11px] font-bold text-[#E8732A] hover:text-[#F59352] flex items-center space-x-1 cursor-pointer"
                   >
                     <Download className="w-3 h-3" />
                     <span>Export CSV</span>
                   </button>
                 </div>
 
-                <div className="border border-slate-200 rounded-lg overflow-hidden max-h-56 overflow-y-auto">
+                <div className="border border-[#28303E] rounded-xl overflow-hidden max-h-56 overflow-y-auto">
                   <table className="w-full text-left text-xs border-collapse">
-                    <thead className="sticky top-0 bg-slate-100 text-slate-700 font-bold uppercase text-[9px] border-b border-slate-200">
+                    <thead className="sticky top-0 bg-[#191F28] text-[#94A3B8] font-bold uppercase text-[9px] border-b border-[#28303E]">
                       <tr>
-                        <th className="py-1.5 px-2.5">#</th>
-                        <th className="py-1.5 px-2">Date</th>
-                        <th className="py-1.5 px-2 text-right">Price / MT</th>
-                        <th className="py-1.5 px-2 text-right">Ups / Downs</th>
-                        <th className="py-1.5 px-2">Notes</th>
+                        <th className="py-2 px-2.5">#</th>
+                        <th className="py-2 px-2">Date</th>
+                        <th className="py-2 px-2 text-right">Price / MT</th>
+                        <th className="py-2 px-2 text-right">Ups / Downs</th>
+                        <th className="py-2 px-2">Notes</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-[#222934]">
                       {(selectedMaterial.historicalPrices || [])
                         .slice()
                         .reverse()
                         .map((p, idx) => (
-                          <tr key={idx} className="hover:bg-slate-50">
-                            <td className="py-1 px-2.5 font-mono text-slate-400 text-[10px]">
+                          <tr key={idx} className="hover:bg-[#191F28]/60">
+                            <td className="py-1.5 px-2.5 font-mono text-[#64748B] text-[10px]">
                               #{idx + 1}
                             </td>
-                            <td className="py-1 px-2 text-slate-700 text-[11px] whitespace-nowrap">
+                            <td className="py-1.5 px-2 text-[#CBD5E1] text-[11px] whitespace-nowrap">
                               {p.date}
                             </td>
-                            <td className="py-1 px-2 text-right font-mono font-bold text-slate-900 text-[11px]">
+                            <td className="py-1.5 px-2 text-right font-mono font-bold text-white text-[11px]">
                               {formatINR(p.price)}
                             </td>
-                            <td className="py-1 px-2 text-right">
+                            <td className="py-1.5 px-2 text-right">
                               <span
                                 className={`font-mono font-bold text-[10px] inline-flex items-center ${
                                   p.movementDirection === 'up'
-                                    ? 'text-emerald-700'
+                                    ? 'text-[#4ADE80]'
                                     : p.movementDirection === 'down'
-                                    ? 'text-rose-700'
-                                    : 'text-slate-500'
+                                    ? 'text-[#F87171]'
+                                    : 'text-[#94A3B8]'
                                 }`}
                               >
                                 {p.movementDirection === 'up' && '▲ +'}
@@ -1180,7 +1198,7 @@ export default function AdminMarketManagementPage() {
                                 ₹{p.priceChange || 0}
                               </span>
                             </td>
-                            <td className="py-1 px-2 text-slate-500 text-[10px] truncate max-w-[120px]">
+                            <td className="py-1.5 px-2 text-[#94A3B8] text-[10px] truncate max-w-[120px]">
                               {p.notes || 'Fixing'}
                             </td>
                           </tr>
@@ -1191,7 +1209,7 @@ export default function AdminMarketManagementPage() {
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-xs text-slate-500 shadow-xs">
+            <div className="bg-[#14181F] border border-[#28303E] rounded-2xl p-6 text-center text-xs text-[#94A3B8] shadow-lg">
               Select any Mandi rate row from the left to inspect its complete 50-session price history and live charts.
             </div>
           )}
@@ -1202,30 +1220,30 @@ export default function AdminMarketManagementPage() {
       {/* Modal 1: WhatsApp Daily Bulletin Parser                   */}
       {/* ========================================================= */}
       {broadcastModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full p-6 shadow-2xl border border-slate-300 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="fixed inset-0 z-50 bg-[#0B0E11]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#14181F] rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-[#28303E] space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#222934] pb-3">
               <div className="flex items-center space-x-2">
-                <MessageSquare className="w-5 h-5 text-emerald-600" />
-                <h3 className="font-extrabold text-base text-slate-900">
+                <MessageSquare className="w-5 h-5 text-[#22C55E]" />
+                <h3 className="font-extrabold text-base text-white">
                   Update Multi-City Prices via WhatsApp Broadcast
                 </h3>
               </div>
               <button
                 onClick={() => setBroadcastModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
+                className="text-[#94A3B8] hover:text-white font-bold cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-[#94A3B8] leading-relaxed">
               Paste the morning or evening WhatsApp broadcast text from the Mandi Gobindgarh Trading Desk.
               The parser automatically normalizes unicode characters, extracts Ingot, Billet, and Scrap rates
               across all mandis, calculates ups/downs against previous rates, and archives previous sessions into the 50-record audit store.
             </p>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <textarea
                 rows={10}
                 value={rawBroadcastInput}
@@ -1234,18 +1252,18 @@ export default function AdminMarketManagementPage() {
                   setParsePreview(null);
                 }}
                 placeholder="Paste the daily Mandi WhatsApp text here..."
-                className="w-full p-3 font-mono text-xs bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 leading-relaxed"
+                className="w-full p-3.5 font-mono text-xs bg-[#191F28] border border-[#2A3342] rounded-xl text-white placeholder-[#64748B] leading-relaxed"
               />
 
               {parsePreview && (
-                <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-xs text-emerald-950 space-y-2">
+                <div className="p-3.5 bg-[#122D21] border border-[#22C55E]/40 rounded-xl text-xs text-[#4ADE80] space-y-2">
                   <div className="flex items-center justify-between font-bold">
                     <span>Parsed Bulletin Summary:</span>
-                    <span className="px-2 py-0.5 bg-emerald-600 text-white rounded font-mono text-[10px]">
+                    <span className="px-2.5 py-0.5 bg-[#22C55E] text-[#0B0E11] rounded-md font-mono text-[10px] font-black">
                       {parsePreview.materials.length} Rates Detected
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] font-mono">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] font-mono text-white">
                     <div>Date: <strong>{parsePreview.bulletin.dateStr}</strong></div>
                     <div>Time: <strong>{parsePreview.bulletin.timeStr}</strong></div>
                     <div>USD/INR: <strong>₹{parsePreview.bulletin.usdInrRate}</strong></div>
@@ -1255,11 +1273,11 @@ export default function AdminMarketManagementPage() {
               )}
             </div>
 
-            <div className="border-t border-slate-200 pt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+            <div className="border-t border-[#222934] pt-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
               <button
                 type="button"
                 onClick={handlePreviewBroadcast}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-bold text-xs transition cursor-pointer text-center touch-manipulation"
+                className="px-4 py-2 bg-[#191F28] hover:bg-[#222936] text-white border border-[#2A3342] rounded-xl font-bold text-xs transition cursor-pointer text-center touch-manipulation"
               >
                 Validate / Preview
               </button>
@@ -1268,14 +1286,14 @@ export default function AdminMarketManagementPage() {
                 <button
                   type="button"
                   onClick={() => setBroadcastModalOpen(false)}
-                  className="flex-1 sm:flex-initial px-4 py-2 border border-slate-300 text-slate-700 rounded-md text-xs font-medium hover:bg-slate-50 cursor-pointer text-center touch-manipulation"
+                  className="flex-1 sm:flex-initial px-4 py-2 bg-[#191F28] border border-[#2A3342] text-[#CBD5E1] rounded-xl text-xs font-bold hover:text-white cursor-pointer text-center touch-manipulation"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleApplyBroadcast}
-                  className="flex-1 sm:flex-initial px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs font-bold shadow transition flex items-center justify-center space-x-1.5 cursor-pointer touch-manipulation"
+                  className="flex-1 sm:flex-initial px-4 py-2 bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border border-[#F59352]/50 rounded-xl text-xs font-extrabold shadow transition flex items-center justify-center space-x-1.5 cursor-pointer touch-manipulation"
                 >
                   <Check className="w-4 h-4" />
                   <span>Update All Mandi Rates</span>
@@ -1290,36 +1308,36 @@ export default function AdminMarketManagementPage() {
       {/* Modal 2: Edit Single Material Price                       */}
       {/* ========================================================= */}
       {editModalOpen && editingMaterial && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-300 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-bold text-base text-slate-900">
+        <div className="fixed inset-0 z-50 bg-[#0B0E11]/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-[#14181F] rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-[#28303E] space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="font-extrabold text-base text-white">
               Update Spot Rate: {editingMaterial.materialName} ({editingMaterial.mandiCity}) ᵃˢᵗ
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#94A3B8]">
               Previous price was ₹{editingMaterial.currentPrice.toLocaleString('en-IN')}. New price will be
               recorded as the 50th historical session record.
             </p>
 
             <form onSubmit={handleModalPriceUpdate} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-white mb-1.5">
                   New Spot Price (₹ / Metric Ton):
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-2.5 font-mono font-bold text-slate-500 text-sm">₹</span>
+                  <span className="absolute left-3 top-2.5 font-mono font-bold text-[#94A3B8] text-sm">₹</span>
                   <input
                     type="number"
                     step="50"
                     required
                     value={modalNewPrice}
                     onChange={(e) => setModalNewPrice(Number(e.target.value))}
-                    className="w-full pl-8 pr-3 py-2 text-sm font-mono font-bold bg-slate-50 border border-slate-300 rounded text-slate-900"
+                    className="w-full pl-8 pr-3 py-2 text-sm font-mono font-bold bg-[#191F28] border border-[#2A3342] rounded-xl text-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-white mb-1.5">
                   Fixing Session Notes:
                 </label>
                 <textarea
@@ -1327,7 +1345,7 @@ export default function AdminMarketManagementPage() {
                   value={modalUpdateNotes}
                   onChange={(e) => setModalUpdateNotes(e.target.value)}
                   placeholder="e.g. Mandi Gobindgarh noon fixing. Sales Tax extra."
-                  className="w-full p-2 text-xs bg-slate-50 border border-slate-300 rounded text-slate-900"
+                  className="w-full p-2.5 text-xs bg-[#191F28] border border-[#2A3342] rounded-xl text-white placeholder-[#64748B]"
                 />
               </div>
 
@@ -1335,13 +1353,13 @@ export default function AdminMarketManagementPage() {
                 <button
                   type="button"
                   onClick={() => setEditModalOpen(false)}
-                  className="px-3.5 py-2 border border-slate-300 text-slate-700 rounded text-xs hover:bg-slate-50 cursor-pointer touch-manipulation"
+                  className="px-4 py-2 bg-[#191F28] border border-[#2A3342] text-[#CBD5E1] rounded-xl text-xs font-bold hover:text-white cursor-pointer touch-manipulation"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold cursor-pointer touch-manipulation"
+                  className="px-4 py-2 bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border border-[#F59352]/50 rounded-xl text-xs font-extrabold cursor-pointer touch-manipulation"
                 >
                   Save New Price
                 </button>
@@ -1355,25 +1373,25 @@ export default function AdminMarketManagementPage() {
       {/* Modal 3: Add New Mandi Price Rate                         */}
       {/* ========================================================= */}
       {addModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-300 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-bold text-base text-slate-900">
+        <div className="fixed inset-0 z-50 bg-[#0B0E11]/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-[#14181F] rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-[#28303E] space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="font-extrabold text-base text-white">
               Add New Mandi Price Rate
             </h3>
 
-            <form onSubmit={handleAddNewMaterial} className="space-y-3">
+            <form onSubmit={handleAddNewMaterial} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-white mb-1.5">
                   1. Primary Category:
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setAddMainCategory('raw_materials')}
-                    className={`py-1.5 px-3 rounded text-xs font-bold border cursor-pointer ${
+                    className={`py-2 px-3 rounded-xl text-xs font-bold border cursor-pointer ${
                       addMainCategory === 'raw_materials'
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-slate-50 text-slate-700 border-slate-300'
+                        ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border-[#F59352]/40'
+                        : 'bg-[#191F28] text-[#CBD5E1] border-[#2A3342]'
                     }`}
                   >
                     Raw Material
@@ -1381,10 +1399,10 @@ export default function AdminMarketManagementPage() {
                   <button
                     type="button"
                     onClick={() => setAddMainCategory('scrap_materials')}
-                    className={`py-1.5 px-3 rounded text-xs font-bold border cursor-pointer ${
+                    className={`py-2 px-3 rounded-xl text-xs font-bold border cursor-pointer ${
                       addMainCategory === 'scrap_materials'
-                        ? 'bg-amber-600 text-white border-amber-600'
-                        : 'bg-slate-50 text-slate-700 border-slate-300'
+                        ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border-[#F59352]/40'
+                        : 'bg-[#191F28] text-[#CBD5E1] border-[#2A3342]'
                     }`}
                   >
                     Scrap Material
@@ -1393,7 +1411,7 @@ export default function AdminMarketManagementPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-white mb-1.5">
                   2. Material Name (e.g. Ingot, Billet, HMS Scrap):
                 </label>
                 <input
@@ -1402,12 +1420,12 @@ export default function AdminMarketManagementPage() {
                   value={addMaterialName}
                   onChange={(e) => setAddMaterialName(e.target.value)}
                   placeholder="e.g. Ingot, Billet, Melting Scrap"
-                  className="w-full p-2 text-xs bg-slate-50 border border-slate-300 rounded text-slate-900"
+                  className="w-full p-2.5 text-xs bg-[#191F28] border border-[#2A3342] rounded-xl text-white placeholder-[#64748B]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-white mb-1.5">
                   3. Mandi / Place Name (e.g. Ludhiana, Mandi Gobindgarh):
                 </label>
                 <input
@@ -1416,13 +1434,13 @@ export default function AdminMarketManagementPage() {
                   value={addMandiCity}
                   onChange={(e) => setAddMandiCity(e.target.value)}
                   placeholder="e.g. Mandi Gobindgarh, Ludhiana (MS)"
-                  className="w-full p-2 text-xs bg-slate-50 border border-slate-300 rounded text-slate-900"
+                  className="w-full p-2.5 text-xs bg-[#191F28] border border-[#2A3342] rounded-xl text-white placeholder-[#64748B]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-bold text-white mb-1.5">
                     Spot Price (₹ / MT):
                   </label>
                   <input
@@ -1431,30 +1449,30 @@ export default function AdminMarketManagementPage() {
                     required
                     value={addInitialPrice}
                     onChange={(e) => setAddInitialPrice(Number(e.target.value))}
-                    className="w-full p-2 text-xs bg-slate-50 border border-slate-300 rounded text-slate-900 font-mono font-bold"
+                    className="w-full p-2.5 text-xs bg-[#191F28] border border-[#2A3342] rounded-xl text-white font-mono font-bold"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Symbol Code:</label>
+                  <label className="block text-xs font-bold text-white mb-1.5">Symbol Code:</label>
                   <input
                     type="text"
                     value={addSymbol}
                     onChange={(e) => setAddSymbol(e.target.value)}
                     placeholder="Optional (Auto)"
-                    className="w-full p-2 text-xs bg-slate-50 border border-slate-300 rounded text-slate-900 font-mono"
+                    className="w-full p-2.5 text-xs bg-[#191F28] border border-[#2A3342] rounded-xl text-white font-mono placeholder-[#64748B]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Notes:</label>
+                <label className="block text-xs font-bold text-white mb-1.5">Notes:</label>
                 <input
                   type="text"
                   value={addNotes}
                   onChange={(e) => setAddNotes(e.target.value)}
                   placeholder="e.g. Applicable Sales Tax (ast) extra ex-mandi"
-                  className="w-full p-2 text-xs bg-slate-50 border border-slate-300 rounded text-slate-900"
+                  className="w-full p-2.5 text-xs bg-[#191F28] border border-[#2A3342] rounded-xl text-white placeholder-[#64748B]"
                 />
               </div>
 
@@ -1462,13 +1480,13 @@ export default function AdminMarketManagementPage() {
                 <button
                   type="button"
                   onClick={() => setAddModalOpen(false)}
-                  className="px-3.5 py-2 border border-slate-300 text-slate-700 rounded text-xs hover:bg-slate-50 cursor-pointer touch-manipulation"
+                  className="px-4 py-2 bg-[#191F28] border border-[#2A3342] text-[#CBD5E1] rounded-xl text-xs font-bold hover:text-white cursor-pointer touch-manipulation"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold cursor-pointer touch-manipulation"
+                  className="px-4 py-2 bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border border-[#F59352]/50 rounded-xl text-xs font-extrabold cursor-pointer touch-manipulation"
                 >
                   Add Mandi Price
                 </button>

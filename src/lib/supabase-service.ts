@@ -1,4 +1,5 @@
 import { supabase, getSupabaseAdmin, isSupabaseConfigured } from './supabase';
+import { INITIAL_MARKET_MATERIALS } from './db-store';
 import {
   ProductCategory,
   MarketMaterial,
@@ -78,26 +79,125 @@ export async function fetchDbMarketMaterials(): Promise<MarketMaterial[] | null>
 
     if (!data || data.length === 0) return null;
 
-    return data.map((row: any) => {
-      const isScrap =
-        row.main_category === 'scrap_materials' ||
-        row.category_slug === 'scrap' ||
-        row.category_slug === 'scrap_materials' ||
-        (row.name && row.name.toLowerCase().includes('scrap'));
-      const mainCategory = isScrap ? 'scrap_materials' : 'raw_materials';
-      const materialName =
-        row.material_name ||
-        (row.name?.includes('-') ? row.name.split('-')[0].trim() : row.category_name || 'Ingot');
-      const mandiCity = row.mandi_city || row.hub_city || 'Mandi Gobindgarh';
+    const hasScrap20 = data.some((r: { symbol?: string }) => r.symbol === 'MANDI-SCR-20');
+    const hasScrap21 = data.some((r: { symbol?: string }) => r.symbol === 'MANDI-SCR-21');
 
-      return {
-        id: row.id,
+    const mappedMaterials: MarketMaterial[] = [];
+
+    for (const row of data) {
+      // Detect legacy benchmark rows (seeded as 'Mandi Benchmark')
+      const isBenchmark =
+        row.category_slug === 'benchmark' ||
+        row.category_name === 'Mandi Benchmark' ||
+        row.symbol?.startsWith('MANDI-BEN');
+
+      const isScrap =
+        !isBenchmark &&
+        (row.main_category === 'scrap_materials' ||
+          row.category_slug === 'scrap' ||
+          row.category_slug === 'scrap_materials' ||
+          (row.name && row.name.toLowerCase().includes('scrap')));
+
+      let mainCategory: 'raw_materials' | 'scrap_materials' = isScrap ? 'scrap_materials' : 'raw_materials';
+      let materialName = 'Ingot';
+      let mandiCity = row.mandi_city || row.hub_city || 'Mandi Gobindgarh';
+      let categorySlug = row.category_slug;
+      let categoryName = row.category_name;
+      let displayName = row.name;
+
+      if (isBenchmark) {
+        mandiCity = 'Mandi Gobindgarh';
+        const rowName = (row.name || '').toLowerCase();
+        const symbol = row.symbol || '';
+
+        if (symbol === 'MANDI-BEN-01' || rowName.includes('billet')) {
+          mainCategory = 'raw_materials';
+          materialName = 'Billet';
+          categorySlug = 'billet';
+          categoryName = 'Billet';
+          displayName = 'Billet - Mandi Gobindgarh';
+        } else if (symbol === 'MANDI-BEN-02' || rowName.includes('ingot')) {
+          mainCategory = 'raw_materials';
+          materialName = 'Ingot';
+          categorySlug = 'ingot';
+          categoryName = 'Ingot';
+          displayName = 'Ingot - Mandi Gobindgarh';
+        } else if (symbol === 'MANDI-BEN-03' || rowName.includes('old')) {
+          // If MANDI-SCR-20 already exists, skip duplicate
+          if (hasScrap20) continue;
+          mainCategory = 'scrap_materials';
+          materialName = 'Old Scrap';
+          categorySlug = 'scrap';
+          categoryName = 'Old Scrap';
+          displayName = 'Old Scrap - Mandi Gobindgarh';
+        } else if (symbol === 'MANDI-BEN-04' || rowName.includes('melting')) {
+          // If MANDI-SCR-21 already exists, skip duplicate
+          if (hasScrap21) continue;
+          mainCategory = 'scrap_materials';
+          materialName = 'Melting Scrap';
+          categorySlug = 'scrap';
+          categoryName = 'Melting Scrap';
+          displayName = 'Melting Scrap - Mandi Gobindgarh';
+        } else {
+          mainCategory = 'raw_materials';
+          materialName = 'Ingot';
+          categorySlug = 'ingot';
+          categoryName = 'Ingot';
+          displayName = `Ingot - ${mandiCity}`;
+        }
+      } else if (isScrap) {
+        mainCategory = 'scrap_materials';
+        const lowerName = (row.name || '').toLowerCase();
+        const lowerNotes = (row.notes || '').toLowerCase();
+        const lowerCity = mandiCity.toLowerCase();
+        if (lowerName.includes('old') || lowerNotes.includes('old') || lowerCity.includes('old')) {
+          materialName = 'Old Scrap';
+        } else {
+          materialName = 'Melting Scrap';
+        }
+        categoryName = materialName;
+        displayName = row.name?.includes('-') ? row.name : `${materialName} - ${mandiCity}`;
+      } else {
+        materialName =
+          row.material_name ||
+          (row.name?.includes('-') ? row.name.split('-')[0].trim() : row.category_name || 'Ingot');
+        categoryName = materialName;
+        displayName = row.name?.includes('-') ? row.name : `${materialName} - ${mandiCity}`;
+      }
+
+      // Safety guard: Never allow "Mandi Benchmark" as a material or category name
+      if (materialName === 'Mandi Benchmark' || categoryName === 'Mandi Benchmark') {
+        materialName = displayName?.toLowerCase().includes('billet') ? 'Billet' : 'Ingot';
+        categoryName = materialName;
+      }
+
+      // Normalize legacy unsuffixed IDs that have a specification (e.g. Ludhiana EN8D vs MS)
+      let normalizedId = row.id;
+      if (
+        row.specification &&
+        (row.id === 'mat-raw-materials-ingot-ludhiana' ||
+          row.id === 'mat-scrap-materials-melting-scrap-ludhiana')
+      ) {
+        const specSlug = String(row.specification)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+        normalizedId = `${row.id}-${specSlug}`;
+      }
+
+      // Skip if this exact ID was already mapped
+      if (mappedMaterials.some((m) => m.id === normalizedId)) {
+        continue;
+      }
+
+      mappedMaterials.push({
+        id: normalizedId,
         mainCategory,
         materialName,
         mandiCity,
-        categorySlug: row.category_slug,
-        categoryName: materialName,
-        name: row.name || `${materialName} - ${mandiCity}`,
+        categorySlug,
+        categoryName,
+        name: displayName,
         symbol: row.symbol,
         hubCity: mandiCity,
         specification: row.specification,
@@ -105,7 +205,14 @@ export async function fetchDbMarketMaterials(): Promise<MarketMaterial[] | null>
         currentPrice: Number(row.current_price),
         previousPrice: Number(row.previous_price),
         priceChange: Number(row.price_change),
-        percentageChange: Number(row.percentage_change),
+        percentageChange:
+          row.percentage_change !== undefined && row.percentage_change !== null
+            ? Number(row.percentage_change)
+            : row.percent_change !== undefined && row.percent_change !== null
+            ? Number(row.percent_change)
+            : Number(row.previous_price) > 0
+            ? Number(((Number(row.price_change) / Number(row.previous_price)) * 100).toFixed(2))
+            : 0,
         movementDirection: row.movement_direction,
         highPrice: Number(row.high_price),
         lowPrice: Number(row.low_price),
@@ -118,8 +225,28 @@ export async function fetchDbMarketMaterials(): Promise<MarketMaterial[] | null>
         historicalPrices: Array.isArray(row.historical_prices) && row.historical_prices.length > 0
           ? row.historical_prices.slice(-50)
           : [],
-      };
-    });
+      });
+    }
+
+    // Merge supplementary materials (e.g. TMT Rebar, Wire Rod, HMS Scrap, Ludhiana EN8D/MS) if not present in DB
+    const existingSymbols = new Set(mappedMaterials.map((m) => m.symbol));
+    const existingIds = new Set(mappedMaterials.map((m) => m.id));
+    for (const sup of INITIAL_MARKET_MATERIALS) {
+      if (
+        !existingSymbols.has(sup.symbol) &&
+        !existingIds.has(sup.id) &&
+        !mappedMaterials.some(
+          (m) =>
+            m.materialName === sup.materialName &&
+            m.mandiCity === sup.mandiCity &&
+            (m.specification || '') === (sup.specification || '')
+        )
+      ) {
+        mappedMaterials.push(sup);
+      }
+    }
+
+    return mappedMaterials;
   } catch (err) {
     console.warn('Supabase market materials error:', err);
     return null;

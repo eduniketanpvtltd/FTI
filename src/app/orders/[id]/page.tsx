@@ -16,11 +16,18 @@ import {
   Building2,
   AlertCircle,
   CreditCard,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function OrderDetailPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs text-[#252A2E]">Loading order details...</div>}>
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-xs text-[#94A3B8]">
+          Loading order details...
+        </div>
+      }
+    >
       <OrderDetailContent />
     </Suspense>
   );
@@ -40,14 +47,14 @@ function OrderDetailContent() {
     return (
       <CustomerLayout>
         <div className="max-w-4xl mx-auto py-16 px-4 text-center">
-          <AlertCircle className="w-12 h-12 text-[#49352D] mx-auto mb-3" />
-          <h2 className="text-xl font-bold text-[#252A2E]">Order Not Found</h2>
-          <p className="text-xs text-[#49352D] mt-1 mb-4 font-medium">
+          <AlertCircle className="w-12 h-12 text-[#E8732A] mx-auto mb-3" />
+          <h2 className="text-xl font-bold text-white">Order Not Found</h2>
+          <p className="text-xs text-[#94A3B8] mt-1 mb-4">
             The requested order ID does not exist or may have been archived.
           </p>
           <Link
             href="/orders"
-            className="inline-flex items-center space-x-1.5 bg-[#76513F] text-[#F1EAE1] text-xs font-bold px-4 py-2 rounded border border-[#B18A70]"
+            className="inline-flex items-center space-x-1.5 bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-[#F59352]/50"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Orders</span>
@@ -57,11 +64,10 @@ function OrderDetailContent() {
     );
   }
 
-  // Define 5-step fulfillment timeline
   const stages = [
     { key: 'order_confirmed', label: 'Order Confirmed', desc: 'Accepted quotation converted to PO' },
     { key: 'payment_received', label: 'Payment Verified', desc: 'Advance RTGS / NEFT confirmed' },
-    { key: 'processing', label: 'Processing & Bundling', desc: 'Weighed & bundled at Kalamboli yard' },
+    { key: 'processing', label: 'Processing & Bundling', desc: 'Weighed & bundled at Ludhiana Works' },
     { key: 'dispatched', label: 'Dispatched (In Transit)', desc: 'Loaded on truck with transit insurance' },
     { key: 'delivered', label: 'Delivered', desc: 'Received at customer site' },
   ];
@@ -90,31 +96,45 @@ function OrderDetailContent() {
 
   return (
     <CustomerLayout>
-      {/* Top Banner - Dark Chocolate Brown */}
-      <div className="bg-[#49352D] text-[#F1EAE1] py-6 px-4 sm:px-6 border-b border-[#343A3F]">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center space-x-2 text-xs text-[#A8ADB1] mb-2 font-medium">
-            <Link href="/" className="hover:text-[#F1EAE1] transition">Home</Link>
-            <span>/</span>
-            <Link href="/orders" className="hover:text-[#F1EAE1] transition">Orders</Link>
-            <span>/</span>
-            <span className="text-[#B18A70] font-bold">{order.orderNumber}</span>
+      {/* Top Hero Banner with AI Foundry Background */}
+      <div className="relative overflow-hidden border-b border-[#1E242D]">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/images/foundry-hero-bg.jpg"
+            alt="Industrial Steel Foundry"
+            className="w-full h-52 sm:h-60 object-cover object-center opacity-60"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0B0E11]/35 via-[#0B0E11]/85 to-[#0B0E11]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0B0E11]/90 via-[#0B0E11]/45 to-transparent" />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto pt-16 sm:pt-20 pb-5 px-3.5 sm:px-6">
+          <div className="flex items-center space-x-1.5 text-xs text-[#CBD5E1] mb-2 font-medium">
+            <Link href="/" className="hover:text-white transition">
+              Home
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-[#64748B]" />
+            <Link href="/orders" className="hover:text-white transition">
+              Orders
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-[#64748B]" />
+            <span className="text-[#E8732A] font-bold">{order.orderNumber}</span>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg p-1 bg-[#343A3F] border border-[#737A7F] flex items-center justify-center shrink-0">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="w-10 h-10 rounded-xl p-1 bg-[#14181F] border border-[#E06924]/50 flex items-center justify-center shrink-0">
                   <img src="/fti-logo.png" alt="FTI Logo" className="w-full h-full object-contain" />
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F1EAE1]">
-                  Purchase Order #{order.orderNumber}
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                  Purchase Order <span className="text-[#E8732A]">#{order.orderNumber}</span>
                 </h1>
-                <span className="bg-[#10B981]/20 text-[#10B981] text-xs font-bold px-2.5 py-0.5 rounded border border-[#10B981]/40">
+                <span className="bg-[#122D21] text-[#4ADE80] text-xs font-bold px-2.5 py-0.5 rounded-lg border border-[#22C55E]/40">
                   {order.status.replace(/_/g, ' ').toUpperCase()}
                 </span>
               </div>
-              <p className="text-xs text-[#A8ADB1] mt-1 font-medium">
+              <p className="text-xs text-[#94A3B8] mt-1.5">
                 Converted from Quotation #{order.quotationNumber} on {formatIndianDateTime(order.createdAt)}
               </p>
             </div>
@@ -123,7 +143,7 @@ function OrderDetailContent() {
               {invoice && (
                 <button
                   onClick={() => generateInvoicePDF(invoice)}
-                  className="bg-[#76513F] hover:bg-[#604333] text-[#F1EAE1] text-xs font-bold px-4 py-2 rounded border border-[#B18A70] flex items-center space-x-1.5 shadow transition cursor-pointer"
+                  className="bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-[#F59352]/50 flex items-center space-x-1.5 shadow-md transition cursor-pointer"
                 >
                   <Receipt className="w-4 h-4" />
                   <span>Download GST Tax Invoice</span>
@@ -134,37 +154,36 @@ function OrderDetailContent() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Just Accepted Celebration Banner */}
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 py-7">
         {isJustAccepted && (
-          <div className="mb-6 p-4 bg-[#BAC0C5] border-2 border-[#10B981] rounded-lg shadow-sm flex items-center space-x-3 text-[#252A2E]">
-            <div className="p-2 bg-[#10B981] text-[#252A2E] rounded-md font-bold">
+          <div className="mb-6 p-4 bg-[#14181F] border-2 border-[#22C55E]/60 rounded-2xl shadow-lg flex items-center space-x-3 text-white">
+            <div className="p-2.5 bg-[#122D21] text-[#4ADE80] border border-[#22C55E]/40 rounded-xl">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-extrabold text-sm text-[#252A2E]">
+              <h3 className="font-extrabold text-sm text-white">
                 Quotation Accepted & Order Confirmed Successfully!
               </h3>
-              <p className="text-xs text-[#49352D] font-medium">
-                Your official Tax Invoice #{order.invoiceNumber} has been generated. Material allocation is active at Kalamboli yard.
+              <p className="text-xs text-[#94A3B8]">
+                Your official Tax Invoice #{order.invoiceNumber} has been generated. Material allocation is active at Ludhiana Dispatch Hub.
               </p>
             </div>
           </div>
         )}
 
         {/* 1. Fulfillment Multi-Step Timeline */}
-        <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-lg p-6 mb-8 shadow-xs text-[#252A2E]">
-          <div className="flex items-center justify-between border-b border-[#737A7F] pb-3 mb-6">
+        <div className="bg-[#14181F] border border-[#28303E] rounded-2xl p-6 mb-7 shadow-lg text-white">
+          <div className="flex items-center justify-between border-b border-[#222934] pb-3.5 mb-5">
             <div>
-              <h2 className="text-sm font-extrabold text-[#252A2E] uppercase tracking-wider">
+              <h2 className="text-sm font-extrabold text-white uppercase tracking-wider">
                 Order Fulfillment & Dispatch Progress
               </h2>
-              <p className="text-xs text-[#49352D] font-medium">
+              <p className="text-xs text-[#94A3B8]">
                 Real-time tracking of weighment, bundling, loading, and transit
               </p>
             </div>
             {order.dispatchDate && (
-              <span className="text-xs bg-[#76513F] text-[#F1EAE1] font-bold px-2.5 py-1 rounded border border-[#B18A70]">
+              <span className="text-xs bg-[#251811] text-[#E8732A] font-bold px-3 py-1 rounded-lg border border-[#E06924]/40">
                 Dispatched on {formatIndianDate(order.dispatchDate)}
               </span>
             )}
@@ -177,62 +196,57 @@ function OrderDetailContent() {
               return (
                 <div
                   key={stage.key}
-                  className={`p-3 rounded border text-xs relative transition ${
+                  className={`p-3.5 rounded-xl border text-xs relative transition ${
                     isCurrent
-                      ? 'bg-[#A8ADB1] border-2 border-[#76513F] ring-1 ring-[#76513F] shadow-xs'
+                      ? 'bg-[#251811] border-2 border-[#E8732A] shadow-md'
                       : isCompleted
-                      ? 'bg-[#858C92] border-[#10B981]'
-                      : 'bg-[#A8ADB1]/60 border-[#737A7F] opacity-60'
+                      ? 'bg-[#122D21]/60 border-[#22C55E]/50'
+                      : 'bg-[#191F28] border-[#2A3342] opacity-60'
                   }`}
                 >
                   <div className="flex items-center space-x-2 mb-1.5">
                     <span
                       className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                         isCompleted
-                          ? 'bg-[#10B981] text-[#252A2E]'
-                          : 'bg-[#737A7F] text-[#F1EAE1]'
+                          ? 'bg-[#22C55E] text-[#0B0E11]'
+                          : 'bg-[#2A3342] text-[#94A3B8]'
                       }`}
                     >
                       {isCompleted ? '✓' : idx + 1}
                     </span>
-                    <span className="font-extrabold text-[#252A2E] text-xs">
-                      {stage.label}
-                    </span>
+                    <span className="font-extrabold text-white text-xs">{stage.label}</span>
                   </div>
-                  <p className="text-[11px] text-[#343A3F] leading-tight font-medium">
-                    {stage.desc}
-                  </p>
+                  <p className="text-[11px] text-[#94A3B8] leading-tight">{stage.desc}</p>
                 </div>
               );
             })}
           </div>
 
-          {/* Dispatch Logistics Banner */}
           {order.trackingNumber && (
-            <div className="mt-6 p-4 bg-[#49352D] text-[#F1EAE1] rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border border-[#343A3F]">
+            <div className="mt-6 p-4 bg-[#191F28] text-white rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border border-[#2A3342]">
               <div className="flex items-center space-x-3">
-                <div className="p-2.5 bg-[#76513F] text-[#F1EAE1] border border-[#B18A70] rounded-md">
+                <div className="p-2.5 bg-[#251811] text-[#E8732A] border border-[#E06924]/40 rounded-xl">
                   <Truck className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="font-bold text-sm text-[#F1EAE1]">{order.trackingCarrier}</span>
-                    <span className="text-[10px] bg-[#343A3F] text-[#10B981] font-mono px-2 py-0.5 rounded border border-[#737A7F]">
+                    <span className="font-bold text-sm text-white">{order.trackingCarrier}</span>
+                    <span className="text-[10px] bg-[#122D21] text-[#4ADE80] font-mono px-2 py-0.5 rounded-md border border-[#22C55E]/40">
                       LIVE TRANSIT
                     </span>
                   </div>
-                  <p className="text-xs text-[#A8ADB1] font-mono mt-0.5">
-                    LR / Docket No: <span className="text-[#F1EAE1] font-bold">{order.trackingNumber}</span>
+                  <p className="text-xs text-[#94A3B8] font-mono mt-0.5">
+                    LR / Docket No: <span className="text-[#E8732A] font-bold">{order.trackingNumber}</span>
                   </p>
                 </div>
               </div>
 
               {order.estimatedDelivery && (
                 <div className="text-left sm:text-right">
-                  <span className="text-[10px] text-[#A8ADB1] block uppercase font-bold">
+                  <span className="text-[10px] text-[#94A3B8] block uppercase font-bold">
                     Estimated Delivery
                   </span>
-                  <span className="text-xs font-bold text-[#10B981]">
+                  <span className="text-xs font-bold text-[#4ADE80]">
                     {formatIndianDate(order.estimatedDelivery)}
                   </span>
                 </div>
@@ -241,20 +255,20 @@ function OrderDetailContent() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column: Itemized Order List & Billing Breakdown (8 Cols) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-7">
+          {/* Left Column */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-lg shadow-xs overflow-hidden text-[#252A2E]">
-              <div className="p-5 border-b border-[#737A7F] flex items-center justify-between">
+            <div className="bg-[#14181F] border border-[#28303E] rounded-2xl shadow-lg overflow-hidden text-white">
+              <div className="p-5 border-b border-[#222934] flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-extrabold text-[#252A2E]">
+                  <h3 className="text-sm font-extrabold text-white">
                     Order Items ({order.items.length})
                   </h3>
-                  <p className="text-xs text-[#49352D] font-medium">
+                  <p className="text-xs text-[#94A3B8]">
                     Agreed specifications locked from Quotation #{order.quotationNumber}
                   </p>
                 </div>
-                <span className="text-xs font-mono font-bold text-[#252A2E] bg-[#858C92] px-2.5 py-1 rounded border border-[#737A7F]">
+                <span className="text-xs font-mono font-bold text-[#E8732A] bg-[#251811] px-2.5 py-1 rounded-lg border border-[#E06924]/40">
                   GST Rate: {order.taxRate}%
                 </span>
               </div>
@@ -262,7 +276,7 @@ function OrderDetailContent() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="bg-[#858C92] text-[#252A2E] font-extrabold border-b border-[#737A7F] uppercase text-[10px]">
+                    <tr className="bg-[#0F1319] text-[#94A3B8] font-extrabold border-b border-[#222934] uppercase text-[10px]">
                       <th className="py-2.5 px-4">#</th>
                       <th className="py-2.5 px-4">Material & Grade</th>
                       <th className="py-2.5 px-4">Specifications</th>
@@ -271,33 +285,33 @@ function OrderDetailContent() {
                       <th className="py-2.5 px-4 text-right">Line Total (₹)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#737A7F]/30">
+                  <tbody className="divide-y divide-[#1E2530]">
                     {order.items.map((item, index) => (
-                      <tr key={item.id} className="hover:bg-[#C7CBD0] transition">
-                        <td className="py-3 px-4 font-mono font-bold text-[#49352D]">{index + 1}</td>
+                      <tr key={item.id} className="hover:bg-[#191F28] transition">
+                        <td className="py-3 px-4 font-mono font-bold text-[#94A3B8]">{index + 1}</td>
                         <td className="py-3 px-4">
-                          <p className="font-extrabold text-[#252A2E]">{item.categoryName}</p>
-                          <span className="font-mono text-[11px] font-bold text-[#F1EAE1] bg-[#76513F] px-1.5 py-0.2 rounded border border-[#B18A70]">
+                          <p className="font-extrabold text-white">{item.categoryName}</p>
+                          <span className="inline-block mt-0.5 font-mono text-[10px] font-bold text-[#E8732A] bg-[#251811] px-2 py-0.5 rounded-md border border-[#E06924]/40">
                             {item.grade}
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="space-y-0.5 text-[11px] text-[#252A2E]">
+                          <div className="space-y-0.5 text-[11px] text-[#CBD5E1]">
                             {Object.entries(item.specifications).map(([k, v]) => (
                               <div key={k}>
-                                <span className="text-[#49352D] font-medium capitalize">{k}:</span>{' '}
-                                <span className="font-bold text-[#252A2E]">{v}</span>
+                                <span className="text-[#94A3B8] font-medium capitalize">{k}:</span>{' '}
+                                <span className="font-bold text-white">{v}</span>
                               </div>
                             ))}
                           </div>
                         </td>
-                        <td className="py-3 px-4 font-mono font-black text-[#252A2E]">
+                        <td className="py-3 px-4 font-mono font-black text-white">
                           {item.quantity} {item.unit}
                         </td>
-                        <td className="py-3 px-4 text-right font-mono font-bold text-[#252A2E]">
+                        <td className="py-3 px-4 text-right font-mono font-bold text-white">
                           {formatINR(item.unitPrice)}
                         </td>
-                        <td className="py-3 px-4 text-right font-mono font-black text-[#252A2E]">
+                        <td className="py-3 px-4 text-right font-mono font-black text-[#E8732A]">
                           {formatINR(item.lineTotal)}
                         </td>
                       </tr>
@@ -306,18 +320,17 @@ function OrderDetailContent() {
                 </table>
               </div>
 
-              {/* Order Financial Breakdown */}
-              <div className="bg-[#A8ADB1] p-5 border-t border-[#737A7F]">
+              <div className="bg-[#10141A] p-5 border-t border-[#222934]">
                 <div className="max-w-sm ml-auto space-y-2 text-xs">
-                  <div className="flex justify-between text-[#252A2E] font-medium">
+                  <div className="flex justify-between text-[#CBD5E1] font-medium">
                     <span>Material Subtotal:</span>
-                    <span className="font-mono font-bold text-[#252A2E]">
+                    <span className="font-mono font-bold text-white">
                       {formatINR(order.subtotal)}
                     </span>
                   </div>
 
                   {order.discountAmount > 0 && (
-                    <div className="flex justify-between text-[#10B981] font-bold">
+                    <div className="flex justify-between text-[#4ADE80] font-bold">
                       <span>Discount:</span>
                       <span className="font-mono font-bold">
                         - {formatINR(order.discountAmount)}
@@ -325,25 +338,25 @@ function OrderDetailContent() {
                     </div>
                   )}
 
-                  <div className="flex justify-between text-[#252A2E] font-medium">
+                  <div className="flex justify-between text-[#CBD5E1] font-medium">
                     <span>GST @ {order.taxRate}% (CGST 9% + SGST 9%):</span>
-                    <span className="font-mono font-bold text-[#252A2E]">
+                    <span className="font-mono font-bold text-white">
                       {formatINR(order.taxAmount)}
                     </span>
                   </div>
 
                   {order.transportationCharges > 0 && (
-                    <div className="flex justify-between text-[#252A2E] font-medium">
+                    <div className="flex justify-between text-[#CBD5E1] font-medium">
                       <span>Transportation / Freight:</span>
-                      <span className="font-mono font-bold text-[#252A2E]">
+                      <span className="font-mono font-bold text-white">
                         {formatINR(order.transportationCharges)}
                       </span>
                     </div>
                   )}
 
-                  <div className="pt-2 border-t border-[#737A7F] flex justify-between text-sm font-black text-[#252A2E]">
+                  <div className="pt-2 border-t border-[#242C38] flex justify-between text-sm font-black text-white">
                     <span>Grand Total:</span>
-                    <span className="font-mono text-base text-[#604333]">
+                    <span className="font-mono text-base text-[#E8732A]">
                       {formatINR(order.grandTotal)}
                     </span>
                   </div>
@@ -351,62 +364,60 @@ function OrderDetailContent() {
               </div>
             </div>
 
-            {/* Bank Transfer Details for Settlement */}
-            <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-lg p-5 shadow-xs text-[#252A2E]">
-              <h3 className="text-xs font-extrabold text-[#252A2E] uppercase tracking-wider mb-2 flex items-center space-x-1.5">
-                <CreditCard className="w-4 h-4 text-[#76513F]" />
+            <div className="bg-[#14181F] border border-[#28303E] rounded-2xl p-5 shadow-lg text-white">
+              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider mb-2 flex items-center space-x-1.5">
+                <CreditCard className="w-4 h-4 text-[#E8732A]" />
                 <span>Bank Payment Details for RTGS / NEFT</span>
               </h3>
-              <p className="text-xs text-[#49352D] mb-3 font-medium">
-                Please remit payments referencing Purchase Order <span className="font-extrabold text-[#252A2E]">#{order.orderNumber}</span>:
+              <p className="text-xs text-[#94A3B8] mb-3">
+                Please remit payments referencing Purchase Order <span className="font-extrabold text-white">#{order.orderNumber}</span>:
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#A8ADB1] p-4 rounded border border-[#737A7F] text-xs font-mono">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#10141A] p-4 rounded-xl border border-[#222934] text-xs font-mono">
                 <div>
-                  <span className="text-[#49352D] block text-[10px] uppercase font-bold">Beneficiary Name</span>
-                  <span className="font-bold text-[#252A2E]">FIELDFAST TECH INTERNATIONAL (FTI)</span>
+                  <span className="text-[#94A3B8] block text-[10px] uppercase font-bold">Beneficiary Name</span>
+                  <span className="font-bold text-white">FIELDFAST TECH INTERNATIONAL (FTI)</span>
                 </div>
                 <div>
-                  <span className="text-[#49352D] block text-[10px] uppercase font-bold">Bank & Branch</span>
-                  <span className="font-bold text-[#252A2E]">State Bank of India, Kalamboli</span>
+                  <span className="text-[#94A3B8] block text-[10px] uppercase font-bold">Bank & Branch</span>
+                  <span className="font-bold text-white">State Bank of India, Industrial Area-C, Ludhiana</span>
                 </div>
                 <div>
-                  <span className="text-[#49352D] block text-[10px] uppercase font-bold">Current Account No.</span>
-                  <span className="font-bold text-[#252A2E]">3892010049281</span>
+                  <span className="text-[#94A3B8] block text-[10px] uppercase font-bold">Current Account No.</span>
+                  <span className="font-bold text-white">3892010049281</span>
                 </div>
                 <div>
-                  <span className="text-[#49352D] block text-[10px] uppercase font-bold">IFSC Code</span>
-                  <span className="font-bold text-[#604333]">SBIN0001824</span>
+                  <span className="text-[#94A3B8] block text-[10px] uppercase font-bold">IFSC Code</span>
+                  <span className="font-bold text-[#E8732A]">SBIN0001824</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Customer Info & Timeline (4 Cols) */}
+          {/* Right Column */}
           <div className="lg:col-span-4 space-y-6">
-            {/* Customer Details Box */}
-            <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-lg p-5 shadow-xs text-[#252A2E]">
-              <h3 className="text-xs font-extrabold text-[#252A2E] uppercase tracking-wider mb-3 flex items-center space-x-1.5">
-                <Building2 className="w-4 h-4 text-[#76513F]" />
+            <div className="bg-[#14181F] border border-[#28303E] rounded-2xl p-5 shadow-lg text-white">
+              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider mb-3 flex items-center space-x-1.5">
+                <Building2 className="w-4 h-4 text-[#E8732A]" />
                 <span>Billing & Delivery Address</span>
               </h3>
 
               <div className="space-y-3 text-xs">
                 <div>
-                  <span className="text-[#49352D] block text-[10px] uppercase font-bold">Company</span>
-                  <span className="font-extrabold text-[#252A2E]">{order.customerSnapshot.companyName}</span>
+                  <span className="text-[#94A3B8] block text-[10px] uppercase font-bold">Company</span>
+                  <span className="font-extrabold text-white">{order.customerSnapshot.companyName}</span>
                 </div>
 
                 <div>
-                  <span className="text-[#49352D] block text-[10px] uppercase font-bold">Buyer Representative</span>
-                  <span className="font-bold text-[#252A2E]">
+                  <span className="text-[#94A3B8] block text-[10px] uppercase font-bold">Buyer Representative</span>
+                  <span className="font-bold text-[#CBD5E1]">
                     {order.customerSnapshot.fullName} ({order.customerSnapshot.mobile})
                   </span>
                 </div>
 
-                <div className="pt-2 border-t border-[#737A7F]/40">
-                  <span className="text-[#49352D] block text-[10px] uppercase font-bold">Shipping Address</span>
-                  <span className="text-[#252A2E] leading-tight block mt-0.5 font-medium">
+                <div className="pt-2.5 border-t border-[#222934]">
+                  <span className="text-[#94A3B8] block text-[10px] uppercase font-bold">Shipping Address</span>
+                  <span className="text-white leading-tight block mt-0.5">
                     {order.shippingAddress.streetAddress}, {order.shippingAddress.city},{' '}
                     {order.shippingAddress.state} - {order.shippingAddress.pincode}
                   </span>
@@ -414,26 +425,25 @@ function OrderDetailContent() {
               </div>
             </div>
 
-            {/* Status History Timeline */}
-            <div className="bg-[#BAC0C5] border border-[#737A7F] rounded-lg p-5 shadow-xs text-[#252A2E]">
-              <h3 className="text-xs font-extrabold text-[#252A2E] uppercase tracking-wider mb-4 flex items-center space-x-1.5">
-                <Clock className="w-4 h-4 text-[#76513F]" />
+            <div className="bg-[#14181F] border border-[#28303E] rounded-2xl p-5 shadow-lg text-white">
+              <h3 className="text-xs font-extrabold text-white uppercase tracking-wider mb-4 flex items-center space-x-1.5">
+                <Clock className="w-4 h-4 text-[#E8732A]" />
                 <span>Order Activity Log</span>
               </h3>
 
-              <div className="space-y-4 relative before:absolute before:inset-0 before:left-2 before:w-0.5 before:bg-[#737A7F]">
+              <div className="space-y-4 relative before:absolute before:inset-0 before:left-2 before:w-0.5 before:bg-[#28303E]">
                 {order.statusHistory.map((history, idx) => (
                   <div key={idx} className="relative flex items-start space-x-3 pl-4">
-                    <div className="absolute left-0 w-4 h-4 rounded-full bg-[#76513F] border-2 border-[#BAC0C5] shadow-xs -translate-x-1 mt-0.5" />
+                    <div className="absolute left-0 w-4 h-4 rounded-full bg-[#E8732A] border-2 border-[#14181F] -translate-x-1 mt-0.5" />
                     <div>
-                      <p className="text-xs font-extrabold text-[#252A2E] capitalize">
+                      <p className="text-xs font-extrabold text-white capitalize">
                         {history.status.replace(/_/g, ' ')}
                       </p>
-                      <p className="text-[10px] text-[#49352D] font-medium">
+                      <p className="text-[10px] text-[#94A3B8]">
                         {formatIndianDateTime(history.changedAt)} • {history.changedBy}
                       </p>
                       {history.note && (
-                        <p className="text-[11px] text-[#343A3F] mt-0.5 italic">
+                        <p className="text-[11px] text-[#CBD5E1] mt-0.5 italic">
                           "{history.note}"
                         </p>
                       )}

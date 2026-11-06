@@ -3,29 +3,26 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useStore } from '@/lib/store-context';
-import { formatINR, formatIndianDate, formatIndianDateTime } from '@/lib/utils';
+import { formatINR, formatIndianDate } from '@/lib/utils';
 import { Quotation, QuotationItem, QuotationStatus } from '@/types';
 import {
   FileSpreadsheet,
   Search,
   CheckCircle2,
-  Clock,
   Send,
   Edit3,
   Download,
-  AlertCircle,
-  Building2,
-  DollarSign,
-  Plus,
-  Trash2,
-  Eye,
   ArrowLeft,
 } from 'lucide-react';
 import { generateQuotationPDF } from '@/lib/pdf-generator';
 
 export default function AdminQuotationsPage() {
   return (
-    <React.Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading quotations desk...</div>}>
+    <React.Suspense
+      fallback={
+        <div className="p-8 text-center text-xs text-[#94A3B8]">Loading quotations desk...</div>
+      }
+    >
       <AdminQuotationsContent />
     </React.Suspense>
   );
@@ -35,7 +32,7 @@ function AdminQuotationsContent() {
   const searchParams = useSearchParams();
   const preselectedId = searchParams?.get('selected');
 
-  const { quotations, updateQuotationPricing, acceptQuotation } = useStore();
+  const { quotations, updateQuotationPricing } = useStore();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -83,7 +80,7 @@ function AdminQuotationsContent() {
       );
       setTermsAndConditions(
         activeQuotation.termsAndConditions ||
-          `1. Quotation valid strictly for 3 days due to steel price volatility.\n2. Payment terms: 100% against proforma invoice before dispatch.\n3. Taxes: 18% GST extra.\n4. Subject to Kalamboli jurisdiction.`
+          `1. Quotation valid strictly for 3 days due to steel price volatility.\n2. Payment terms: 100% against proforma invoice before dispatch.\n3. Taxes: 18% GST extra.\n4. Subject to Ludhiana jurisdiction.`
       );
       setAdminNotes(activeQuotation.adminNotes || '');
     }
@@ -128,7 +125,6 @@ function AdminQuotationsContent() {
         : 'Quotation pricing saved as draft.'
     );
 
-    // Refresh active quotation reference from store
     setTimeout(() => {
       setSaveFeedback(null);
     }, 4000);
@@ -148,24 +144,24 @@ function AdminQuotationsContent() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-            Quotation Management & Pricing Desk
+          <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+            Quotation Management & <span className="text-[#E8732A]">Pricing Desk</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#94A3B8] mt-0.5">
             Review customer material specification requests, assign mill-direct rates, add freight, and issue official quotations.
           </p>
         </div>
       </div>
 
       {/* Mobile-only Segmented View Switcher */}
-      <div className="lg:hidden flex rounded-lg bg-slate-200 p-1 shadow-inner text-xs">
+      <div className="lg:hidden flex rounded-xl bg-[#14181F] border border-[#28303E] p-1 shadow-inner text-xs">
         <button
           type="button"
           onClick={() => setMobileTab('queue')}
-          className={`flex-1 py-2 font-bold rounded-md transition touch-manipulation flex items-center justify-center space-x-1.5 ${
+          className={`flex-1 py-2 font-bold rounded-lg transition touch-manipulation flex items-center justify-center space-x-1.5 cursor-pointer ${
             mobileTab === 'queue'
-              ? 'bg-white text-blue-700 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white shadow-sm'
+              : 'text-[#94A3B8] hover:text-white'
           }`}
         >
           <FileSpreadsheet className="w-4 h-4" />
@@ -174,41 +170,47 @@ function AdminQuotationsContent() {
         <button
           type="button"
           onClick={() => setMobileTab('desk')}
-          className={`flex-1 py-2 font-bold rounded-md transition touch-manipulation flex items-center justify-center space-x-1.5 ${
+          className={`flex-1 py-2 font-bold rounded-lg transition touch-manipulation flex items-center justify-center space-x-1.5 cursor-pointer ${
             mobileTab === 'desk'
-              ? 'bg-white text-blue-700 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white shadow-sm'
+              : 'text-[#94A3B8] hover:text-white'
           }`}
         >
           <Edit3 className="w-4 h-4" />
-          <span>Pricing Desk {activeQuotation ? `(${activeQuotation.quotationNumber.slice(-4)})` : ''}</span>
+          <span>
+            Pricing Desk {activeQuotation ? `(${activeQuotation.quotationNumber.slice(-4)})` : ''}
+          </span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Quotation Requests Queue (4 Cols) */}
-        <div className={`lg:col-span-4 space-y-3 ${mobileTab === 'queue' ? 'block' : 'hidden lg:block'}`}>
-          <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-xs space-y-2">
+        <div
+          className={`lg:col-span-4 space-y-3 ${
+            mobileTab === 'queue' ? 'block' : 'hidden lg:block'
+          }`}
+        >
+          <div className="bg-[#14181F] border border-[#28303E] rounded-2xl p-3.5 shadow-lg space-y-2.5">
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-3 top-2.5" />
               <input
                 type="text"
-                placeholder="Search RFQs..."
+                placeholder="Search RFQs by ID or company..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-2 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded text-slate-900"
+                className="w-full pl-8 pr-3 py-2 text-xs bg-[#191F28] border border-[#2A3342] rounded-xl text-white placeholder-[#64748B]"
               />
             </div>
 
-            <div className="flex items-center space-x-1 text-[11px] overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex items-center space-x-1.5 text-[11px] overflow-x-auto pb-1 no-scrollbar">
               {['all', 'pending', 'quotation_sent', 'accepted'].map((st) => (
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st)}
-                  className={`px-2.5 py-1 rounded font-medium whitespace-nowrap touch-manipulation ${
+                  className={`px-3 py-1 rounded-full font-bold whitespace-nowrap touch-manipulation cursor-pointer transition ${
                     statusFilter === st
-                      ? 'bg-blue-600 text-white font-bold'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white border border-[#F59352]/40'
+                      : 'bg-[#191F28] text-[#CBD5E1] hover:bg-[#222936] border border-[#2A3342]'
                   }`}
                 >
                   {st === 'all' ? 'All' : st.replace('_', ' ')}
@@ -217,9 +219,9 @@ function AdminQuotationsContent() {
             </div>
           </div>
 
-          <div className="space-y-2 max-h-[75vh] overflow-y-auto">
+          <div className="space-y-2.5 max-h-[75vh] overflow-y-auto pr-1">
             {filtered.length === 0 ? (
-              <div className="bg-white border border-slate-200 rounded-lg p-6 text-center text-xs text-slate-500">
+              <div className="bg-[#14181F] border border-[#28303E] rounded-2xl p-6 text-center text-xs text-[#94A3B8]">
                 No quotation requests found matching filter.
               </div>
             ) : (
@@ -232,41 +234,44 @@ function AdminQuotationsContent() {
                       setActiveQuotation(q);
                       setMobileTab('desk');
                     }}
-                    className={`cursor-pointer p-3.5 rounded-lg border text-xs transition touch-manipulation ${
+                    className={`cursor-pointer p-4 rounded-2xl border text-xs transition touch-manipulation ${
                       isSelected
-                        ? 'bg-blue-50/80 border-blue-600 shadow-xs ring-1 ring-blue-600'
-                        : 'bg-white border-slate-200 hover:border-slate-300'
+                        ? 'bg-[#251811] border-[#E06924] shadow-md ring-1 ring-[#E06924]'
+                        : 'bg-[#14181F] border-[#28303E] hover:border-[#3A4659]'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono font-bold text-slate-900">{q.quotationNumber}</span>
+                      <span className="font-mono font-extrabold text-white">
+                        {q.quotationNumber}
+                      </span>
                       <span
-                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                        className={`text-[9px] font-bold px-2 py-0.5 rounded-md uppercase ${
                           q.status === 'pending'
-                            ? 'bg-amber-100 text-amber-800'
+                            ? 'bg-[#332114] text-[#E58A3C] border border-[#C86D28]/50'
                             : q.status === 'quotation_sent'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-slate-100 text-slate-700'
+                            ? 'bg-[#122D21] text-[#4ADE80] border border-[#22C55E]/40'
+                            : 'bg-[#191F28] text-[#CBD5E1] border border-[#2A3342]'
                         }`}
                       >
                         {q.status.replace(/_/g, ' ')}
                       </span>
                     </div>
 
-                    <p className="font-semibold text-slate-800 truncate">
+                    <p className="font-bold text-[#E2E8F0] truncate">
                       {q.customerSnapshot.companyName}
                     </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      {q.customerSnapshot.fullName} • {q.items.length} Combination(s) • {formatIndianDate(q.createdAt)}
+                    <p className="text-[11px] text-[#94A3B8] mt-0.5">
+                      {q.customerSnapshot.fullName} • {q.items.length} Combination(s) •{' '}
+                      {formatIndianDate(q.createdAt)}
                     </p>
 
-                    <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                      <span className="text-slate-400">Total:</span>
+                    <div className="mt-2.5 pt-2 border-t border-[#222934] flex items-center justify-between text-[11px]">
+                      <span className="text-[#64748B]">Total:</span>
                       <div className="flex items-center space-x-2">
-                        <span className="font-mono font-bold text-slate-900">
+                        <span className="font-mono font-extrabold text-[#E8732A]">
                           {q.grandTotal ? formatINR(q.grandTotal) : 'Unpriced'}
                         </span>
-                        <span className="lg:hidden text-blue-600 font-bold text-[10px]">
+                        <span className="lg:hidden text-[#E8732A] font-bold text-[10px]">
                           Edit →
                         </span>
                       </div>
@@ -281,37 +286,41 @@ function AdminQuotationsContent() {
         {/* Right Column: Pricing & Quotation Preparation Desk (8 Cols) */}
         <div className={`lg:col-span-8 ${mobileTab === 'desk' ? 'block' : 'hidden lg:block'}`}>
           {activeQuotation ? (
-            <div className="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-xs space-y-5 sm:space-y-6">
+            <div className="bg-[#14181F] border border-[#28303E] rounded-2xl p-4 sm:p-6 shadow-lg space-y-5 sm:space-y-6">
               {/* Mobile Back to Queue Button */}
-              <div className="lg:hidden flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="lg:hidden flex items-center justify-between pb-2 border-b border-[#222934]">
                 <button
                   type="button"
                   onClick={() => setMobileTab('queue')}
-                  className="inline-flex items-center space-x-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 px-2.5 py-1.5 rounded touch-manipulation"
+                  className="inline-flex items-center space-x-1.5 text-xs font-bold text-[#E8732A] bg-[#251811] border border-[#E06924]/40 px-3 py-1.5 rounded-xl touch-manipulation"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Back to RFQ Queue</span>
                 </button>
-                <span className="text-[10px] text-slate-400 font-mono">
+                <span className="text-[10px] text-[#94A3B8] font-mono">
                   {filtered.findIndex((q) => q.id === activeQuotation.id) + 1} of {filtered.length}
                 </span>
               </div>
 
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-slate-200 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-[#222934] pb-4">
                 <div>
-                  <div className="flex items-center space-x-2">
-                    <h2 className="text-base sm:text-lg font-bold text-slate-900 font-mono">
+                  <div className="flex items-center space-x-2.5">
+                    <h2 className="text-base sm:text-lg font-extrabold text-white font-mono">
                       {activeQuotation.quotationNumber}
                     </h2>
-                    <span className="bg-slate-100 text-slate-700 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
+                    <span className="bg-[#251811] text-[#E8732A] border border-[#E06924]/40 text-[10px] font-mono px-2 py-0.5 rounded-md font-bold">
                       Version {activeQuotation.version}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Client: <span className="font-bold text-slate-800">{activeQuotation.customerSnapshot.companyName}</span> ({activeQuotation.customerSnapshot.fullName})
+                  <p className="text-xs text-[#94A3B8] mt-1">
+                    Client:{' '}
+                    <span className="font-bold text-white">
+                      {activeQuotation.customerSnapshot.companyName}
+                    </span>{' '}
+                    ({activeQuotation.customerSnapshot.fullName})
                   </p>
-                  <p className="text-[11px] text-slate-400 break-words mt-0.5">
+                  <p className="text-[11px] text-[#64748B] break-words mt-0.5">
                     Delivery To: {activeQuotation.customerSnapshot.deliveryAddress}
                   </p>
                 </div>
@@ -319,64 +328,64 @@ function AdminQuotationsContent() {
                 <div className="flex items-center space-x-2 shrink-0">
                   <button
                     onClick={() => generateQuotationPDF(activeQuotation)}
-                    className="p-2 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center space-x-1 touch-manipulation"
+                    className="px-3.5 py-2 rounded-xl bg-[#191F28] hover:bg-[#222936] border border-[#2A3342] text-white text-xs font-bold flex items-center space-x-1.5 touch-manipulation cursor-pointer transition"
                     title="Download Quotation PDF"
                   >
-                    <Download className="w-4 h-4 text-slate-600" />
+                    <Download className="w-4 h-4 text-[#E8732A]" />
                     <span>Download PDF</span>
                   </button>
                 </div>
               </div>
 
               {saveFeedback && (
-                <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs rounded-md flex items-center space-x-2 animate-in fade-in">
-                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-                  <span>{saveFeedback}</span>
+                <div className="p-3.5 bg-[#122D21] border border-[#22C55E]/40 text-[#4ADE80] text-xs rounded-xl flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-[#22C55E]" />
+                  <span className="font-bold">{saveFeedback}</span>
                 </div>
               )}
 
               {/* Line Items Pricing */}
               <div>
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">
+                <h3 className="text-xs font-extrabold text-white uppercase tracking-wider mb-2.5">
                   Line Items Specification & Unit Price Assignment
                 </h3>
 
                 {/* Desktop/Tablet Table View */}
-                <div className="hidden md:block border border-slate-200 rounded-lg overflow-x-auto">
+                <div className="hidden md:block border border-[#2A3342] rounded-xl overflow-x-auto">
                   <table className="w-full text-left text-xs min-w-[500px]">
                     <thead>
-                      <tr className="bg-slate-100 text-slate-700 font-bold text-[10px] uppercase border-b border-slate-200">
-                        <th className="py-2.5 px-3">#</th>
-                        <th className="py-2.5 px-3">Category & Grade</th>
-                        <th className="py-2.5 px-3">Specifications</th>
-                        <th className="py-2.5 px-3">Quantity</th>
-                        <th className="py-2.5 px-3">Unit Price (₹)</th>
-                        <th className="py-2.5 px-3 text-right">Line Total (₹)</th>
+                      <tr className="bg-[#191F28] text-[#CBD5E1] font-bold text-[10px] uppercase border-b border-[#2A3342]">
+                        <th className="py-3 px-3">#</th>
+                        <th className="py-3 px-3">Category & Grade</th>
+                        <th className="py-3 px-3">Specifications</th>
+                        <th className="py-3 px-3">Quantity</th>
+                        <th className="py-3 px-3">Unit Price (₹)</th>
+                        <th className="py-3 px-3 text-right">Line Total (₹)</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-200">
+                    <tbody className="divide-y divide-[#222934]">
                       {itemsPricing.map((item, idx) => (
-                        <tr key={item.id} className="hover:bg-slate-50">
-                          <td className="py-3 px-3 font-mono text-slate-400">{idx + 1}</td>
-                          <td className="py-3 px-3 font-bold text-slate-900">
+                        <tr key={item.id} className="hover:bg-[#191F28]/50">
+                          <td className="py-3 px-3 font-mono text-[#64748B]">{idx + 1}</td>
+                          <td className="py-3 px-3 font-bold text-white">
                             {item.categoryName}
-                            <span className="block font-mono text-[10px] text-blue-700">
+                            <span className="block font-mono text-[10px] text-[#E8732A]">
                               {item.grade}
                             </span>
                           </td>
-                          <td className="py-3 px-3 text-[11px] text-slate-600">
+                          <td className="py-3 px-3 text-[11px] text-[#CBD5E1]">
                             {Object.entries(item.specifications).map(([k, v]) => (
                               <div key={k}>
-                                <span className="text-slate-400 capitalize">{k}:</span> {v}
+                                <span className="text-[#94A3B8] capitalize">{k}:</span> {v}
                               </div>
                             ))}
                             {item.specialInstructions && (
-                              <span className="italic text-[10px] text-amber-700 block mt-0.5">
+                              <span className="italic text-[10px] text-[#E58A3C] block mt-0.5">
                                 Req: {item.specialInstructions}
                               </span>
                             )}
                           </td>
-                          <td className="py-3 px-3 font-mono font-bold text-slate-800">
+                          <td className="py-3 px-3 font-mono font-bold text-white">
                             {item.quantity} {item.unit}
                           </td>
                           <td className="py-3 px-3">
@@ -387,10 +396,10 @@ function AdminQuotationsContent() {
                               onChange={(e) =>
                                 handlePriceChange(idx, parseFloat(e.target.value) || 0)
                               }
-                              className="w-24 p-1.5 text-xs bg-slate-50 border border-slate-300 rounded font-mono font-bold text-slate-900 focus:ring-1 focus:ring-blue-500"
+                              className="w-28 p-2 text-xs bg-[#191F28] border border-[#2A3342] rounded-xl font-mono font-bold text-white"
                             />
                           </td>
-                          <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
+                          <td className="py-3 px-3 text-right font-mono font-extrabold text-[#E8732A]">
                             {formatINR(item.lineTotal || 0)}
                           </td>
                         </tr>
@@ -404,28 +413,30 @@ function AdminQuotationsContent() {
                   {itemsPricing.map((item, idx) => (
                     <div
                       key={item.id}
-                      className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2.5 text-xs shadow-xs"
+                      className="bg-[#191F28] border border-[#2A3342] rounded-xl p-3.5 space-y-2.5 text-xs shadow-sm"
                     >
                       <div className="flex items-start justify-between">
                         <div>
-                          <span className="font-bold text-slate-900 text-sm">{item.categoryName}</span>
-                          <span className="block font-mono text-xs text-blue-700 font-semibold">{item.grade}</span>
+                          <span className="font-bold text-white text-sm">{item.categoryName}</span>
+                          <span className="block font-mono text-xs text-[#E8732A] font-semibold">
+                            {item.grade}
+                          </span>
                         </div>
-                        <span className="bg-slate-200 text-slate-700 text-[10px] font-mono px-2 py-0.5 rounded font-bold">
+                        <span className="bg-[#14181F] text-[#CBD5E1] border border-[#28303E] text-[10px] font-mono px-2 py-0.5 rounded-md font-bold">
                           Item #{idx + 1}
                         </span>
                       </div>
 
                       {/* Specs pills */}
-                      <div className="bg-white rounded p-2 border border-slate-200 space-y-1 text-[11px] text-slate-600">
+                      <div className="bg-[#14181F] rounded-xl p-2.5 border border-[#28303E] space-y-1 text-[11px] text-[#CBD5E1]">
                         {Object.entries(item.specifications).map(([k, v]) => (
                           <div key={k} className="flex justify-between">
-                            <span className="text-slate-400 capitalize">{k}:</span>
-                            <span className="font-medium text-slate-800">{v}</span>
+                            <span className="text-[#94A3B8] capitalize">{k}:</span>
+                            <span className="font-medium text-white">{v}</span>
                           </div>
                         ))}
                         {item.specialInstructions && (
-                          <p className="italic text-[10px] text-amber-700 pt-1 border-t border-slate-100">
+                          <p className="italic text-[10px] text-[#E58A3C] pt-1 border-t border-[#222934]">
                             Req: {item.specialInstructions}
                           </p>
                         )}
@@ -434,15 +445,15 @@ function AdminQuotationsContent() {
                       {/* Quantity & Unit Rate Inputs */}
                       <div className="grid grid-cols-2 gap-2.5 pt-1 items-end">
                         <div>
-                          <label className="text-[10px] uppercase font-bold text-slate-500 block mb-1">
+                          <label className="text-[10px] uppercase font-bold text-[#94A3B8] block mb-1">
                             Quantity ({item.unit})
                           </label>
-                          <div className="font-mono font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-2 text-xs">
+                          <div className="font-mono font-bold text-white bg-[#14181F] border border-[#28303E] rounded-xl px-2.5 py-2 text-xs">
                             {item.quantity} {item.unit}
                           </div>
                         </div>
                         <div>
-                          <label className="text-[10px] uppercase font-bold text-blue-900 block mb-1">
+                          <label className="text-[10px] uppercase font-bold text-[#E8732A] block mb-1">
                             Unit Price (₹/{item.unit})
                           </label>
                           <input
@@ -452,15 +463,15 @@ function AdminQuotationsContent() {
                             onChange={(e) =>
                               handlePriceChange(idx, parseFloat(e.target.value) || 0)
                             }
-                            className="w-full px-2.5 py-1.5 text-xs bg-white border-2 border-blue-500 rounded font-mono font-bold text-slate-900 focus:outline-hidden"
+                            className="w-full px-2.5 py-2 text-xs bg-[#14181F] border border-[#E06924] rounded-xl font-mono font-bold text-white"
                           />
                         </div>
                       </div>
 
                       {/* Line Total */}
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-200">
-                        <span className="text-slate-500 font-medium">Item Total:</span>
-                        <span className="font-mono font-bold text-slate-900 text-sm">
+                      <div className="flex items-center justify-between pt-2 border-t border-[#28303E]">
+                        <span className="text-[#94A3B8] font-medium">Item Total:</span>
+                        <span className="font-mono font-extrabold text-[#E8732A] text-sm">
                           {formatINR(item.lineTotal || 0)}
                         </span>
                       </div>
@@ -473,102 +484,106 @@ function AdminQuotationsContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1">
+                    <label className="block text-xs font-bold text-white mb-1">
                       Quotation Validity Date
                     </label>
                     <input
                       type="date"
                       value={validUntil}
                       onChange={(e) => setValidUntil(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs font-mono text-slate-900"
+                      className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-xs font-mono text-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1">
+                    <label className="block text-xs font-bold text-white mb-1">
                       Desk Notes (Visible to Client)
                     </label>
                     <textarea
                       rows={2}
                       value={adminNotes}
                       onChange={(e) => setAdminNotes(e.target.value)}
-                      placeholder="e.g. Material ready in Kalamboli yard. Ready for immediate loading."
-                      className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs text-slate-900"
+                      placeholder="e.g. Material ready at Ludhiana Works (Industrial Area-C). Ready for immediate loading."
+                      className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-xs text-white placeholder-[#64748B]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1">
+                    <label className="block text-xs font-bold text-white mb-1">
                       Commercial Terms & Conditions
                     </label>
                     <textarea
                       rows={3}
                       value={termsAndConditions}
                       onChange={(e) => setTermsAndConditions(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-xs font-mono text-slate-900"
+                      className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-xs font-mono text-white"
                     />
                   </div>
                 </div>
 
                 {/* Financial Summary & Add-on Charges */}
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3 text-xs">
-                  <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2">
+                <div className="bg-[#191F28] border border-[#2A3342] rounded-2xl p-4 space-y-3 text-xs">
+                  <h4 className="font-extrabold text-white uppercase tracking-wider text-[11px] border-b border-[#28303E] pb-2">
                     Pricing Breakdown
                   </h4>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Material Subtotal:</span>
-                    <span className="font-mono font-bold text-slate-900">{formatINR(subtotal)}</span>
+                    <span className="text-[#94A3B8]">Material Subtotal:</span>
+                    <span className="font-mono font-bold text-white">{formatINR(subtotal)}</span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Special Discount (₹):</span>
+                    <span className="text-[#94A3B8]">Special Discount (₹):</span>
                     <input
                       type="number"
                       value={discountAmount}
                       onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
-                      className="w-24 p-1 text-xs bg-white border border-slate-300 rounded font-mono text-right"
+                      className="w-28 p-1.5 text-xs bg-[#14181F] border border-[#28303E] rounded-lg font-mono text-right text-white"
                     />
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Transportation / Freight (₹):</span>
+                    <span className="text-[#94A3B8]">Transportation / Freight (₹):</span>
                     <input
                       type="number"
                       value={transportationCharges}
                       onChange={(e) => setTransportationCharges(parseFloat(e.target.value) || 0)}
-                      className="w-24 p-1 text-xs bg-white border border-slate-300 rounded font-mono text-right"
+                      className="w-28 p-1.5 text-xs bg-[#14181F] border border-[#28303E] rounded-lg font-mono text-right text-white"
                     />
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-600">GST Rate (%):</span>
+                    <span className="text-[#94A3B8]">GST Rate (%):</span>
                     <input
                       type="number"
                       value={taxRate}
                       onChange={(e) => setTaxRate(parseFloat(e.target.value) || 18)}
-                      className="w-24 p-1 text-xs bg-white border border-slate-300 rounded font-mono text-right"
+                      className="w-28 p-1.5 text-xs bg-[#14181F] border border-[#28303E] rounded-lg font-mono text-right text-white"
                     />
                   </div>
 
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-200 text-slate-600">
+                  <div className="flex items-center justify-between pt-1.5 border-t border-[#28303E] text-[#CBD5E1]">
                     <span>Tax Amount:</span>
-                    <span className="font-mono font-semibold text-slate-800">{formatINR(calculatedTax)}</span>
+                    <span className="font-mono font-bold text-white">
+                      {formatINR(calculatedTax)}
+                    </span>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-300 flex items-center justify-between text-sm font-bold text-slate-900">
+                  <div className="pt-2.5 border-t border-[#28303E] flex items-center justify-between text-sm font-extrabold text-white">
                     <span>Quotation Grand Total:</span>
-                    <span className="font-mono text-base text-blue-700">{formatINR(grandTotal)}</span>
+                    <span className="font-mono text-base text-[#E8732A]">
+                      {formatINR(grandTotal)}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="pt-4 border-t border-[#222934] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={() => handleSaveQuotation('quotation_prepared')}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold px-4 py-2.5 rounded border border-slate-300 transition text-center touch-manipulation"
+                  className="bg-[#191F28] hover:bg-[#222936] text-[#CBD5E1] hover:text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-[#2A3342] transition text-center touch-manipulation cursor-pointer"
                 >
                   Save as Draft (Do Not Send)
                 </button>
@@ -576,7 +591,7 @@ function AdminQuotationsContent() {
                 <button
                   type="button"
                   onClick={() => handleSaveQuotation('quotation_sent')}
-                  className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-6 py-2.5 rounded shadow flex items-center justify-center space-x-2 transition touch-manipulation"
+                  className="bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white text-xs font-extrabold px-6 py-2.5 rounded-xl border border-[#F59352]/50 shadow-[0_4px_15px_rgba(224,105,36,0.3)] flex items-center justify-center space-x-2 transition touch-manipulation cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
                   <span>Issue & Send Official Quotation</span>
@@ -584,9 +599,9 @@ function AdminQuotationsContent() {
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-400">
-              <FileSpreadsheet className="w-12 h-12 mx-auto mb-2 text-slate-300" />
-              <p className="text-xs font-semibold text-slate-600">
+            <div className="bg-[#14181F] border border-[#28303E] rounded-2xl p-12 text-center text-[#94A3B8]">
+              <FileSpreadsheet className="w-12 h-12 mx-auto mb-2 text-[#E8732A]" />
+              <p className="text-xs font-semibold text-white">
                 Select a quotation from the list on the left to review and assign line item pricing.
               </p>
             </div>

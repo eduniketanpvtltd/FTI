@@ -1,16 +1,40 @@
 import { NextResponse } from 'next/server';
 import { INITIAL_MARKET_MATERIALS } from '@/lib/db-store';
+import {
+  INITIAL_MANDI_BULLETIN,
+  formatIstBulletinDateTime,
+  syncBulletinWithLatestTime,
+} from '@/lib/mandi-parser';
 import { fetchDbMarketMaterials, updateDbMarketPrice } from '@/lib/supabase-service';
+
 
 export async function GET(request: Request) {
   try {
+    const now = new Date();
+    const { sessionDate, isoStr } = formatIstBulletinDateTime(now);
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const mainCategory = searchParams.get('mainCategory');
     const materialName = searchParams.get('materialName');
 
     const dbMaterials = await fetchDbMarketMaterials();
-    let materials = dbMaterials || INITIAL_MARKET_MATERIALS;
+    let materials = (dbMaterials || INITIAL_MARKET_MATERIALS).map((m) => {
+      const history = Array.isArray(m.historicalPrices) ? [...m.historicalPrices] : [];
+      if (history.length > 0) {
+        const lastIdx = history.length - 1;
+        history[lastIdx] = {
+          ...history[lastIdx],
+          date: sessionDate,
+          timestamp: now.getTime(),
+          price: m.currentPrice,
+        };
+      }
+      return {
+        ...m,
+        lastUpdatedAt: isoStr,
+        historicalPrices: history,
+      };
+    });
 
     if (mainCategory) {
       materials = materials.filter((m) => m.mainCategory === mainCategory);
@@ -26,13 +50,27 @@ export async function GET(request: Request) {
       materials = materials.filter((m) => m.categorySlug === category);
     }
 
-    return NextResponse.json({
-      success: true,
-      source: dbMaterials ? 'supabase' : 'local_store',
-      lastUpdated: new Date().toISOString(),
-      count: materials.length,
-      data: materials,
-    });
+    const bulletin = syncBulletinWithLatestTime(INITIAL_MANDI_BULLETIN, materials, now);
+
+    return NextResponse.json(
+      {
+        success: true,
+        source: dbMaterials ? 'supabase' : 'local_store',
+        lastUpdated: isoStr,
+        dateStr: bulletin.dateStr,
+        timeStr: bulletin.timeStr,
+        bulletin,
+        count: materials.length,
+        data: materials,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        },
+      }
+    );
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to fetch market data' },

@@ -13,7 +13,11 @@ import {
   AppSettings,
 } from '@/types';
 import { generateRefId } from './utils';
-import { INITIAL_MANDI_BULLETIN, INITIAL_MANDI_MATERIALS } from './mandi-parser';
+import {
+  INITIAL_MANDI_BULLETIN,
+  INITIAL_MANDI_MATERIALS,
+  syncBulletinWithLatestTime,
+} from './mandi-parser';
 
 // ==========================================
 // INITIAL SEED DATA
@@ -24,40 +28,64 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
     id: 'cat-round-bar',
     slug: 'round-bar',
     name: 'Round Bar',
-    description: 'Hot-rolled, normalized, and alloy engineering solid steel round bars strictly complying with IS: 2062, IS: 2073, IS: 1875, and IS: 5517 (BS 970 / EN & AISI equivalents).',
+    description: 'Round bars in various engineering grades and standard sizes. Hot-rolled, normalized, and alloy engineering solid steel round bars.',
     imageUrl: '/images/products/round-bar.png',
     isActive: true,
     isComingSoon: false,
     displayOrder: 1,
     availableGrades: [
-      'IS: 2062 Fe410-W / E250 (Fusion Welded Structural)',
-      'IS: 2073 C45 / 45C8 (BS 970: 080A40 / EN8)',
-      'IS: 2073 C45D / 45C8 (080A47 / EN8D Forging Quality)',
-      'IS: 5517 40Cr1Mo28 (BS: 708A42 / EN19 / AISI 4140)',
-      'IS: 5517 40Ni2Cr1Mo28 (BS: 826M40 / EN24 / AISI 4340)',
-      'IS: 5517 20MnCr5 / 16MnCr5 (Case Hardening Steel)',
-      'IS: 5517 103Cr6 / 103Cr1 (BS: 534A99 / EN31 / SAE 52100)',
-      'IS: 2073 C20 / 20C8 (AISI 1020 / Class 2 Forging)',
-      'IS: 2073 55C8 (BS: 070A55 / EN9 Wear Resistant)',
-      'IS: 1570 X04Cr18Ni9 (AISI 304 Austenitic Stainless)',
-      'IS: 1570 X04Cr18Ni12Mo2 (AISI 316 Stainless Round)',
+      '16MNCR5',
+      '20MNCR5',
+      '30MNB5',
+      '30MNCR4',
+      '41CR4',
+      '42CRMO4',
+      'A-105',
+      'BORON',
+      'C-55',
+      'CK-45',
+      'EN-15',
+      'EN-18',
+      'EN-18D',
+      'EN-19',
+      'EN-24',
+      'EN-353',
+      'EN-36A',
+      'EN-45',
+      'EN-45A',
+      'EN-8D',
+      'EN-8DCR',
+      'EN-8DLHT',
+      'EN-9',
+      'LC',
+      'S-45C',
+      'S-48C',
+      'SAE-1018',
+      'SAE-1541',
+      'SAE-4130',
+      'SAE-4140',
+      'SAE-8620',
+      'SCM-420',
+      'SCM-435',
+      'ST-52.3',
     ],
     specificationFields: [
       {
         key: 'diameter',
-        label: 'Nominal Bar Diameter (IS: 1732 Standard)',
+        label: 'Diameter (mm)',
         type: 'select',
         options: [
-          '10 mm', '12 mm', '16 mm', '20 mm', '22 mm', '25 mm', '28 mm', '32 mm', '36 mm', '40 mm',
-          '45 mm', '50 mm', '56 mm', '63 mm', '71 mm', '75 mm', '80 mm', '90 mm', '100 mm', '110 mm',
-          '125 mm', '140 mm', '150 mm', '160 mm', '180 mm', '200 mm', '220 mm', '250 mm', '280 mm', '300 mm'
+          '8 mm', '10 mm', '12 mm', '16 mm', '17 mm', '18 mm', '20 mm', '21 mm', '22 mm',
+          '23 mm', '24 mm', '25 mm', '26 mm', '27 mm', '28 mm', '30 mm', '32 mm', '34 mm',
+          '36 mm', '38 mm', '40 mm', '42 mm', '45 mm', '48 mm', '50 mm', '51 mm', '53 mm',
+          '56 mm', '60 mm', '63 mm', '65 mm', '68 mm', '70 mm', '72 mm', '75 mm', '80 mm'
         ],
         unit: 'mm',
         required: true,
       },
       {
         key: 'supplyCondition',
-        label: 'Supply / Heat Treatment Condition (Handbook Standard)',
+        label: 'Supply / Heat Treatment Condition',
         type: 'select',
         options: [
           'AR - As Rolled / Hot Rolled (Black Surface)',
@@ -86,10 +114,26 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
         label: 'Testing & Inspection Standard',
         type: 'select',
         options: [
-          'Standard Mill Test Certificate (MTC with Chemistry & Tensile per IS: 2049)',
+          'Standard Mill Test Certificate (MTC 3.1 with Chemistry & Tensile)',
           '100% Ultrasonic Tested (UT per IS: 6396 / IS: 8791)',
           'Third Party Inspection (TPI Witnessed)',
           '100% Spark Tested for Chemical Grade Identity',
+        ],
+        required: false,
+      },
+      {
+        key: 'handbookGradeEquivalent',
+        label: 'IS / BS / AISI Handbook Equivalent Reference',
+        type: 'select',
+        options: [
+          'IS: 2062 Fe410-W / E250 (Structural)',
+          'IS: 2073 C45 / 45C8 (BS 970: 080A40 / EN8)',
+          'IS: 2073 C45D / 45C8 (080A47 / EN8D Forging Quality)',
+          'IS: 5517 40Cr1Mo28 (BS: 708A42 / EN19 / AISI 4140)',
+          'IS: 5517 40Ni2Cr1Mo28 (BS: 826M40 / EN24 / AISI 4340)',
+          'IS: 5517 20MnCr5 / 16MnCr5 (Case Hardening Steel)',
+          'IS: 5517 103Cr6 / 103Cr1 (EN31 / SAE 52100)',
+          'IS: 1570 X04Cr18Ni9 (AISI 304 / 316 Stainless)',
         ],
         required: false,
       },
@@ -99,54 +143,82 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
     id: 'cat-bright-bar',
     slug: 'bright-bar',
     name: 'Bright Bar',
-    description: 'Cold-drawn, turned, and centerless ground precision bright steel bars complying with IS: 2073, IS: 1570, BS 970 (EN1A / EN8), and DIN ISO tolerance regimes.',
+    description: 'Precision finished bright round bars with high surface finish and tight tolerances.',
     imageUrl: '/images/products/bright-bar.png',
     isActive: true,
     isComingSoon: false,
     displayOrder: 2,
     availableGrades: [
-      'IS: 2073 14Mn1S14 / 14C14S14 (BS: 220M07 / EN1A Non-Leaded Free Cutting)',
-      'IS: 2073 14Mn1S14L (EN1A Leaded with 0.15-0.35% Pb)',
-      'IS: 2073 C20 / 20C8 (AISI 1018 / 1020 Bright Mild Steel)',
-      'IS: 2073 C45 / 45C8 (BS: 080A47 / EN8D Bright Carbon)',
-      'IS: 2073 13C10S25 (13S25 Free Machining Steel)',
-      'IS: 5517 40Cr1Mo28 (EN19 / 708A42 Ground Bright)',
-      'IS: 1570 X04Cr18Ni9 (SS 304 Precision Bright)',
+      '16MNCR5',
+      '20MNCR5',
+      '30MNB5',
+      '30MNCR4',
+      '41CR4',
+      '42CRMO4',
+      'A-105',
+      'BORON',
+      'C-55',
+      'CK-45',
+      'EN-15',
+      'EN-18',
+      'EN-18D',
+      'EN-19',
+      'EN-24',
+      'EN-353',
+      'EN-36A',
+      'EN-45',
+      'EN-45A',
+      'EN-8D',
+      'EN-8DCR',
+      'EN-8DLHT',
+      'EN-9',
+      'LC',
+      'S-45C',
+      'S-48C',
+      'SAE-1018',
+      'SAE-1541',
+      'SAE-4130',
+      'SAE-4140',
+      'SAE-8620',
+      'SCM-420',
+      'SCM-435',
+      'ST-52.3',
     ],
     specificationFields: [
       {
         key: 'diameter',
-        label: 'Bright Bar Diameter',
+        label: 'Diameter (mm)',
         type: 'select',
         options: [
-          '5 mm', '6 mm', '8 mm', '10 mm', '12 mm', '14 mm', '16 mm', '18 mm', '20 mm', '22 mm',
-          '24 mm', '25 mm', '28 mm', '30 mm', '32 mm', '35 mm', '38 mm', '40 mm', '45 mm', '50 mm',
-          '55 mm', '60 mm', '65 mm', '70 mm', '75 mm', '80 mm', '90 mm', '100 mm'
+          '8 mm', '10 mm', '12 mm', '16 mm', '17 mm', '18 mm', '20 mm', '21 mm', '22 mm',
+          '23 mm', '24 mm', '25 mm', '26 mm', '27 mm', '28 mm', '30 mm', '32 mm', '34 mm',
+          '36 mm', '38 mm', '40 mm', '42 mm', '45 mm', '48 mm', '50 mm', '51 mm', '53 mm',
+          '56 mm', '60 mm', '63 mm', '65 mm', '68 mm', '70 mm', '72 mm', '75 mm', '80 mm'
         ],
         unit: 'mm',
         required: true,
       },
       {
         key: 'tolerance',
-        label: 'Dimensional Tolerance Standard (Handbook ISO / DIN)',
+        label: 'Dimensional Tolerance Standard (ISO / DIN)',
         type: 'select',
         options: [
           'ISO h9 Tolerance (Precision Turned / Cold Drawn)',
           'ISO h11 Tolerance (Standard Commercial Cold Drawn)',
           'ISO h8 Tolerance (Centerless Ground & Polished)',
         ],
-        required: true,
+        required: false,
       },
       {
         key: 'finishCondition',
-        label: 'Surface Processing Condition (Handbook Table)',
+        label: 'Surface Processing Condition',
         type: 'select',
         options: [
           'CD - Cold Drawn Bright (Scale-Free Smooth)',
           'Peeled & Polished Surface',
           'Centerless Ground & End Chamfered',
         ],
-        required: true,
+        required: false,
       },
       {
         key: 'length',
@@ -158,7 +230,21 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
           'Fixed 6.0 Meters',
         ],
         unit: 'Meters',
-        required: true,
+        required: false,
+      },
+      {
+        key: 'handbookGradeEquivalent',
+        label: 'Free-Cutting / IS Handbook Grade Specification',
+        type: 'select',
+        options: [
+          'IS: 2073 14Mn1S14 / EN1A Non-Leaded Free Cutting',
+          'IS: 2073 14Mn1S14L / EN1A Leaded (0.15-0.35% Pb)',
+          'IS: 2073 C20 / 20C8 (AISI 1018 / 1020 Bright Mild Steel)',
+          'IS: 2073 C45 / 45C8 (BS: 080A47 / EN8D Bright Carbon)',
+          'IS: 5517 40Cr1Mo28 (EN19 / 708A42 Ground Bright)',
+          'IS: 1570 X04Cr18Ni9 (SS 304 Precision Bright)',
+        ],
+        required: false,
       },
     ],
   },
@@ -166,46 +252,42 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
     id: 'cat-flat',
     slug: 'flat',
     name: 'Flat',
-    description: 'Hot-rolled structural, medium carbon, and spring steel flats adhering to IS: 2062, IS: 2073, IS: 1570, and IS: 3749 standards from the handbook.',
+    description: 'Flat steel in LC, MS and alloy steel, with standard and custom thickness and square edges.',
     imageUrl: '/images/products/flat.png',
     isActive: true,
     isComingSoon: false,
     displayOrder: 3,
     availableGrades: [
-      'IS: 2062 Fe410-W / St42-W (Standard Fusion Welded Quality)',
-      'IS: 2062 Fe410-WC / St42-WC (Weather-Resistant Copper Alloyed)',
-      'IS: 2062 Fe540WT / St55HTW (High Tensile Weldable Structural)',
-      'IS: 2073 40C8 / C45 (BS 970: 080A40 / EN8 Medium Carbon)',
-      'IS: 3749 55Si7 / T55Si7 (BS: 250A53 / EN45 Oil-Hardening Spring Steel)',
-      'IS: 3749 65Si7 / 60Si7 (Heavy Laminated Leaf Spring Steel)',
-      'IS: 5517 50CrV4 / 50Cr1V23 (BS: 735A50 / EN47 Chrome-Vanadium Spring)',
-      'IS: 1570 X04Cr18Ni9 (SS 304 Industrial Stainless Flat)',
+      'MS',
+      'LC',
+      'ALLOY',
     ],
     specificationFields: [
+      {
+        key: 'thickness',
+        label: 'Thickness / Section (mm)',
+        type: 'select',
+        options: [
+          '5 mm', '6 mm', '8 mm', '10 mm', '12 mm', '15 mm', '16 mm', '18 mm',
+          '20 mm', '22 mm', '25 mm', '30 mm', '35 mm', '38 mm', '40 mm', '45 mm', '50 mm'
+        ],
+        unit: 'mm',
+        required: true,
+      },
       {
         key: 'width',
         label: 'Flat Width (IS: 1730 Standard Range)',
         type: 'select',
         options: [
           '20 mm', '25 mm', '32 mm', '40 mm', '50 mm', '65 mm', '75 mm',
-          '90 mm', '100 mm', '125 mm', '150 mm', '180 mm', '200 mm', '250 mm'
+          '90 mm', '100 mm', '125 mm', '150 mm', '180 mm', '200 mm', '250 mm', '300 mm'
         ],
         unit: 'mm',
-        required: true,
-      },
-      {
-        key: 'thickness',
-        label: 'Flat Thickness (IS: 1730 Standard Range)',
-        type: 'select',
-        options: [
-          '3 mm', '5 mm', '6 mm', '8 mm', '10 mm', '12 mm', '16 mm', '20 mm', '25 mm', '32 mm', '40 mm', '50 mm'
-        ],
-        unit: 'mm',
-        required: true,
+        required: false,
       },
       {
         key: 'supplyCondition',
-        label: 'Supply / Heat Treatment Condition (Handbook Standard)',
+        label: 'Supply / Heat Treatment Condition',
         type: 'select',
         options: [
           'AR - As Rolled / Hot Rolled Standard',
@@ -225,37 +307,44 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
         ],
         required: false,
       },
+      {
+        key: 'handbookGradeEquivalent',
+        label: 'Detailed IS / Spring Steel Grade (Optional)',
+        type: 'select',
+        options: [
+          'IS: 2062 Fe410-W / E250 (Standard Fusion Welded Quality)',
+          'IS: 2062 Fe540WT / E350 (High Tensile Structural)',
+          'IS: 2073 40C8 / C45 (EN-8 Medium Carbon)',
+          'IS: 3749 55Si7 / EN-45 (Oil-Hardening Spring Steel)',
+          'IS: 3749 65Si7 / EN-45A (Heavy Laminated Leaf Spring)',
+          'IS: 5517 50CrV4 / EN-47 (Chrome-Vanadium Spring)',
+          'IS: 1570 X04Cr18Ni9 (SS 304 Stainless Flat)',
+        ],
+        required: false,
+      },
     ],
   },
   {
     id: 'cat-sheet',
     slug: 'sheet',
     name: 'Sheet',
-    description: 'Cold-rolled (IS: 513 CR1-CR4) and hot-rolled (IS: 1079 HR1-HR4 / IS: 2062 / IS: 2002) steel sheets, coils, and plates matching handbook tables.',
+    description: 'Steel sheets in LC, MS and alloy steel for precision fabrication and structural use.',
     imageUrl: '/images/products/sheet.png',
     isActive: true,
     isComingSoon: false,
     displayOrder: 4,
     availableGrades: [
-      'IS: 513 CR1 / Ordinary (O) Commercial Cold Rolled',
-      'IS: 513 CR2 / Deep Drawing (D) Stamping Quality',
-      'IS: 513 CR3 / Extra Deep Drawing (DD)',
-      'IS: 513 CR4 / EDD (Non-Aging Super Deep Drawing)',
-      'IS: 1079 HR1 / Ordinary Commercial Hot Rolled Sheet',
-      'IS: 1079 HR2 / Deep Drawing HR Sheet & Strip',
-      'IS: 2062 Fe410-W / E250 (Hot Rolled Structural Plate)',
-      'IS: 2002 Grade 1 / 2 (Boiler & Pressure Vessel Quality Plate)',
-      'IS: 1570 X04Cr18Ni9 (SS 304 2B/BA Stainless Sheet)',
-      'IS: 2062 Chequered Floor Plate (Tear Drop Raised Pattern)',
+      'MS',
+      'LC',
+      'ALLOY',
     ],
     specificationFields: [
       {
         key: 'thickness',
-        label: 'Sheet / Plate Thickness (IS: 513 / IS: 1079 Range)',
+        label: 'Thickness (mm)',
         type: 'select',
         options: [
-          '0.5 mm', '0.6 mm', '0.8 mm', '1.0 mm', '1.2 mm', '1.6 mm', '2.0 mm', '2.5 mm',
-          '3.15 mm', '4.0 mm', '5.0 mm', '6.0 mm', '8.0 mm', '10.0 mm', '12.0 mm', '16.0 mm', '20.0 mm', '25.0 mm'
+          '2 mm', '3 mm', '4 mm', '5 mm', '6 mm', '8 mm', '10 mm', '12 mm'
         ],
         unit: 'mm',
         required: true,
@@ -268,11 +357,11 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
           '900 mm (3 ft)', '1000 mm (1.0 Mtr)', '1220 mm (4 ft)', '1250 mm (1.25 Mtr)', '1500 mm (5 ft)', '2000 mm (2.0 Mtr)'
         ],
         unit: 'mm',
-        required: true,
+        required: false,
       },
       {
         key: 'lengthFormat',
-        label: 'Length / Product Format (Handbook Standard)',
+        label: 'Length / Product Format',
         type: 'select',
         options: [
           '2000 mm Sheet Standard',
@@ -282,19 +371,33 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
           '6000 mm Industrial Plate',
           'Continuous Coil (CR Coil / HR Coil)',
         ],
-        required: true,
+        required: false,
       },
       {
         key: 'surfaceFinish',
-        label: 'Surface Finish / Processing (Handbook Standard)',
+        label: 'Surface Finish / Processing',
         type: 'select',
         options: [
-          'CR 2B - Skin Passed / Scale-Free Cold Rolled',
           'HR Mill Finish (Hot Rolled As Rolled)',
           'HRPO - Hot Rolled Pickled & Oiled (Descaled)',
+          'CR 2B - Skin Passed / Scale-Free Cold Rolled',
           'Annealed & Descaled (IS: 1079 General Engineering)',
         ],
-        required: true,
+        required: false,
+      },
+      {
+        key: 'handbookGradeEquivalent',
+        label: 'Detailed IS / CR / HR Sheet Specification (Optional)',
+        type: 'select',
+        options: [
+          'IS: 1079 HR1 / HR2 (Commercial / Deep Drawing Hot Rolled)',
+          'IS: 513 CR1 / CR2 / CR3 / CR4 (Cold Rolled Stamping / EDD)',
+          'IS: 2062 Fe410-W / E250 (Hot Rolled Structural Plate)',
+          'IS: 2002 Grade 1 / 2 (Boiler & Pressure Vessel Plate)',
+          'IS: 2062 Chequered Floor Plate (Tear Drop Pattern)',
+          'IS: 1570 X04Cr18Ni9 (SS 304 2B/BA Stainless Sheet)',
+        ],
+        required: false,
       },
     ],
   },
@@ -302,36 +405,33 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
     id: 'cat-square',
     slug: 'square',
     name: 'Square',
-    description: 'Hot-rolled solid square steel bars complying with IS: 2062, IS: 1875, IS: 2073, and IS: 5517 for heavy structural, drop forging, and crane shaft applications.',
+    description: 'Square bars in MS and alloy, precision rolled for engineering and machining.',
     imageUrl: '/images/products/square.png',
     isActive: true,
     isComingSoon: false,
     displayOrder: 5,
     availableGrades: [
-      'IS: 2062 Fe410-W / St42-W (Fusion Welded Structural Square)',
-      'IS: 1875 Class 2 / 20C8 (Carbon Steel Forging Billet)',
-      'IS: 1875 Class 4 / 45C8 (BS: 080A47 / EN8 Forging Grade)',
-      'IS: 2073 40C8 / C45 (Engineering Machining Square)',
-      'IS: 5517 40Cr1Mo28 (BS: 708A42 / EN19 Chrome-Moly Square)',
-      'IS: 5517 40Ni2Cr1Mo28 (BS: 826M40 / EN24 Heavy Duty Shaft Quality)',
-      'IS: 1570 X04Cr18Ni9 (SS 304 Solid Stainless Square)',
+      'ALLOY',
+      'MS',
     ],
     specificationFields: [
       {
         key: 'squareSize',
-        label: 'Square Size (IS: 1732 Standard Square Dimensions)',
+        label: 'Section Size (mm)',
         type: 'select',
         options: [
-          '10 x 10 mm', '12 x 12 mm', '16 x 16 mm', '20 x 20 mm', '25 x 25 mm',
-          '32 x 32 mm', '40 x 40 mm', '50 x 50 mm', '63 x 63 mm', '75 x 75 mm',
-          '90 x 90 mm', '100 x 100 mm', '125 x 125 mm', '150 x 150 mm'
+          '10 mm', '12 mm', '14 mm', '15 mm', '16 mm', '18 mm', '20 mm', '22 mm',
+          '25 mm', '28 mm', '30 mm', '32 mm', '35 mm', '36 mm', '38 mm', '40 mm',
+          '42 mm', '45 mm', '48 mm', '50 mm', '55 mm', '60 mm', '65 mm', '70 mm',
+          '75 mm', '80 mm', '85 mm', '90 mm', '95 mm', '100 mm', '105 mm', '110 mm',
+          '115 mm', '120 mm', '125 mm', '130 mm', '135 mm', '140 mm', '145 mm', '150 mm'
         ],
         unit: 'mm',
         required: true,
       },
       {
         key: 'supplyCondition',
-        label: 'Supply / Heat Treatment Condition (Handbook Standard)',
+        label: 'Supply / Heat Treatment Condition',
         type: 'select',
         options: [
           'AR - As Rolled / Hot Rolled Standard',
@@ -351,37 +451,66 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
         ],
         required: false,
       },
+      {
+        key: 'handbookGradeEquivalent',
+        label: 'Detailed IS / Alloy Grade Specification (Optional)',
+        type: 'select',
+        options: [
+          'IS: 2062 Fe410-W / St42-W (Structural Square)',
+          'IS: 1875 Class 2 / 20C8 (Carbon Steel Forging Billet)',
+          'IS: 1875 Class 4 / 45C8 (EN-8D Forging Grade)',
+          'IS: 2073 40C8 / C45 (Engineering Machining Square)',
+          'IS: 5517 40Cr1Mo28 (EN-19 Chrome-Moly Square)',
+          'IS: 5517 40Ni2Cr1Mo28 (EN-24 Heavy Duty Shaft Square)',
+          'IS: 1570 X04Cr18Ni9 (SS 304 Solid Stainless Square)',
+        ],
+        required: false,
+      },
     ],
   },
   {
     id: 'cat-tmt-bar',
     slug: 'tmt-bar',
     name: 'TMT Bar',
-    description: 'Thermo-Mechanically Treated high-ductility rebar and deformed bars strictly conforming to IS: 1786 and IS: 432 / IS: 2062 for concrete reinforcement.',
+    description: 'High-strength thermo-mechanically treated reinforcement bars for construction excellence.',
     imageUrl: '/images/products/tmt-bar.png',
     isActive: true,
     isComingSoon: false,
     displayOrder: 6,
     availableGrades: [
-      'Fe 415 (IS: 1786 Standard Construction Rebar)',
-      'Fe 415D (IS: 1786 High Ductility - Earthquake Resistant)',
-      'Fe 500 (IS: 1786 High Strength Concrete Reinforcement)',
-      'Fe 500D (IS: 1786 High Ductility & Elongation >= 16%)',
-      'Fe 550 / Fe 550D (IS: 1786 Heavy Infrastructure & Flyovers)',
-      'Fe 600 (IS: 1786 Ultra High Strength Heavy Columns)',
-      'CRS Fe 500D (Corrosion Resistant Steel for Coastal / Marine)',
-      'Fe 380 / Fe 410 M.S. Gr-I (IS: 432 / IS: 2062 Mild Steel Rebar)',
+      'AWADH TMT',
+      'BALSHALI 550D',
+      'HR PLATINUM',
+      'MAJHI TMT',
+      'RATHI TMT',
+      'SMS TMT',
+      'STAR TMT',
+      'SUPERX TMT',
+      'ZARA TMT',
+      'ZEE CON TMT',
     ],
     specificationFields: [
       {
         key: 'diameter',
-        label: 'Bar Diameter (IS: 1786 Nominal Sizes)',
+        label: 'Diameter (mm)',
         type: 'select',
         options: [
-          '8 mm', '10 mm', '12 mm', '16 mm', '20 mm', '25 mm', '28 mm', '32 mm', '36 mm', '40 mm'
+          '8 mm', '10 mm', '12 mm', '16 mm', '20 mm', '25 mm', '32 mm'
         ],
         unit: 'mm',
         required: true,
+      },
+      {
+        key: 'rebarGrade',
+        label: 'IS: 1786 Strength Grade',
+        type: 'select',
+        options: [
+          'Fe 500D (IS: 1786 High Ductility Seismic Rebar)',
+          'Fe 550D (IS: 1786 Heavy Infrastructure & Flyovers)',
+          'Fe 500 (IS: 1786 High Strength Concrete Reinforcement)',
+          'CRS Fe 500D (Corrosion Resistant Rebar)',
+        ],
+        required: false,
       },
       {
         key: 'length',
@@ -392,16 +521,15 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
           'Standard 12.0 Meters (U-Bend Bundle)',
           'Cut & Bend Custom Project Fabricated',
         ],
-        required: true,
+        required: false,
       },
       {
         key: 'certification',
-        label: 'BIS Certification & Mill Provenance',
+        label: 'BIS Certification & Test Report',
         type: 'select',
         options: [
-          'Primary Integrated Steel Mill (Tata Tiscon / SAIL / JSW Neosteel / Jindal Panther)',
-          'Secondary Quality ISI Certified IS: 1786 with MTC',
-          'BIS ISI Hallmarked with 100% 0.2% Proof Stress Test',
+          'BIS ISI Hallmarked with Mill Test Certificate (MTC)',
+          '100% 0.2% Proof Stress & Elongation Test Report',
         ],
         required: false,
       },
@@ -411,52 +539,54 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
     id: 'cat-square-bright-bar',
     slug: 'square-bright-bar',
     name: 'Square Bright Bar',
-    description: 'Precision cold-drawn bright square steel bars with sharp 90-degree corners per IS: 2073, IS: 1570, BS 970 (EN1A / EN8), and ISO h9/h11 tolerances.',
+    description: 'Precision cold-drawn bright square steel bars with sharp 90-degree corners and tight ISO h9/h11 tolerances.',
     imageUrl: '/images/products/square-bright.png',
     isActive: true,
     isComingSoon: false,
     displayOrder: 7,
     availableGrades: [
-      'IS: 2073 14Mn1S14 / EN1A (Cold Drawn Free Cutting Bright Square)',
-      'IS: 2073 14Mn1S14L / EN1A Leaded (High-Speed Machining)',
-      'IS: 2073 C20 / 20C8 (AISI 1018 Bright Quality)',
-      'IS: 2073 C45 / 45C8 (BS: 080A47 / EN8D Carbon Bright Square)',
-      'IS: 1570 X04Cr18Ni9 (SS 304 Precision Bright Square)',
+      'ALLOY',
+      'MS',
+      'EN-8D',
+      'EN-1A',
+      'LC',
+      'SAE-1018',
     ],
     specificationFields: [
       {
         key: 'squareSize',
-        label: 'Square Dimension (IS Standard)',
+        label: 'Section Size (mm)',
         type: 'select',
         options: [
-          '6 x 6 mm', '8 x 8 mm', '10 x 10 mm', '12 x 12 mm', '14 x 14 mm', '16 x 16 mm',
-          '18 x 18 mm', '20 x 20 mm', '22 x 22 mm', '25 x 25 mm', '30 x 30 mm', '32 x 32 mm',
-          '35 x 35 mm', '40 x 40 mm', '45 x 45 mm', '50 x 50 mm', '60 x 60 mm', '75 x 75 mm'
+          '10 mm', '12 mm', '14 mm', '15 mm', '16 mm', '18 mm', '20 mm', '22 mm',
+          '25 mm', '28 mm', '30 mm', '32 mm', '35 mm', '36 mm', '38 mm', '40 mm',
+          '42 mm', '45 mm', '48 mm', '50 mm', '55 mm', '60 mm', '65 mm', '70 mm',
+          '75 mm', '80 mm', '85 mm', '90 mm', '95 mm', '100 mm'
         ],
         unit: 'mm',
         required: true,
       },
       {
         key: 'tolerance',
-        label: 'Dimensional Tolerance Standard (Handbook ISO / DIN)',
+        label: 'Dimensional Tolerance Standard (ISO / DIN)',
         type: 'select',
         options: [
           'ISO h9 Tolerance (Sharp 90° Precision Square)',
           'ISO h11 Tolerance (Standard Bright Cold Drawn)',
           'ISO h8 Tolerance (Centerless Ground Finish)',
         ],
-        required: true,
+        required: false,
       },
       {
         key: 'finishCondition',
-        label: 'Supply / Surface Condition (Handbook Standard)',
+        label: 'Supply / Surface Condition',
         type: 'select',
         options: [
           'CD - Cold Drawn Bright (Scale-Free Smooth)',
           'Cold Drawn & Annealed (Stress Relieved)',
           'Peeled & Ground Surface',
         ],
-        required: true,
+        required: false,
       },
       {
         key: 'length',
@@ -468,7 +598,7 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
           'Fixed 6.0 Meters',
         ],
         unit: 'Meters',
-        required: true,
+        required: false,
       },
     ],
   },
@@ -476,25 +606,123 @@ export const INITIAL_CATEGORIES: ProductCategory[] = [
     id: 'cat-fasteners',
     slug: 'fasteners',
     name: 'Fasteners',
-    description: 'Industrial high-tensile bolts, nuts, washers, studs, and heavy hex screws. Coming soon to FTI Marketplace.',
-    imageUrl: '/images/products/fasteners.png',
-    isActive: false,
-    isComingSoon: true,
+    description: 'ISO 9001:2015 certified cold & hot forged industrial fasteners across 17 subcategories (Hex Bolts, Hex Nuts, U-Bolts, J-Bolts, L-Bolts, Coach Screws, Heavy Hex, Washers) per IS 1363, IS 1364, IS 730 & IS 1120.',
+    imageUrl: 'https://ftis.b-cdn.net/fasteners-catalog/hex-bolt/hex-bolt.jpg',
+    isActive: true,
+    isComingSoon: false,
     displayOrder: 8,
-    availableGrades: ['Grade 8.8', 'Grade 10.9', 'SS 316 A4-70'],
-    specificationFields: [],
+    availableGrades: [
+      'SPL 8.8 (High Tensile Quenched & Tempered)',
+      'SPL 10.9 (Alloy Steel High Tensile)',
+      'SPL 12.9 (Ultra High Tensile Socket/Hex)',
+      'EN-8D (Medium Carbon Forged)',
+      'Boron (10B21 / 15B25 Cold Forged)',
+      'SAE-4140 / EN-19 (Chrome-Moly High Temperature)',
+      'CHQ (Cold Heading Quality)',
+      'MS / LC (Mild Steel / Low Carbon)',
+    ],
+    specificationFields: [
+      {
+        key: 'subcategory',
+        label: 'Fastener Subcategory',
+        type: 'select',
+        options: [
+          'Hex Bolt (IS 1363 / IS 1364)',
+          'Hex Nut (IS 1363 / IS 1364)',
+          'U-Bolt (Round & Square Bend)',
+          'J-Type Bolt (IS 730:1978)',
+          'L-Bolt (Foundation Anchor)',
+          'Coach Screw (IS 1120:1975)',
+          'Heavy Hex Bolt',
+          'Heavy Hex Nut',
+          'J-Hook',
+          'Square J-Bolt',
+          'Plain Washer',
+          'Machined Washer',
+          'Spring Washer',
+          'Square Washer',
+          'DTI Washer',
+          'Square Nut',
+          'Square Plate',
+        ],
+        required: true,
+      },
+      {
+        key: 'diameter',
+        label: 'Thread Size / Nominal Diameter',
+        type: 'select',
+        options: [
+          'M5', 'M6', 'M8', 'M10', 'M12', 'M14', 'M16', 'M18', 'M20', 'M22', 'M24',
+          'M27', 'M30', 'M33', 'M36', 'M39', 'M42', 'M45', 'M48', 'M52', 'M56', 'M64'
+        ],
+        required: true,
+      },
+      {
+        key: 'length',
+        label: 'Nominal Length',
+        type: 'select',
+        options: [
+          'N/A (Nut / Washer / Plate)',
+          '20 mm', '25 mm', '30 mm', '35 mm', '40 mm', '45 mm', '50 mm', '60 mm', '65 mm', '70 mm', '75 mm',
+          '80 mm', '90 mm', '100 mm', '110 mm', '120 mm', '130 mm', '140 mm', '150 mm', '160 mm', '180 mm',
+          '200 mm', '220 mm', '250 mm', '280 mm', '300 mm', '350 mm', '400 mm', '450 mm', '500 mm'
+        ],
+        required: true,
+      },
+      {
+        key: 'surfaceFinish',
+        label: 'Surface Coating & Finish',
+        type: 'select',
+        options: [
+          'Auto Black (Heat Treated & Oiled)',
+          'Zinc Plating (White / Yellow Trivalent Passivated)',
+          'Hot Dip Galvanizing (HDG per IS 4759)',
+          'Zinc Flake Coating (Geomet / Dacromet)',
+        ],
+        required: true,
+      },
+    ],
   },
   {
     id: 'cat-tractor-parts',
     slug: 'tractor-parts',
     name: 'Tractor Parts',
-    description: 'Forged linkage components, rotavator blades, PTO shafts, and agricultural tractor spare parts. Coming soon.',
-    imageUrl: '/images/products/tractor-parts.png',
-    isActive: false,
-    isComingSoon: true,
+    description: 'Precision forged and CNC-machined agricultural tractor spare parts across 50 OEM-grade SKUs covering Engine, Clutch, Transmission, PTO, Differential, Hydraulics, Steering, Linkage & Brakes.',
+    imageUrl: 'https://ftis.b-cdn.net/tractor-workbook-images/001-piston-assembly.jpg',
+    isActive: true,
+    isComingSoon: false,
     displayOrder: 9,
-    availableGrades: ['Forged Boron Steel', 'Case Hardened Alloy'],
-    specificationFields: [],
+    availableGrades: [
+      'OEM Standard Forged Alloy (20MnCr5 / EN-19 / EN-8D)',
+      'Case Hardened Gear Steel (16MnCr5 / SAE-8620)',
+      'Boron Steel (30MnB5 Heat Treated)',
+      'High-Duty Cast / Ductile Iron (SG Iron / FG 260)',
+    ],
+    specificationFields: [
+      {
+        key: 'partSystem',
+        label: 'Tractor Assembly System',
+        type: 'select',
+        options: [
+          'Engine (Piston, Liner, Crankshaft, Valves, Gasket, Turbo)',
+          'Clutch & Transmission (Clutch Plate, Pressure Plate, Gear Set, Sync Ring)',
+          'Transmission / PTO (PTO Shaft, PTO Clutch Plate)',
+          'Differential & Axle (Crown Wheel Pinion, Diff Lock, Front/Rear Axle, Stub Axle)',
+          'Steering (Power Steering Cylinder, Pump, Tie Rod End)',
+          'Hydraulics & Linkage (Hydraulic Pump, Lift Cylinder, Control Valve, Top Link, Lower Link)',
+          'Brakes & Wheels (Brake Disc, Drum, Master Cylinder, Wheel Hub, Rim)',
+          'Cooling, Fuel, Electrical & Filters',
+        ],
+        required: true,
+      },
+      {
+        key: 'partNumber',
+        label: 'FTI Catalog SKU / Part Name',
+        type: 'text',
+        placeholder: 'e.g., FTI-AGRI-XLSX-001 (Piston Assembly) or OEM Ref',
+        required: true,
+      },
+    ],
   },
 ];
 
@@ -524,6 +752,20 @@ function generateHistory(basePrice: number, days: number = 30, volatilityRatio: 
 
 export const INITIAL_MARKET_MATERIALS: MarketMaterial[] = INITIAL_MANDI_MATERIALS;
 
+export const GUEST_USER: UserProfile = {
+  id: 'guest',
+  fullName: 'Guest Visitor',
+  email: '',
+  mobile: '',
+  companyName: 'Guest Visitor',
+  gstin: '',
+  businessType: 'Manufacturer',
+  role: 'customer',
+  isActive: true,
+  isProfileComplete: false,
+  createdAt: '2026-01-01T00:00:00.000Z',
+};
+
 export const INITIAL_USERS: UserProfile[] = [
   {
     id: 'usr-customer-01',
@@ -533,21 +775,61 @@ export const INITIAL_USERS: UserProfile[] = [
     companyName: 'Sharma Precision & Heavy Fabricators Pvt Ltd',
     gstin: '27AABCS1429B1Z8',
     businessType: 'Fabricator',
+    designation: 'Director / Partner',
+    city: 'Navi Mumbai',
+    state: 'Maharashtra',
     role: 'customer',
     isActive: true,
+    isProfileComplete: true,
     createdAt: '2026-08-15T10:00:00.000Z',
   },
   {
     id: 'usr-admin-01',
     fullName: 'Anil Singhania (Head of Operations)',
-    email: 'admin@fti-industrial.com',
-    mobile: '+91 98111 99999',
-    companyName: 'FTI Industrial Metal Trading Co.',
-    gstin: '27AAACF0123M1Z5',
-    businessType: 'Trader',
+    email: 'sales@fieldfasttech.com',
+    mobile: '+91-9780830333',
+    companyName: 'FieldFast Tech International',
+    gstin: '03AAACF0123M1Z5',
+    businessType: 'Manufacturer',
+    designation: 'Head of Operations',
+    city: 'Ludhiana',
+    state: 'Punjab',
     role: 'super_admin',
     isActive: true,
+    isProfileComplete: true,
     createdAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'usr-customer-02',
+    fullName: 'Vikramaditya Mehta',
+    email: 'v.mehta@gujarat-tubes.com',
+    mobile: '+91 98791 22334',
+    companyName: 'Gujarat Precision Tubes & Forgings Ltd',
+    gstin: '24AAACG8812J1Z2',
+    businessType: 'Manufacturer',
+    designation: 'Purchase / Procurement Head',
+    city: 'Ahmedabad',
+    state: 'Gujarat',
+    role: 'customer',
+    isActive: true,
+    isProfileComplete: true,
+    createdAt: '2026-09-01T09:00:00.000Z',
+  },
+  {
+    id: 'usr-customer-03',
+    fullName: 'Gurpreet Singh',
+    email: 'gsingh@punjab-fasteners.com',
+    mobile: '+91 98140 55667',
+    companyName: 'Punjab Heavy Bolts & Industrial Fasteners',
+    gstin: '03AABCP9912K1Z9',
+    businessType: 'Wholesaler',
+    designation: 'Owner / Proprietor',
+    city: 'Ludhiana',
+    state: 'Punjab',
+    role: 'customer',
+    isActive: true,
+    isProfileComplete: true,
+    createdAt: '2026-09-20T11:30:00.000Z',
   },
 ];
 
@@ -587,20 +869,20 @@ export const INITIAL_ADDRESSES: UserAddress[] = [
 ];
 
 export const INITIAL_SETTINGS: AppSettings = {
-  companyName: 'FieldFast Tech International (FTI)',
-  tagline: 'Direct Mill Sourced Raw Materials & Certified Scrap',
-  gstin: '27AAACF0123M1Z5',
-  address: 'FTI House, Iron & Steel Market, Kalamboli, Navi Mumbai, Maharashtra 410218, India',
-  phone: '+91 22 2742 8800',
-  email: 'sales@fti-materials.com',
+  companyName: 'FieldFast Tech International',
+  tagline: 'Smart Sourcing. Stronger Business. — Direct Mill Steel, Industrial Fasteners & Tractor Spares',
+  gstin: '03AAACF0123M1Z5',
+  address: 'St.No.1, New Ram Nagar, Industrial Area-C, Sua Road, Ludhiana 141014, Punjab, India',
+  phone: '+91-9780830333',
+  email: 'sales@fieldfasttech.com',
   bankName: 'State Bank of India',
   accountNumber: '3892010049281',
   ifscCode: 'SBIN0001824',
-  branch: 'Steel Market Branch, Kalamboli',
+  branch: 'Industrial Area-C Branch, Ludhiana',
   defaultTaxRate: 18.0,
   quotationValidityDays: 3,
-  supportPhone: '+91 98765 43210',
-  supportEmail: 'support@fti-materials.com',
+  supportPhone: '+91-9780830333, +91-9589971567',
+  supportEmail: 'sales@fieldfasttech.com',
 };
 
 // Seed Quotation showing realistic B2B quotation workflow
@@ -666,9 +948,9 @@ export const INITIAL_QUOTATIONS: Quotation[] = [
     transportationCharges: 14500,
     discountAmount: 5000,
     grandTotal: 697971,
-    specialNotes: 'Material available ready in stock at Kalamboli yard. Dispatch within 24 hours of PO confirmation.',
+    specialNotes: 'Material available ready in stock at Ludhiana Works (Industrial Area-C). Dispatch within 24 hours of PO confirmation.',
     adminNotes: 'Client has strong credit history. Offered freight concession.',
-    termsAndConditions: '1. Quotation valid strictly for 3 days due to steel price volatility.\n2. Payment terms: 100% against proforma invoice before dispatch.\n3. Taxes: 18% GST extra as applicable.\n4. Subject to Kalamboli jurisdiction.',
+    termsAndConditions: '1. Quotation valid strictly for 3 days due to steel price volatility.\n2. Payment terms: 100% against proforma invoice before dispatch.\n3. Taxes: 18% GST extra as applicable.\n4. Subject to Ludhiana jurisdiction.',
     statusHistory: [
       { status: 'pending', changedAt: '2026-11-02T14:15:00.000Z', changedBy: 'Customer (Rajesh K. Sharma)', note: 'Quotation request submitted' },
       { status: 'under_review', changedAt: '2026-11-02T16:30:00.000Z', changedBy: 'Admin (Anil Singhania)', note: 'Checking warehouse stock availability' },
@@ -725,7 +1007,7 @@ export const INITIAL_ORDERS: Order[] = [
       { status: 'order_confirmed', changedAt: '2026-10-31T11:00:00.000Z', changedBy: 'System', note: 'Customer accepted quotation FTI-QT-2026-0000' },
       { status: 'payment_received', changedAt: '2026-11-01T15:20:00.000Z', changedBy: 'Admin (Anil Singhania)', note: 'RTGS payment verified' },
       { status: 'processing', changedAt: '2026-11-02T09:00:00.000Z', changedBy: 'Admin (Anil Singhania)', note: 'Material weighed and bundled' },
-      { status: 'dispatched', changedAt: '2026-11-03T08:30:00.000Z', changedBy: 'Admin (Anil Singhania)', note: 'Truck MH-04-GP-9142 loaded and left Kalamboli' },
+      { status: 'dispatched', changedAt: '2026-11-03T08:30:00.000Z', changedBy: 'Admin (Anil Singhania)', note: 'Truck PB-10-GP-9142 loaded and left Ludhiana Dispatch Hub' },
     ],
     invoiceId: 'inv-demo-01',
     invoiceNumber: 'FTI-INV-2026-0001',
@@ -746,18 +1028,18 @@ export const INITIAL_INVOICES: Invoice[] = [
     invoiceDate: '2026-11-02',
     dueDate: '2026-11-02',
     companyDetails: {
-      name: 'FieldFast Tech International (FTI)',
-      tagline: 'Direct Mill Sourced Raw Materials & Certified Scrap',
-      address: 'FTI House, Iron & Steel Market, Kalamboli, Navi Mumbai, Maharashtra 410218, India',
-      gstin: '27AAACF0123M1Z5',
+      name: 'FieldFast Tech International',
+      tagline: 'Smart Sourcing. Stronger Business. — ISO 9001:2015 Certified (QACS/IND/250321)',
+      address: 'St.No.1, New Ram Nagar, Industrial Area-C, Sua Road, Ludhiana 141014, Punjab, India',
+      gstin: '03AAACF0123M1Z5',
       pan: 'AAACF0123M',
-      phone: '+91 22 2742 8800',
-      email: 'billing@fti-materials.com',
-      website: 'www.fti-materials.com',
+      phone: '+91-9780830333',
+      email: 'sales@fieldfasttech.com',
+      website: 'https://fti-app-sooty.vercel.app',
       bankName: 'State Bank of India',
       accountNumber: '3892010049281',
       ifscCode: 'SBIN0001824',
-      branch: 'Steel Market Branch, Kalamboli',
+      branch: 'Industrial Area-C Branch, Ludhiana',
     },
     customerDetails: {
       name: 'Rajesh K. Sharma',
@@ -836,7 +1118,9 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
 export const STORAGE_KEY = 'fti_platform_state_v2';
 
 export interface AppState {
+  isAuthenticated: boolean;
   currentUser: UserProfile;
+  users: UserProfile[];
   categories: ProductCategory[];
   cart: CartLineItem[];
   quotations: Quotation[];
@@ -852,7 +1136,9 @@ export interface AppState {
 export function getInitialState(): AppState {
   if (typeof window === 'undefined') {
     return {
-      currentUser: INITIAL_USERS[0],
+      isAuthenticated: false,
+      currentUser: GUEST_USER,
+      users: INITIAL_USERS,
       categories: INITIAL_CATEGORIES,
       cart: [],
       quotations: INITIAL_QUOTATIONS,
@@ -873,18 +1159,66 @@ export function getInitialState(): AppState {
       const hasMandiData =
         parsed.marketMaterials &&
         parsed.marketMaterials.some((m: any) => m.categorySlug === 'ingot' || m.id?.startsWith('mandi-'));
+      
+      // Cleanse any legacy cached entries, deduplicate IDs, and merge any new initial materials
+      let cleanedMaterials: MarketMaterial[] = [];
+      if (hasMandiData && Array.isArray(parsed.marketMaterials)) {
+        const seenIds = new Set<string>();
+        const seenSymbols = new Set<string>();
+
+        for (const m of parsed.marketMaterials as MarketMaterial[]) {
+          if (m.materialName === 'Mandi Benchmark' || m.categoryName === 'Mandi Benchmark') {
+            continue;
+          }
+          // Skip legacy unsuffixed Ludhiana IDs so they are replaced by properly suffixed EN8D/MS items
+          if (
+            m.id === 'mat-raw-materials-ingot-ludhiana' ||
+            m.id === 'mat-scrap-materials-melting-scrap-ludhiana'
+          ) {
+            continue;
+          }
+          if (!seenIds.has(m.id) && !seenSymbols.has(m.symbol)) {
+            seenIds.add(m.id);
+            seenSymbols.add(m.symbol);
+            cleanedMaterials.push(m);
+          }
+        }
+
+        for (const initMat of INITIAL_MARKET_MATERIALS) {
+          if (!seenIds.has(initMat.id) && !seenSymbols.has(initMat.symbol)) {
+            seenIds.add(initMat.id);
+            seenSymbols.add(initMat.symbol);
+            cleanedMaterials.push(initMat);
+          }
+        }
+      }
+
+      const isAuth = parsed.isAuthenticated === true;
+      const mergedUsers: UserProfile[] = Array.isArray(parsed.users) && parsed.users.length > 0
+        ? parsed.users
+        : INITIAL_USERS;
+
+      const resolvedMaterials =
+        hasMandiData && cleanedMaterials.length > 0 ? cleanedMaterials : INITIAL_MARKET_MATERIALS;
+      const resolvedBulletin = parsed.mandiBulletin || INITIAL_MANDI_BULLETIN;
+
       return {
-        currentUser: parsed.currentUser || INITIAL_USERS[0],
+        isAuthenticated: isAuth,
+        currentUser: isAuth && parsed.currentUser ? parsed.currentUser : GUEST_USER,
+        users: mergedUsers,
         categories: INITIAL_CATEGORIES,
         cart: parsed.cart || [],
         quotations: parsed.quotations || INITIAL_QUOTATIONS,
         orders: parsed.orders || INITIAL_ORDERS,
         invoices: parsed.invoices || INITIAL_INVOICES,
         addresses: parsed.addresses || INITIAL_ADDRESSES,
-        marketMaterials: hasMandiData ? parsed.marketMaterials : INITIAL_MARKET_MATERIALS,
-        mandiBulletin: parsed.mandiBulletin || INITIAL_MANDI_BULLETIN,
+        marketMaterials: resolvedMaterials,
+        mandiBulletin: resolvedBulletin,
         notifications: parsed.notifications || INITIAL_NOTIFICATIONS,
-        settings: parsed.settings || INITIAL_SETTINGS,
+        settings:
+          parsed.settings && !parsed.settings.address?.includes('Kalamboli')
+            ? parsed.settings
+            : INITIAL_SETTINGS,
       };
     }
   } catch (err) {
@@ -892,7 +1226,9 @@ export function getInitialState(): AppState {
   }
 
   return {
-    currentUser: INITIAL_USERS[0],
+    isAuthenticated: false,
+    currentUser: GUEST_USER,
+    users: INITIAL_USERS,
     categories: INITIAL_CATEGORIES,
     cart: [],
     quotations: INITIAL_QUOTATIONS,

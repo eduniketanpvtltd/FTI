@@ -1,86 +1,94 @@
 @import "tailwindcss";
 
 @theme {
-  --color-copper-primary: #76513F;
-  --color-copper-deep: #604333;
-  --color-copper-dark: #49352D;
-  --color-copper-soft: #B18A70;
+  --color-copper-primary: #E06924;
+  --color-copper-deep: #C45316;
+  --color-copper-dark: #14181E;
+  --color-copper-soft: #F28B49;
 
-  --color-steel-industrial: #A8ADB1;
-  --color-steel-medium: #858C92;
-  --color-steel-charcoal: #343A3F;
-  --color-steel-surface: #BAC0C4;
-  --color-steel-card: #C7CBD0;
-  --color-steel-light: #D6DADC;
+  --color-steel-industrial: #0B0E11;
+  --color-steel-medium: #14181E;
+  --color-steel-charcoal: #1C222B;
+  --color-steel-surface: #161B22;
+  --color-steel-card: #1B2028;
+  --color-steel-light: #242B35;
 
-  --color-neutral-ivory: #F1EAE1;
-  --color-neutral-dark: #252A2E;
-  --color-neutral-secondary: #626B72;
-  --color-neutral-border: #737A7F;
+  --color-neutral-ivory: #F8FAFC;
+  --color-neutral-dark: #FFFFFF;
+  --color-neutral-secondary: #94A3B8;
+  --color-neutral-border: #262E3B;
 
-  --color-func-live: #10B981;
-  --color-func-warning: #E5A34B;
-  --color-func-error: #DC6262;
-  --color-func-info: #75A9D8;
+  --color-func-live: #22C55E;
+  --color-func-warning: #F59E0B;
+  --color-func-error: #EF4444;
+  --color-func-info: #38BDF8;
 }
 
 @layer base {
   :root {
-    --background: #A8ADB1;
-    --foreground: #252A2E;
-    --card: #C7CBD0;
-    --card-foreground: #252A2E;
-    --primary: #76513F;
-    --primary-foreground: #F1EAE1;
-    --secondary: #858C92;
-    --secondary-foreground: #252A2E;
-    --muted: #858C92;
-    --muted-foreground: #626B72;
-    --accent: #B18A70;
-    --accent-foreground: #F1EAE1;
-    --destructive: #DC6262;
-    --destructive-foreground: #F1EAE1;
-    --border: #737A7F;
-    --input: #737A7F;
-    --ring: #76513F;
+    --background: #0B0E11;
+    --foreground: #F8FAFC;
+    --card: #14181E;
+    --card-foreground: #F8FAFC;
+    --primary: #E06924;
+    --primary-foreground: #FFFFFF;
+    --secondary: #1C222B;
+    --secondary-foreground: #F8FAFC;
+    --muted: #161B22;
+    --muted-foreground: #94A3B8;
+    --accent: #E8732A;
+    --accent-foreground: #FFFFFF;
+    --destructive: #EF4444;
+    --destructive-foreground: #FFFFFF;
+    --border: #262E3B;
+    --input: #1E2530;
+    --ring: #E06924;
   }
 }
 
 body {
-  background-color: #A8ADB1;
-  color: #252A2E;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #0B0E11;
+  color: #F8FAFC;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom industrial copper & steel scrollbars */
+/* Custom dark obsidian & molten orange scrollbars */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #343A3F;
+  background: #0E1217;
 }
 ::-webkit-scrollbar-thumb {
-  background: #76513F;
-  border-radius: 4px;
-  border: 1px solid #49352D;
+  background: #2C3545;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #B18A70;
+  background: #E06924;
+}
+
+/* Hide scrollbar utility for horizontal pill strips */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Selection highlight */
 ::selection {
-  background-color: #76513F;
-  color: #F1EAE1;
+  background-color: #E06924;
+  color: #FFFFFF;
 }
 
 /* Form input focus styles */
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: #76513F !important;
-  box-shadow: 0 0 0 2px rgba(118, 81, 63, 0.25) !important;
+  border-color: #E06924 !important;
+  box-shadow: 0 0 0 2px rgba(224, 105, 36, 0.25) !important;
 }
 
 /* Print specific styles for invoice rendering */

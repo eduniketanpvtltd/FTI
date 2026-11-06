@@ -4,9 +4,11 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
+  onAuthStateChanged,
   RecaptchaVerifier,
   signInWithPhoneNumber,
   ConfirmationResult,
+  User as FirebaseUser,
 } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -30,11 +32,16 @@ export const isFirebaseConfigured = () => {
 export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account',
+});
 
 export {
   signInWithPopup,
   signOut,
+  onAuthStateChanged,
   RecaptchaVerifier,
   signInWithPhoneNumber,
   type ConfirmationResult,
+  type FirebaseUser,
 };

@@ -72,6 +72,97 @@ _📲 +91-9589971567
 ===================`;
 
 /**
+ * Formats a Date into IST date string (e.g., "06-NOV-2026"), time string (e.g., "22:31:34"),
+ * and YYYY-MM-DD session date string in Asia/Kolkata timezone.
+ */
+export function formatIstBulletinDateTime(date: Date = new Date()): {
+  dateStr: string;
+  timeStr: string;
+  sessionDate: string;
+  isoStr: string;
+} {
+  const istDateParts = new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }).formatToParts(date);
+
+  const day = istDateParts.find((p) => p.type === 'day')?.value || '01';
+  const month = (istDateParts.find((p) => p.type === 'month')?.value || 'JANUARY').toUpperCase();
+  const year = istDateParts.find((p) => p.type === 'year')?.value || '2026';
+  const dateStr = `${day}-${month}-${year}`;
+
+  const timeStr = new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+
+  const sessionDate = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+
+  return {
+    dateStr,
+    timeStr,
+    sessionDate,
+    isoStr: date.toISOString(),
+  };
+}
+
+/**
+ * Syncs a MandiBulletinData object and its raw broadcast text header to the latest Date/Time
+ */
+export function syncBulletinWithLatestTime(
+  bulletin: MandiBulletinData | undefined,
+  materials: MarketMaterial[] = [],
+  now: Date = new Date()
+): MandiBulletinData {
+  const { dateStr, timeStr, isoStr } = formatIstBulletinDateTime(now);
+  const base = bulletin || INITIAL_MANDI_BULLETIN;
+
+  // Determine overall trend from Mandi Gobindgarh or all materials
+  const gobindgarhMats = materials.filter((m) =>
+    (m.mandiCity || m.hubCity || '').toLowerCase().includes('gobindgarh')
+  );
+  const sample = gobindgarhMats.length > 0 ? gobindgarhMats : materials;
+  const upCount = sample.filter((m) => m.movementDirection === 'up').length;
+  const downCount = sample.filter((m) => m.movementDirection === 'down').length;
+
+  const overallTrend: 'up' | 'down' | 'neutral' =
+    sample.length === 0
+      ? base.overallTrend || 'down'
+      : downCount >= upCount && downCount > 0
+      ? 'down'
+      : upCount > downCount
+      ? 'up'
+      : base.overallTrend || 'neutral';
+
+  const trendArrow = overallTrend === 'down' ? '↓' : overallTrend === 'up' ? '↑' : '→';
+  const trendText = `Mandi Gobindgarh ${trendArrow}`;
+
+  let rawMessageText = base.rawMessageText || DEFAULT_MANDI_BULLETIN_TEXT;
+  rawMessageText = rawMessageText
+    .replace(/_🗓️[^\n]*_/, `_🗓️ ${dateStr}_`)
+    .replace(/_⏰\d{1,2}:\d{2}(?::\d{2})?_/, `_⏰${timeStr}_`);
+
+  return {
+    ...base,
+    dateStr,
+    timeStr,
+    overallTrend,
+    trendText,
+    rawMessageText,
+    lastUpdatedAt: isoStr,
+  };
+}
+
+/**
  * Normalizes Unicode enclosed characters (like 🄾🄲🅃🄾🄱🄴🅁) to regular ASCII uppercase
  */
 export function normalizeSpecialText(s: string): string {
@@ -101,7 +192,7 @@ export function generateHistoryForMandi(
   seedStr: string = 'mandi'
 ) {
   const points = [];
-  const now = new Date();
+  const now = new Date('2026-11-06T12:00:00.000Z');
 
   // Deterministic seed hash
   let seed = 0;
@@ -161,16 +252,26 @@ export function generateHistoryForMandi(
  * Level 3: mandiCity (Prices across Mandi Gobindgarh, Ludhiana, Raipur, Muzaffarnagar, etc.)
  */
 export function parseMandiBroadcast(
-  rawText: string
+  rawText: string,
+  syncToLatestTime: boolean = false
 ): { bulletin: MandiBulletinData; materials: MarketMaterial[] } {
   const normalized = normalizeSpecialText(rawText);
   const lines = normalized.split('\n').map((l) => l.trim()).filter(Boolean);
 
   let dateStr = '28-OCTOBER-2026';
   let timeStr = '12:00';
+  let isoStr = '2026-11-06T12:00:00.000Z';
+
+  if (syncToLatestTime) {
+    const latestIst = formatIstBulletinDateTime(new Date());
+    dateStr = latestIst.dateStr;
+    timeStr = latestIst.timeStr;
+    isoStr = latestIst.isoStr;
+  }
+
   let usdInrRate = 95.04;
   let overallTrend: 'up' | 'down' | 'neutral' = 'down';
-  let trendText = 'Mandi Gobindgarh Trend downwards';
+  let trendText = 'Mandi Gobindgarh ↓';
   const supportPhone = '+91-9780830333';
   const smsPhones = ['+91-9780830333'];
   const whatsappPhones = ['+91-9780830333', '+91-9589971567'];
@@ -182,20 +283,25 @@ export function parseMandiBroadcast(
   for (const line of lines) {
     // 1. Detect Date
     if (
-      line.includes('🗓️') ||
-      line.includes('OCTOBER') ||
-      line.includes('NOVEMBER') ||
-      line.includes('DECEMBER') ||
-      line.includes('JANUARY')
+      !syncToLatestTime &&
+      (line.includes('🗓️') ||
+        line.includes('OCTOBER') ||
+        line.includes('NOVEMBER') ||
+        line.includes('DECEMBER') ||
+        line.includes('JANUARY'))
     ) {
       const match = line.match(/\d{1,2}-[A-Za-z]+-\d{4}/);
-      if (match) dateStr = match[0];
+      if (match && match[0].toUpperCase() !== '28-OCTOBER-2026') {
+        dateStr = match[0].toUpperCase();
+      }
     }
 
     // 2. Detect Time & Overall Emoji
     if (line.includes('⏰')) {
-      const match = line.match(/\d{1,2}:\d{2}/);
-      if (match) timeStr = match[0];
+      if (!syncToLatestTime) {
+        const match = line.match(/\d{1,2}:\d{2}(?::\d{2})?/);
+        if (match && match[0] !== '12:00') timeStr = match[0];
+      }
       if (line.includes('📉')) {
         overallTrend = 'down';
       } else if (line.includes('📈') || line.includes('🔼')) {
@@ -222,10 +328,15 @@ export function parseMandiBroadcast(
       (line.toLowerCase().includes('trend') || line.includes('ᵀʳᵉⁿᵈ'))
     ) {
       currentCategory = 'benchmark';
-      trendText = line.replace(/[\*_~💬]/g, '').trim();
-      if (line.toLowerCase().includes('down') || line.includes('📉')) overallTrend = 'down';
-      else if (line.toLowerCase().includes('up') || line.includes('📈') || line.includes('🔼'))
+      if (line.toLowerCase().includes('down') || line.includes('📉')) {
+        overallTrend = 'down';
+        trendText = 'Mandi Gobindgarh ↓';
+      } else if (line.toLowerCase().includes('up') || line.includes('📈') || line.includes('🔼')) {
         overallTrend = 'up';
+        trendText = 'Mandi Gobindgarh ↑';
+      } else {
+        trendText = line.replace(/[\*_~💬]/g, '').trim();
+      }
       continue;
     }
 
@@ -343,6 +454,9 @@ export function parseMandiBroadcast(
         } else {
           materialName = 'Melting Scrap';
         }
+        if (mandiCity.toLowerCase() === 'ludhiana' && !specification) {
+          specification = 'MS';
+        }
       } else if (currentCategory === 'billet') {
         mainCategory = 'raw_materials';
         materialName = 'Billet';
@@ -351,8 +465,13 @@ export function parseMandiBroadcast(
         materialName = 'Ingot';
       }
 
-      const displayName = `${materialName} - ${mandiCity}`;
-      const slugKey = `${mainCategory}-${materialName}-${mandiCity}`
+      const displayName = specification
+        ? `${materialName} (${specification}) - ${mandiCity}`
+        : `${materialName} - ${mandiCity}`;
+      const specSlug = specification
+        ? `-${specification.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+        : '';
+      const slugKey = `${mainCategory}-${materialName}-${mandiCity}${specSlug}`
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
@@ -538,6 +657,116 @@ export function parseMandiBroadcast(
       notes: 'Wire Rod 5.5mm ex-Mandi Gobindgarh.',
       historicalPrices: generateHistoryForMandi(47500, 50, 0.013, 'wire-rod-mandi'),
     },
+    // --- RAW MATERIALS: Ludhiana EN8D Special Carbon Alloy Steel ---
+    {
+      id: 'mat-raw-billet-ludhiana-en8d',
+      mainCategory: 'raw_materials',
+      materialName: 'Billet',
+      mandiCity: 'Ludhiana',
+      categorySlug: 'raw_materials',
+      categoryName: 'Billet',
+      name: 'Billet (EN8D) - Ludhiana',
+      symbol: 'RAW-BIL-LUD-EN8',
+      hubCity: 'Ludhiana',
+      specification: 'EN8D',
+      unit: '₹ / Metric Ton',
+      currentPrice: 47400,
+      previousPrice: 47500,
+      priceChange: -100,
+      percentageChange: -0.21,
+      movementDirection: 'down',
+      highPrice: 48000,
+      lowPrice: 46800,
+      averagePrice: 47400,
+      volatility: 1.0,
+      lastUpdatedAt: new Date().toISOString(),
+      displayOrder: displayOrderCounter++,
+      isActive: true,
+      notes: 'Continuous cast EN8D alloy carbon billets ex-Ludhiana cluster.',
+      historicalPrices: generateHistoryForMandi(47400, 50, 0.012, 'billet-ludhiana-en8d'),
+    },
+    {
+      id: 'mat-raw-round-bar-ludhiana-en8d',
+      mainCategory: 'raw_materials',
+      materialName: 'Round Bar',
+      mandiCity: 'Ludhiana',
+      categorySlug: 'raw_materials',
+      categoryName: 'Round Bar',
+      name: 'Round Bar (EN8D) - Ludhiana',
+      symbol: 'RAW-BAR-LUD-EN8',
+      hubCity: 'Ludhiana',
+      specification: 'EN8D',
+      unit: '₹ / Metric Ton',
+      currentPrice: 51200,
+      previousPrice: 51350,
+      priceChange: -150,
+      percentageChange: -0.29,
+      movementDirection: 'down',
+      highPrice: 51900,
+      lowPrice: 50500,
+      averagePrice: 51200,
+      volatility: 1.1,
+      lastUpdatedAt: new Date().toISOString(),
+      displayOrder: displayOrderCounter++,
+      isActive: true,
+      notes: 'EN8D Hot Rolled Black Round Bar ex-Ludhiana rolling mills.',
+      historicalPrices: generateHistoryForMandi(51200, 50, 0.012, 'bar-ludhiana-en8d'),
+    },
+    // --- RAW MATERIALS: Ludhiana MS Mild Steel Commercial ---
+    {
+      id: 'mat-raw-billet-ludhiana-ms',
+      mainCategory: 'raw_materials',
+      materialName: 'Billet',
+      mandiCity: 'Ludhiana',
+      categorySlug: 'raw_materials',
+      categoryName: 'Billet',
+      name: 'Billet (MS) - Ludhiana',
+      symbol: 'RAW-BIL-LUD-MS',
+      hubCity: 'Ludhiana',
+      specification: 'MS',
+      unit: '₹ / Metric Ton',
+      currentPrice: 46800,
+      previousPrice: 46900,
+      priceChange: -100,
+      percentageChange: -0.21,
+      movementDirection: 'down',
+      highPrice: 47400,
+      lowPrice: 46200,
+      averagePrice: 46800,
+      volatility: 1.0,
+      lastUpdatedAt: new Date().toISOString(),
+      displayOrder: displayOrderCounter++,
+      isActive: true,
+      notes: 'Commercial Mild Steel Billet ex-Ludhiana secondary producers.',
+      historicalPrices: generateHistoryForMandi(46800, 50, 0.012, 'billet-ludhiana-ms'),
+    },
+    {
+      id: 'mat-raw-round-bar-ludhiana-ms',
+      mainCategory: 'raw_materials',
+      materialName: 'Round Bar',
+      mandiCity: 'Ludhiana',
+      categorySlug: 'raw_materials',
+      categoryName: 'Round Bar',
+      name: 'Round Bar (MS) - Ludhiana',
+      symbol: 'RAW-BAR-LUD-MS',
+      hubCity: 'Ludhiana',
+      specification: 'MS',
+      unit: '₹ / Metric Ton',
+      currentPrice: 48900,
+      previousPrice: 49000,
+      priceChange: -100,
+      percentageChange: -0.20,
+      movementDirection: 'down',
+      highPrice: 49500,
+      lowPrice: 48200,
+      averagePrice: 48900,
+      volatility: 0.9,
+      lastUpdatedAt: new Date().toISOString(),
+      displayOrder: displayOrderCounter++,
+      isActive: true,
+      notes: 'Commercial MS round bar ex-Ludhiana.',
+      historicalPrices: generateHistoryForMandi(48900, 50, 0.011, 'bar-ludhiana-ms'),
+    },
     // --- SCRAP MATERIALS: HMS 1 & 2 ---
     {
       id: 'mat-scr-hms-mandi-gobindgarh',
@@ -629,9 +858,9 @@ export function parseMandiBroadcast(
       categorySlug: 'scrap_materials',
       categoryName: 'Turning Scrap',
       name: 'MS Turning Scrap - Ludhiana',
-      symbol: 'SCR-TRN-LUD',
+      symbol: 'SCR-TRN-LUD-MS',
       hubCity: 'Ludhiana',
-      specification: 'Clean Dry Machine Turnings',
+      specification: 'MS Clean Machine Turnings',
       unit: '₹ / Metric Ton',
       currentPrice: 32000,
       previousPrice: 32100,
@@ -645,8 +874,91 @@ export function parseMandiBroadcast(
       lastUpdatedAt: new Date().toISOString(),
       displayOrder: displayOrderCounter++,
       isActive: true,
-      notes: 'Industrial turning scrap ex-Ludhiana industrial area.',
-      historicalPrices: generateHistoryForMandi(32000, 50, 0.015, 'turning-ludhiana'),
+      notes: 'Industrial MS turning scrap ex-Ludhiana industrial area.',
+      historicalPrices: generateHistoryForMandi(32000, 50, 0.015, 'turning-ludhiana-ms'),
+    },
+    // --- SCRAP MATERIALS: Ludhiana EN8D Scrap ---
+    {
+      id: 'mat-scr-turning-ludhiana-en8d',
+      mainCategory: 'scrap_materials',
+      materialName: 'Turning Scrap',
+      mandiCity: 'Ludhiana',
+      categorySlug: 'scrap_materials',
+      categoryName: 'Turning Scrap',
+      name: 'EN8D Turning Scrap - Ludhiana',
+      symbol: 'SCR-TRN-LUD-EN8',
+      hubCity: 'Ludhiana',
+      specification: 'EN8D Turning',
+      unit: '₹ / Metric Ton',
+      currentPrice: 33400,
+      previousPrice: 33500,
+      priceChange: -100,
+      percentageChange: -0.30,
+      movementDirection: 'down',
+      highPrice: 34000,
+      lowPrice: 32800,
+      averagePrice: 33400,
+      volatility: 1.2,
+      lastUpdatedAt: new Date().toISOString(),
+      displayOrder: displayOrderCounter++,
+      isActive: true,
+      notes: 'EN8D high-carbon turning & boring scrap ex-Ludhiana forging units.',
+      historicalPrices: generateHistoryForMandi(33400, 50, 0.014, 'turning-ludhiana-en8d'),
+    },
+    {
+      id: 'mat-scr-end-cutting-ludhiana-en8d',
+      mainCategory: 'scrap_materials',
+      materialName: 'End Cutting / Crops',
+      mandiCity: 'Ludhiana',
+      categorySlug: 'scrap_materials',
+      categoryName: 'End Cutting',
+      name: 'EN8D Forging Flash / End Cuts - Ludhiana',
+      symbol: 'SCR-CUT-LUD-EN8',
+      hubCity: 'Ludhiana',
+      specification: 'EN8D Forging Scrap',
+      unit: '₹ / Metric Ton',
+      currentPrice: 39600,
+      previousPrice: 39700,
+      priceChange: -100,
+      percentageChange: -0.25,
+      movementDirection: 'down',
+      highPrice: 40200,
+      lowPrice: 39000,
+      averagePrice: 39600,
+      volatility: 1.1,
+      lastUpdatedAt: new Date().toISOString(),
+      displayOrder: displayOrderCounter++,
+      isActive: true,
+      notes: 'EN8D heavy billet ends & forging flash ex-Ludhiana auto component units.',
+      historicalPrices: generateHistoryForMandi(39600, 50, 0.012, 'cutting-ludhiana-en8d'),
+    },
+    // --- SCRAP MATERIALS: Ludhiana MS Heavy End Cuts ---
+    {
+      id: 'mat-scr-end-cutting-ludhiana-ms',
+      mainCategory: 'scrap_materials',
+      materialName: 'End Cutting / Crops',
+      mandiCity: 'Ludhiana',
+      categorySlug: 'scrap_materials',
+      categoryName: 'End Cutting',
+      name: 'MS Heavy End Cutting - Ludhiana',
+      symbol: 'SCR-CUT-LUD-MS',
+      hubCity: 'Ludhiana',
+      specification: 'MS Heavy Cuts',
+      unit: '₹ / Metric Ton',
+      currentPrice: 38200,
+      previousPrice: 38300,
+      priceChange: -100,
+      percentageChange: -0.26,
+      movementDirection: 'down',
+      highPrice: 38900,
+      lowPrice: 37600,
+      averagePrice: 38200,
+      volatility: 1.1,
+      lastUpdatedAt: new Date().toISOString(),
+      displayOrder: displayOrderCounter++,
+      isActive: true,
+      notes: 'Mild steel heavy re-rolling scrap crops ex-Ludhiana.',
+      historicalPrices: generateHistoryForMandi(38200, 50, 0.013, 'cutting-ludhiana-ms'),
     },
     // --- SCRAP MATERIALS: End Cutting ---
     {
@@ -680,17 +992,21 @@ export function parseMandiBroadcast(
 
   materials.push(...supplementaryMaterials);
 
+  const syncedRawText = rawText
+    .replace(/_🗓️[^\n]*_/, `_🗓️ ${dateStr}_`)
+    .replace(/_⏰\d{1,2}:\d{2}(?::\d{2})?_/, `_⏰${timeStr}_`);
+
   const bulletin: MandiBulletinData = {
     dateStr,
     timeStr,
     usdInrRate,
     overallTrend,
     trendText,
-    rawMessageText: rawText,
+    rawMessageText: syncedRawText,
     supportPhone,
     smsPhones,
     whatsappPhones,
-    lastUpdatedAt: new Date().toISOString(),
+    lastUpdatedAt: isoStr,
   };
 
   return { bulletin, materials };

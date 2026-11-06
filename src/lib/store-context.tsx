@@ -5,9 +5,16 @@ import {
   AppState,
   getInitialState,
   saveState,
+  INITIAL_CATEGORIES,
   INITIAL_USERS,
+  GUEST_USER,
   STORAGE_KEY,
 } from './db-store';
+import {
+  formatIstBulletinDateTime,
+  syncBulletinWithLatestTime,
+  parseMandiBroadcast,
+} from './mandi-parser';
 import {
   UserProfile,
   UserAddress,
@@ -26,8 +33,16 @@ import {
   PaymentStatus,
   MovementDirection,
   MarketPricePoint,
+  BusinessType,
 } from '@/types';
 import { generateRefId, numberToIndianWords } from './utils';
+import {
+  auth,
+  googleProvider,
+  signInWithPopup,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+} from './firebase';
 import {
   fetchDbCategories,
   fetchDbMarketMaterials,
@@ -42,10 +57,52 @@ import {
   createDbInvoice,
 } from './supabase-service';
 
+export interface OnboardingProfileInput {
+  fullName: string;
+  email: string;
+  mobile: string;
+  designation: string;
+  companyName: string;
+  businessType: BusinessType;
+  gstin: string;
+  primaryMaterials?: string[];
+  monthlyVolume?: string;
+  streetAddress: string;
+  landmark?: string;
+  city: string;
+  district: string;
+  state: string;
+  pincode: string;
+  addressType?: 'billing' | 'shipping' | 'both';
+}
+
+export interface GoogleAccountPayload {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  phoneNumber?: string;
+}
+
 interface StoreContextType {
   state: AppState;
   categories: ProductCategory[];
+  // Auth & User
+  isAuthenticated: boolean;
+  isProfileComplete: boolean;
+  authLoading: boolean;
   currentUser: UserProfile;
+  users: UserProfile[];
+  loginWithGoogle: (
+    fallbackAccount?: GoogleAccountPayload
+  ) => Promise<{
+    status: 'logged_in' | 'needs_onboarding' | 'error';
+    user?: UserProfile;
+    error?: string;
+    errorCode?: string;
+  }>;
+  completeSignupProfile: (input: OnboardingProfileInput) => Promise<UserProfile>;
+  logout: () => Promise<void>;
   switchUserRole: (role: 'customer' | 'admin') => void;
   // Cart
   cart: CartLineItem[];
@@ -94,7 +151,7 @@ interface StoreContextType {
   updateMandiBulletin: (rawBulletinText: string) => void;
   addMarketMaterial: (material: Omit<MarketMaterial, 'id' | 'lastUpdatedAt' | 'historicalPrices'>) => void;
   lastMarketSyncTime: Date;
-  refreshMarketPrices: () => void;
+  refreshMarketPrices: () => Promise<void>;
   // Addresses
   addresses: UserAddress[];
   addAddress: (address: Omit<UserAddress, 'id'>) => void;
@@ -114,11 +171,9 @@ const StoreContext = createContext<StoreContextType | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(getInitialState);
-  const [lastMarketSyncTime, setLastMarketSyncTime] = useState<Date>(
-    () => new Date('2026-11-03T11:30:00.000Z')
-  );
+  const [authLoading, setAuthLoading] = useState<boolean>(false);
+  const [lastMarketSyncTime, setLastMarketSyncTime] = useState<Date>(() => new Date('2026-01-01T00:00:00.000Z'));
 
-  // Set to client time upon mount
   useEffect(() => {
     setLastMarketSyncTime(new Date());
   }, []);
@@ -149,34 +204,284 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => updater(prev));
   }, []);
 
-  // 5-minute automated customer market price polling synchronization
+  // Helper to resolve or create a UserProfile from a Google account payload
+  const resolveGoogleAccount = useCallback(
+    async (
+      account: GoogleAccountPayload
+    ): Promise<{ status: 'logged_in' | 'needs_onboarding'; user: UserProfile }> => {
+      let dbProfile: UserProfile | null = null;
+      let dbAddresses: UserAddress[] = [];
+
+      try {
+        const res = await fetch(
+          `/api/auth/profile?uid=${encodeURIComponent(account.uid)}&email=${encodeURIComponent(
+            account.email || ''
+          )}`
+        );
+        if (res.ok) {
+          const json = await res.json();
+          if (json.found && json.profile) {
+            dbProfile = json.profile;
+            dbAddresses = Array.isArray(json.addresses) ? json.addresses : [];
+          }
+        }
+      } catch (err) {
+        // Fallback to local state users
+      }
+
+      let resolvedUser: UserProfile | null = null;
+      let needsOnboarding = true;
+
+      mutate((prev) => {
+        const localExisting = prev.users.find(
+          (u) =>
+            (account.uid && u.firebaseUid === account.uid) ||
+            (account.email && u.email.toLowerCase() === account.email.toLowerCase())
+        );
+
+        const existing = localExisting || dbProfile;
+        const hasCompanyAndMobile = Boolean(
+          existing &&
+            existing.companyName &&
+            existing.companyName !== 'Guest Visitor' &&
+            existing.companyName !== 'Pending Setup' &&
+            existing.mobile &&
+            existing.mobile.trim().length >= 10 &&
+            existing.isProfileComplete !== false
+        );
+
+        if (existing && hasCompanyAndMobile) {
+          needsOnboarding = false;
+          const mergedProfile: UserProfile = {
+            ...existing,
+            firebaseUid: account.uid || existing.firebaseUid,
+            fullName: existing.fullName || account.displayName || 'Authorized Buyer',
+            email: account.email || existing.email,
+            avatarUrl: account.photoURL || existing.avatarUrl,
+            isProfileComplete: true,
+          };
+          resolvedUser = mergedProfile;
+
+          const existingAddrIds = new Set(prev.addresses.map((a) => a.id));
+          const mergedAddresses = [
+            ...prev.addresses,
+            ...dbAddresses.filter((a) => !existingAddrIds.has(a.id)),
+          ];
+
+          const updatedUsers = prev.users.some((u) => u.id === mergedProfile.id)
+            ? prev.users.map((u) => (u.id === mergedProfile.id ? mergedProfile : u))
+            : [mergedProfile, ...prev.users];
+
+          return {
+            ...prev,
+            isAuthenticated: true,
+            currentUser: mergedProfile,
+            users: updatedUsers,
+            addresses: mergedAddresses,
+          };
+        } else {
+          needsOnboarding = true;
+          const partialUser: UserProfile = {
+            id: existing?.id || `usr-${account.uid.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}`,
+            firebaseUid: account.uid,
+            fullName:
+              existing?.fullName && existing.fullName !== 'Guest Visitor'
+                ? existing.fullName
+                : account.displayName || (account.email ? account.email.split('@')[0] : ''),
+            email: account.email || existing?.email || '',
+            mobile: existing?.mobile || account.phoneNumber || '',
+            companyName:
+              existing?.companyName && existing.companyName !== 'Guest Visitor'
+                ? existing.companyName
+                : '',
+            gstin: existing?.gstin || '',
+            businessType: existing?.businessType || 'Manufacturer',
+            designation: existing?.designation || 'Purchase / Procurement Head',
+            role: existing?.role || 'customer',
+            isActive: true,
+            isProfileComplete: false,
+            avatarUrl: account.photoURL || existing?.avatarUrl,
+            createdAt: existing?.createdAt || new Date().toISOString(),
+          };
+          resolvedUser = partialUser;
+
+          return {
+            ...prev,
+            isAuthenticated: true,
+            currentUser: partialUser,
+          };
+        }
+      });
+
+      return {
+        status: needsOnboarding ? 'needs_onboarding' : 'logged_in',
+        user: resolvedUser!,
+      };
+    },
+    [mutate]
+  );
+
+  // Sync Firebase Auth session if user previously authenticated via Firebase
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser && fbUser.email) {
+        // Only auto-sync if not already authenticated as the same user
+        setState((prev) => {
+          if (prev.isAuthenticated && prev.currentUser.email.toLowerCase() === fbUser.email?.toLowerCase()) {
+            return prev;
+          }
+          return prev;
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch latest market prices & bulletin and sync all timestamps to latest current time
+  const refreshMarketPrices = useCallback(async () => {
+    const now = new Date();
+    const { sessionDate, isoStr } = formatIstBulletinDateTime(now);
+
+    try {
+      const res = await fetch(`/api/market?t=${now.getTime()}`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          mutate((prev) => {
+            const baseMaterials: MarketMaterial[] =
+              json.source === 'supabase'
+                ? json.data
+                : prev.marketMaterials && prev.marketMaterials.length > 0
+                ? prev.marketMaterials
+                : json.data;
+
+            const syncedMaterials = baseMaterials.map((m) => {
+              const history = Array.isArray(m.historicalPrices) ? [...m.historicalPrices] : [];
+              if (history.length > 0) {
+                const lastIdx = history.length - 1;
+                history[lastIdx] = {
+                  ...history[lastIdx],
+                  date: sessionDate,
+                  timestamp: now.getTime(),
+                  price: m.currentPrice,
+                };
+              }
+              return {
+                ...m,
+                lastUpdatedAt: isoStr,
+                historicalPrices: history,
+              };
+            });
+
+            const updatedBulletin = syncBulletinWithLatestTime(
+              prev.mandiBulletin || json.bulletin,
+              syncedMaterials,
+              now
+            );
+
+            return {
+              ...prev,
+              marketMaterials: syncedMaterials,
+              mandiBulletin: updatedBulletin,
+            };
+          });
+          setLastMarketSyncTime(now);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Market refresh fetch fallback:', err);
+    }
+
+    // Fallback: sync all timestamps and bulletin date/time to latest time
+    mutate((prev) => {
+      const syncedMaterials = prev.marketMaterials.map((m) => {
+        const history = Array.isArray(m.historicalPrices) ? [...m.historicalPrices] : [];
+        if (history.length > 0) {
+          const lastIdx = history.length - 1;
+          history[lastIdx] = {
+            ...history[lastIdx],
+            date: sessionDate,
+            timestamp: now.getTime(),
+            price: m.currentPrice,
+          };
+        }
+        return {
+          ...m,
+          lastUpdatedAt: isoStr,
+          historicalPrices: history,
+        };
+      });
+      const updatedBulletin = syncBulletinWithLatestTime(
+        prev.mandiBulletin,
+        syncedMaterials,
+        now
+      );
+      return {
+        ...prev,
+        marketMaterials: syncedMaterials,
+        mandiBulletin: updatedBulletin,
+      };
+    });
+    setLastMarketSyncTime(now);
+  }, [mutate]);
+
+  // Initial sync on mount + 3-minute automated market price polling & time synchronization
+  useEffect(() => {
+    refreshMarketPrices();
     const interval = setInterval(() => {
-      setLastMarketSyncTime(new Date());
-    }, 5 * 60 * 1000); // 5 minutes
+      refreshMarketPrices();
+    }, 3 * 60 * 1000); // Auto sync every 3 minutes
 
     return () => clearInterval(interval);
-  }, []);
+  }, [refreshMarketPrices]);
 
   // Background sync from Supabase when database tables exist
   useEffect(() => {
     async function syncFromSupabase() {
       try {
-        const [dbCats, dbMat, dbQuotes, dbOrders] = await Promise.all([
+        const [dbCats, dbMat, dbQuotes, dbOrders, profilesRes] = await Promise.all([
           fetchDbCategories(),
           fetchDbMarketMaterials(),
           fetchDbQuotations(),
           fetchDbOrders(),
+          fetch('/api/auth/profile?all=true').then((r) => (r.ok ? r.json() : null)).catch(() => null),
         ]);
 
-        if (dbCats || dbMat || dbQuotes || dbOrders) {
-          mutate((prev) => ({
-            ...prev,
-            categories: dbCats && dbCats.length > 0 ? dbCats : prev.categories,
-            marketMaterials: dbMat && dbMat.length > 0 ? dbMat : prev.marketMaterials,
-            quotations: dbQuotes && dbQuotes.length > 0 ? dbQuotes : prev.quotations,
-            orders: dbOrders && dbOrders.length > 0 ? dbOrders : prev.orders,
-          }));
+        const dbProfiles: UserProfile[] = profilesRes?.profiles || [];
+
+        if (dbCats || dbMat || dbQuotes || dbOrders || dbProfiles.length > 0) {
+          const now = new Date();
+          mutate((prev) => {
+            const existingEmails = new Set(prev.users.map((u) => u.email.toLowerCase()));
+            const mergedUsers = [...prev.users];
+            for (const p of dbProfiles) {
+              if (p.email && !existingEmails.has(p.email.toLowerCase())) {
+                existingEmails.add(p.email.toLowerCase());
+                mergedUsers.push(p);
+              }
+            }
+
+            const resolvedMat = dbMat && dbMat.length > 0 ? dbMat : prev.marketMaterials;
+            return {
+              ...prev,
+              users: mergedUsers,
+              categories: INITIAL_CATEGORIES,
+              marketMaterials: resolvedMat,
+              mandiBulletin: syncBulletinWithLatestTime(prev.mandiBulletin, resolvedMat, now),
+              quotations: dbQuotes && dbQuotes.length > 0 ? dbQuotes : prev.quotations,
+              orders: dbOrders && dbOrders.length > 0 ? dbOrders : prev.orders,
+            };
+          });
+          setLastMarketSyncTime(now);
         }
       } catch (err) {
         // Fallback safely to current state
@@ -185,17 +490,190 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     syncFromSupabase();
   }, [mutate]);
 
-  const refreshMarketPrices = useCallback(() => {
-    setLastMarketSyncTime(new Date());
-  }, []);
+  // Google Sign-In / Sign-Up Flow
+  const loginWithGoogle = useCallback(
+    async (
+      fallbackAccount?: GoogleAccountPayload
+    ): Promise<{
+      status: 'logged_in' | 'needs_onboarding' | 'error';
+      user?: UserProfile;
+      error?: string;
+      errorCode?: string;
+    }> => {
+      setAuthLoading(true);
+      try {
+        if (fallbackAccount) {
+          const result = await resolveGoogleAccount(fallbackAccount);
+          return result;
+        }
 
-  // Switch between Demo Customer and Super Admin
-  const switchUserRole = useCallback((role: 'customer' | 'admin') => {
+        const credential = await signInWithPopup(auth, googleProvider);
+        const fbUser = credential.user;
+
+        const result = await resolveGoogleAccount({
+          uid: fbUser.uid,
+          email: fbUser.email || '',
+          displayName: fbUser.displayName || '',
+          photoURL: fbUser.photoURL || undefined,
+          phoneNumber: fbUser.phoneNumber || undefined,
+        });
+
+        return result;
+      } catch (err: any) {
+        const code = err?.code || '';
+        if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+          return {
+            status: 'error',
+            errorCode: code,
+            error: 'Google Sign-In popup was closed before completing. Please try again.',
+          };
+        }
+        return {
+          status: 'error',
+          errorCode: code || 'auth/unknown',
+          error:
+            err?.message ||
+            'Unable to complete Google Sign-In popup. Please try again or continue with your Google email below.',
+        };
+      } finally {
+        setAuthLoading(false);
+      }
+    },
+    [resolveGoogleAccount]
+  );
+
+  // Complete B2B Buyer Profile during Signup
+  const completeSignupProfile = useCallback(
+    async (input: OnboardingProfileInput): Promise<UserProfile> => {
+      let createdProfile: UserProfile | null = null;
+      let createdAddress: UserAddress | null = null;
+
+      mutate((prev) => {
+        const userId =
+          prev.currentUser.id && prev.currentUser.id !== 'guest'
+            ? prev.currentUser.id
+            : `usr-${Date.now()}`;
+
+        const completedUser: UserProfile = {
+          id: userId,
+          firebaseUid: prev.currentUser.firebaseUid || `g-${Date.now()}`,
+          fullName: input.fullName.trim(),
+          email: input.email.trim().toLowerCase(),
+          mobile: input.mobile.trim(),
+          designation: input.designation || 'Purchase / Procurement Head',
+          companyName: input.companyName.trim(),
+          gstin: input.gstin.trim().toUpperCase(),
+          businessType: input.businessType,
+          primaryMaterials: input.primaryMaterials || [],
+          monthlyVolume: input.monthlyVolume || '',
+          city: input.city.trim(),
+          state: input.state.trim(),
+          role: prev.currentUser.role || 'customer',
+          isActive: true,
+          isProfileComplete: true,
+          avatarUrl: prev.currentUser.avatarUrl,
+          createdAt: prev.currentUser.createdAt || new Date().toISOString(),
+        };
+
+        const newAddress: UserAddress = {
+          id: `addr-${Date.now()}`,
+          userId,
+          addressType: input.addressType || 'both',
+          isDefault: true,
+          recipientName: `${input.companyName.trim()} (${input.fullName.trim()})`,
+          phone: input.mobile.trim(),
+          companyName: input.companyName.trim(),
+          gstin: input.gstin.trim().toUpperCase() || undefined,
+          streetAddress: input.streetAddress.trim(),
+          landmark: input.landmark?.trim() || undefined,
+          city: input.city.trim(),
+          district: input.district.trim() || input.city.trim(),
+          state: input.state.trim(),
+          pincode: input.pincode.trim(),
+          country: 'India',
+        };
+
+        const welcomeNotif: NotificationItem = {
+          id: `notif-welcome-${Date.now()}`,
+          userId,
+          title: `B2B Buyer Account Verified: ${input.companyName.trim()}`,
+          message: `Welcome ${input.fullName.trim()}! Your company profile and delivery location (${input.city.trim()}, ${input.state.trim()}) are now active for official RFQ quotations.`,
+          type: 'system',
+          link: '/raw-materials',
+          isRead: false,
+          createdAt: new Date().toISOString(),
+        };
+
+        createdProfile = completedUser;
+        createdAddress = newAddress;
+
+        const updatedUsers = prev.users.some(
+          (u) => u.id === completedUser.id || u.email.toLowerCase() === completedUser.email.toLowerCase()
+        )
+          ? prev.users.map((u) =>
+              u.id === completedUser.id || u.email.toLowerCase() === completedUser.email.toLowerCase()
+                ? completedUser
+                : u
+            )
+          : [completedUser, ...prev.users];
+
+        // Clear default flag only for this user's existing addresses
+        const updatedAddresses = [
+          ...prev.addresses.map((a) => (a.userId === userId ? { ...a, isDefault: false } : a)),
+          newAddress,
+        ];
+
+        return {
+          ...prev,
+          isAuthenticated: true,
+          currentUser: completedUser,
+          users: updatedUsers,
+          addresses: updatedAddresses,
+          notifications: [welcomeNotif, ...prev.notifications],
+        };
+      });
+
+      if (createdProfile) {
+        fetch('/api/auth/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            profile: createdProfile,
+            address: createdAddress,
+          }),
+        }).catch((err) => console.warn('Profile sync notice:', err));
+      }
+
+      return createdProfile!;
+    },
+    [mutate]
+  );
+
+  // Logout
+  const logout = useCallback(async () => {
+    try {
+      await firebaseSignOut(auth);
+    } catch (err) {
+      // Ignore firebase signout warning if not signed into firebase
+    }
     mutate((prev) => ({
       ...prev,
-      currentUser: role === 'admin' ? INITIAL_USERS[1] : INITIAL_USERS[0],
+      isAuthenticated: false,
+      currentUser: GUEST_USER,
     }));
   }, [mutate]);
+
+  // Switch between Demo Customer and Super Admin
+  const switchUserRole = useCallback(
+    (role: 'customer' | 'admin') => {
+      mutate((prev) => ({
+        ...prev,
+        isAuthenticated: true,
+        currentUser: role === 'admin' ? INITIAL_USERS[1] : INITIAL_USERS[0],
+      }));
+    },
+    [mutate]
+  );
 
   // Cart operations
   const addToCart = useCallback((item: Omit<CartLineItem, 'id' | 'addedAt'>) => {
@@ -252,9 +730,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, [mutate]);
 
-  // Quotation Submission (Customer)
+  // Quotation Submission (Customer) - Requires Authentication & Completed Profile
   const submitQuotationRequest = useCallback(
     (deliveryAddress: UserAddress, specialNotes?: string): string => {
+      if (
+        !state.isAuthenticated ||
+        state.currentUser.id === 'guest' ||
+        state.currentUser.isProfileComplete === false
+      ) {
+        throw new Error('Authentication and completed B2B buyer profile are required to request a quotation.');
+      }
+
       let createdQuotationId = '';
       let pendingQuote: Quotation | null = null;
 
@@ -531,7 +1017,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             pan: 'AAACF0123M',
             phone: prev.settings.phone,
             email: prev.settings.email,
-            website: 'www.fti-materials.com',
+            website: 'https://fti-app-sooty.vercel.app',
             bankName: prev.settings.bankName,
             accountNumber: prev.settings.accountNumber,
             ifscCode: prev.settings.ifscCode,
@@ -746,6 +1232,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Admin updates market material price with audit trail and historical chart update
   const updateMarketPrice = useCallback(
     (materialId: string, newPrice: number, notes?: string) => {
+      const now = new Date();
+      const { sessionDate, isoStr } = formatIstBulletinDateTime(now);
+
       mutate((prev) => {
         const material = prev.marketMaterials.find((m) => m.id === materialId);
         if (!material) return prev;
@@ -756,9 +1245,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const movementDirection: MovementDirection =
           priceChange > 0 ? 'up' : priceChange < 0 ? 'down' : 'neutral';
 
-        const now = new Date();
         const newPoint: MarketPricePoint = {
-          date: now.toISOString().split('T')[0],
+          date: sessionDate,
           timestamp: now.getTime(),
           price: newPrice,
           previousPrice: prevPrice,
@@ -779,16 +1267,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           movementDirection,
           highPrice: Math.max(material.highPrice, newPrice),
           lowPrice: Math.min(material.lowPrice, newPrice),
-          lastUpdatedAt: now.toISOString(),
+          lastUpdatedAt: isoStr,
           notes: notes || material.notes,
           historicalPrices: updatedHistory,
         };
 
+        const updatedMaterials = prev.marketMaterials.map((m) =>
+          m.id === materialId ? updatedMaterial : m
+        );
+
         return {
           ...prev,
-          marketMaterials: prev.marketMaterials.map((m) => (m.id === materialId ? updatedMaterial : m)),
+          marketMaterials: updatedMaterials,
+          mandiBulletin: syncBulletinWithLatestTime(prev.mandiBulletin, updatedMaterials, now),
         };
       });
+
+      setLastMarketSyncTime(now);
 
       // Background asynchronous sync to Supabase database
       syncDbMarketPrice(materialId, newPrice, notes).catch((err) =>
@@ -801,54 +1296,59 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const addMarketMaterial = useCallback(
     (materialData: Omit<MarketMaterial, 'id' | 'lastUpdatedAt' | 'historicalPrices'>) => {
+      const now = new Date();
+      const { sessionDate, isoStr } = formatIstBulletinDateTime(now);
+
       mutate((prev) => {
         const id = `mat-${Date.now()}`;
-        const now = new Date();
         const newMat: MarketMaterial = {
           ...materialData,
           id,
-          lastUpdatedAt: now.toISOString(),
+          lastUpdatedAt: isoStr,
           historicalPrices: [
             {
-              date: now.toISOString().split('T')[0],
+              date: sessionDate,
               timestamp: now.getTime(),
               price: materialData.currentPrice,
             },
           ],
         };
+        const updatedMaterials = [...prev.marketMaterials, newMat];
         return {
           ...prev,
-          marketMaterials: [...prev.marketMaterials, newMat],
+          marketMaterials: updatedMaterials,
+          mandiBulletin: syncBulletinWithLatestTime(prev.mandiBulletin, updatedMaterials, now),
         };
       });
+      setLastMarketSyncTime(now);
     },
     [mutate]
   );
 
   const updateMandiBulletin = useCallback(
     (rawBulletinText: string) => {
-      // Import parser dynamically or use helper
-      const { parseMandiBroadcast } = require('./mandi-parser');
-      const { bulletin, materials } = parseMandiBroadcast(rawBulletinText);
+      const now = new Date();
+      const { bulletin, materials } = parseMandiBroadcast(rawBulletinText, true);
+      const syncedBulletin = syncBulletinWithLatestTime(bulletin, materials, now);
       mutate((prev: AppState) => {
         const notif: NotificationItem = {
           id: `notif-${Date.now()}`,
           title: 'Live Mandi Benchmark Updated',
-          message: `Mandi Gobindgarh live bulletin updated for ${bulletin.dateStr} (${bulletin.timeStr}) with ${materials.length} hub rates.`,
+          message: `Mandi Gobindgarh live bulletin updated for ${syncedBulletin.dateStr} (${syncedBulletin.timeStr}) with ${materials.length} hub rates.`,
           type: 'market',
           link: '/market',
           isRead: false,
-          createdAt: new Date().toISOString(),
+          createdAt: now.toISOString(),
         };
 
         return {
           ...prev,
-          mandiBulletin: bulletin,
+          mandiBulletin: syncedBulletin,
           marketMaterials: materials,
           notifications: [notif, ...prev.notifications],
         };
       });
-      setLastMarketSyncTime(new Date());
+      setLastMarketSyncTime(now);
     },
     [mutate]
   );
@@ -856,19 +1356,38 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Addresses
   const addAddress = useCallback(
     (address: Omit<UserAddress, 'id'>) => {
+      let createdAddr: UserAddress | null = null;
+      let ownerProfile: UserProfile | null = null;
+
       mutate((prev) => {
         const newAddr: UserAddress = {
           ...address,
           id: `addr-${Date.now()}`,
         };
+        createdAddr = newAddr;
+        ownerProfile = prev.currentUser;
+
         const updatedList = address.isDefault
-          ? prev.addresses.map((a) => ({ ...a, isDefault: false }))
+          ? prev.addresses.map((a) =>
+              a.userId === address.userId ? { ...a, isDefault: false } : a
+            )
           : prev.addresses;
         return {
           ...prev,
           addresses: [...updatedList, newAddr],
         };
       });
+
+      if (createdAddr && ownerProfile && (ownerProfile as UserProfile).id !== 'guest') {
+        fetch('/api/auth/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            profile: ownerProfile,
+            address: createdAddr,
+          }),
+        }).catch(() => {});
+      }
     },
     [mutate]
   );
@@ -896,10 +1415,32 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Profile
   const updateProfile = useCallback(
     (updates: Partial<UserProfile>) => {
-      mutate((prev) => ({
-        ...prev,
-        currentUser: { ...prev.currentUser, ...updates },
-      }));
+      let updatedProfile: UserProfile | null = null;
+      mutate((prev) => {
+        const merged: UserProfile = {
+          ...prev.currentUser,
+          ...updates,
+          isProfileComplete: true,
+        };
+        updatedProfile = merged;
+        const updatedUsers = prev.users.some((u) => u.id === merged.id)
+          ? prev.users.map((u) => (u.id === merged.id ? merged : u))
+          : [merged, ...prev.users];
+
+        return {
+          ...prev,
+          currentUser: merged,
+          users: updatedUsers,
+        };
+      });
+
+      if (updatedProfile && (updatedProfile as UserProfile).id !== 'guest') {
+        fetch('/api/auth/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile: updatedProfile }),
+        }).catch(() => {});
+      }
     },
     [mutate]
   );
@@ -926,11 +1467,39 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [mutate]
   );
 
+  const isProfileComplete = useMemo(() => {
+    if (!state.isAuthenticated || state.currentUser.id === 'guest') return false;
+    if (state.currentUser.isProfileComplete === false) return false;
+    return Boolean(
+      state.currentUser.companyName &&
+        state.currentUser.companyName !== 'Guest Visitor' &&
+        state.currentUser.mobile &&
+        state.currentUser.mobile.trim().length >= 10
+    );
+  }, [state.isAuthenticated, state.currentUser]);
+
+  const userAddresses = useMemo(() => {
+    if (!state.isAuthenticated || state.currentUser.id === 'guest') {
+      return [];
+    }
+    if (state.currentUser.role !== 'customer') {
+      return state.addresses;
+    }
+    return state.addresses.filter((a) => a.userId === state.currentUser.id);
+  }, [state.isAuthenticated, state.currentUser, state.addresses]);
+
   const value = useMemo(
     () => ({
       state,
       categories: state.categories,
+      isAuthenticated: state.isAuthenticated,
+      isProfileComplete,
+      authLoading,
       currentUser: state.currentUser,
+      users: state.users,
+      loginWithGoogle,
+      completeSignupProfile,
+      logout,
       switchUserRole,
       cart: state.cart,
       addToCart,
@@ -954,7 +1523,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       addMarketMaterial,
       lastMarketSyncTime,
       refreshMarketPrices,
-      addresses: state.addresses,
+      addresses: userAddresses,
       addAddress,
       updateAddress,
       deleteAddress,
@@ -966,6 +1535,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       state,
+      isProfileComplete,
+      authLoading,
+      userAddresses,
+      loginWithGoogle,
+      completeSignupProfile,
+      logout,
       switchUserRole,
       addToCart,
       updateCartItem,

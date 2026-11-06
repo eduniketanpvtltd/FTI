@@ -5,9 +5,9 @@ import { Footer } from './Footer';
 
 export function CustomerLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col bg-[#A8ADB1] text-[#252A2E]">
+    <div className="min-h-screen flex flex-col bg-[#0B0E11] text-[#F8FAFC]">
       <Header />
-      <main className="flex-1 pb-20 md:pb-12">{children}</main>
+      <main className="flex-1 pb-24 md:pb-12">{children}</main>
       <Footer />
       <BottomNav />
     </div>

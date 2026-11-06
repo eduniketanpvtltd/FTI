@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useStore } from '@/lib/store-context';
-import { Settings, ShieldCheck, CheckCircle2, History, Building2, CreditCard } from 'lucide-react';
+import { CheckCircle2, History, Building2, CreditCard } from 'lucide-react';
 import { formatIndianDateTime } from '@/lib/utils';
 
 export default function AdminSettingsPage() {
@@ -19,7 +19,9 @@ export default function AdminSettingsPage() {
   const [ifscCode, setIfscCode] = useState(settings.ifscCode);
   const [branch, setBranch] = useState(settings.branch);
   const [defaultTaxRate, setDefaultTaxRate] = useState(settings.defaultTaxRate);
-  const [quotationValidityDays, setQuotationValidityDays] = useState(settings.quotationValidityDays);
+  const [quotationValidityDays, setQuotationValidityDays] = useState(
+    settings.quotationValidityDays
+  );
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleSaveSettings = (e: React.FormEvent) => {
@@ -58,7 +60,8 @@ export default function AdminSettingsPage() {
     },
     {
       action: 'DISPATCH_CONFIRMED',
-      details: 'Order #FTI-ORD-2026-0001 dispatched with V-Trans Express (LR# VTR-MH-892147)',
+      details:
+        'Order #FTI-ORD-2026-0001 dispatched with V-Trans Express (LR# VTR-MH-892147)',
       user: 'Anil Singhania (Super Admin)',
       timestamp: '2026-11-03T08:30:00.000Z',
     },
@@ -75,162 +78,173 @@ export default function AdminSettingsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-            Platform Settings & Audit Logs
+          <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+            Platform Settings & <span className="text-[#E8732A]">Audit Logs</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#94A3B8] mt-0.5">
             Configure company legal credentials, bank transfer accounts, default GST rates, and inspect system audit trails.
           </p>
         </div>
       </div>
 
       {savedSuccess && (
-        <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs rounded-md flex items-center space-x-2 animate-in fade-in">
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-          <span>Platform settings updated successfully! Invoices will now reflect these details.</span>
+        <div className="p-3.5 bg-[#122D21] border border-[#22C55E]/40 text-[#4ADE80] text-xs rounded-xl flex items-center space-x-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-[#22C55E]" />
+          <span className="font-bold">
+            Platform settings updated successfully! Invoices will now reflect these details.
+          </span>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Settings Form (7 Cols) */}
         <div className="lg:col-span-7 space-y-5">
-          <form onSubmit={handleSaveSettings} className="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 shadow-xs space-y-4 text-xs">
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-2 flex items-center space-x-2">
-              <Building2 className="w-4 h-4 text-blue-600" />
+          <form
+            onSubmit={handleSaveSettings}
+            className="bg-[#14181F] border border-[#28303E] rounded-2xl p-5 sm:p-6 shadow-lg space-y-4 text-xs"
+          >
+            <h2 className="text-sm font-extrabold text-white uppercase tracking-wider border-b border-[#222934] pb-3 flex items-center space-x-2">
+              <Building2 className="w-4 h-4 text-[#E8732A]" />
               <span>FTI Company Details & Invoicing Credentials</span>
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block font-bold text-slate-800 mb-1">Company Legal Name</label>
+                <label className="block font-bold text-white mb-1.5">Company Legal Name</label>
                 <input
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-slate-900"
+                  className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-white"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-800 mb-1">Official GSTIN</label>
+                <label className="block font-bold text-white mb-1.5">Official GSTIN</label>
                 <input
                   type="text"
                   value={gstin}
                   onChange={(e) => setGstin(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-slate-900 font-mono font-bold"
+                  className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-[#E8732A] font-mono font-bold"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block font-bold text-slate-800 mb-1">Registered Yard & Head Office Address</label>
+              <label className="block font-bold text-white mb-1.5">
+                Registered Yard & Head Office Address
+              </label>
               <textarea
                 rows={2}
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-slate-900"
+                className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-white"
                 required
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block font-bold text-slate-800 mb-1">Official Phone</label>
+                <label className="block font-bold text-white mb-1.5">Official Phone</label>
                 <input
                   type="text"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-slate-900"
+                  className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-white font-mono"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-800 mb-1">Billing Email</label>
+                <label className="block font-bold text-white mb-1.5">Billing Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-slate-900"
+                  className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-white"
                   required
                 />
               </div>
             </div>
 
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider pt-2 border-t border-slate-200 flex items-center space-x-1.5">
-              <CreditCard className="w-4 h-4 text-blue-600" />
+            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider pt-3 border-t border-[#222934] flex items-center space-x-2">
+              <CreditCard className="w-4 h-4 text-[#E8732A]" />
               <span>Remittance Bank Account (For Invoice Header)</span>
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block font-bold text-slate-800 mb-1">Bank Name</label>
+                <label className="block font-bold text-white mb-1.5">Bank Name</label>
                 <input
                   type="text"
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-slate-900"
+                  className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-white"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-800 mb-1">Current Account Number</label>
+                <label className="block font-bold text-white mb-1.5">
+                  Current Account Number
+                </label>
                 <input
                   type="text"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-slate-900 font-mono font-bold"
+                  className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-white font-mono font-bold"
                   required
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block font-bold text-slate-800 mb-1">IFSC Code</label>
+                <label className="block font-bold text-white mb-1.5">IFSC Code</label>
                 <input
                   type="text"
                   value={ifscCode}
                   onChange={(e) => setIfscCode(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-slate-900 font-mono font-bold"
+                  className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-[#E8732A] font-mono font-bold"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-800 mb-1">Branch Location</label>
+                <label className="block font-bold text-white mb-1.5">Branch Location</label>
                 <input
                   type="text"
                   value={branch}
                   onChange={(e) => setBranch(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-slate-900"
+                  className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-white"
                   required
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-3 border-t border-[#222934]">
               <div>
-                <label className="block font-bold text-slate-800 mb-1">Standard GST Rate (%)</label>
+                <label className="block font-bold text-white mb-1.5">Standard GST Rate (%)</label>
                 <input
                   type="number"
                   value={defaultTaxRate}
                   onChange={(e) => setDefaultTaxRate(parseFloat(e.target.value) || 18)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-slate-900 font-mono"
+                  className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-white font-mono"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-800 mb-1">Default Quotation Validity (Days)</label>
+                <label className="block font-bold text-white mb-1.5">
+                  Default Quotation Validity (Days)
+                </label>
                 <input
                   type="number"
                   value={quotationValidityDays}
                   onChange={(e) => setQuotationValidityDays(parseInt(e.target.value, 10) || 3)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded p-2 text-slate-900 font-mono"
+                  className="w-full bg-[#191F28] border border-[#2A3342] rounded-xl p-2.5 text-white font-mono"
                   required
                 />
               </div>
@@ -239,7 +253,7 @@ export default function AdminSettingsPage() {
             <div className="pt-3 flex justify-end">
               <button
                 type="submit"
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-6 rounded shadow transition touch-manipulation text-center"
+                className="w-full sm:w-auto bg-gradient-to-b from-[#E8732A] to-[#C45316] text-white font-extrabold py-2.5 px-6 rounded-xl border border-[#F59352]/50 shadow-md transition touch-manipulation text-center cursor-pointer"
               >
                 Save Settings
               </button>
@@ -249,25 +263,28 @@ export default function AdminSettingsPage() {
 
         {/* Right Column: Audit Logs (5 Cols) */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center space-x-1.5 border-b border-slate-200 pb-2">
-              <History className="w-4 h-4 text-blue-600" />
+          <div className="bg-[#14181F] border border-[#28303E] rounded-2xl p-5 shadow-lg">
+            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider mb-3.5 flex items-center space-x-2 border-b border-[#222934] pb-3">
+              <History className="w-4 h-4 text-[#E8732A]" />
               <span>Administrative Audit Trail</span>
             </h3>
 
             <div className="space-y-3">
               {auditLogs.map((log, idx) => (
-                <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded text-xs">
+                <div
+                  key={idx}
+                  className="p-3.5 bg-[#191F28] border border-[#2A3342] rounded-xl text-xs"
+                >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-mono font-bold text-blue-700 bg-blue-100/60 px-1.5 py-0.2 rounded text-[10px]">
+                    <span className="font-mono font-bold text-[#E8732A] bg-[#251811] border border-[#E06924]/40 px-2 py-0.5 rounded-md text-[10px]">
                       {log.action}
                     </span>
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-[#94A3B8]">
                       {formatIndianDateTime(log.timestamp)}
                     </span>
                   </div>
-                  <p className="text-slate-800 font-medium mt-1 leading-snug">{log.details}</p>
-                  <p className="text-[10px] text-slate-500 mt-1">Logged by: {log.user}</p>
+                  <p className="text-white font-medium mt-1.5 leading-snug">{log.details}</p>
+                  <p className="text-[10px] text-[#64748B] mt-1">Logged by: {log.user}</p>
                 </div>
               ))}
             </div>

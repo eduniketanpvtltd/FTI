@@ -4,14 +4,21 @@ export type BusinessType = 'Manufacturer' | 'Wholesaler' | 'Fabricator' | 'Contr
 
 export interface UserProfile {
   id: string;
+  firebaseUid?: string;
   fullName: string;
   email: string;
   mobile: string;
   companyName: string;
   gstin: string;
   businessType: BusinessType;
+  designation?: string;
+  primaryMaterials?: string[];
+  monthlyVolume?: string;
+  city?: string;
+  state?: string;
   role: UserRole;
   isActive: boolean;
+  isProfileComplete?: boolean;
   avatarUrl?: string;
   createdAt: string;
 }
